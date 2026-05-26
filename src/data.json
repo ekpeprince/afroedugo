@@ -1,0 +1,155 @@
+{
+  "schools": [
+    {
+      "name": "SMK University of Applied Sciences",
+      "location": "Vilnius, Lithuania",
+      "country": "Lithuania",
+      "tuitionFee": 2800,
+      "tuition": "€2,800 / year",
+      "courses": ["International Business", "Tourism & Hotels", "Digital Design"],
+      "whatsapp": "+37060123456"
+    },
+    {
+      "name": "Vilnius University",
+      "location": "Vilnius, Lithuania",
+      "country": "Lithuania",
+      "tuitionFee": 3500,
+      "tuition": "€3,500 / year",
+      "courses": ["Medicine", "Physics", "Economics"],
+      "whatsapp": "+37060987654"
+    },
+    {
+      "name": "Kaunas University of Technology (KTU)",
+      "location": "Kaunas, Lithuania",
+      "country": "Lithuania",
+      "tuitionFee": 2500,
+      "tuition": "€2,500 / year",
+      "courses": ["Mechanical Engineering", "IT", "Architecture"],
+      "whatsapp": "+37061111111"
+    },
+    {
+      "name": "University of Warsaw",
+      "location": "Warsaw, Poland",
+      "country": "Poland",
+      "tuitionFee": 3000,
+      "tuition": "€3,000 / year",
+      "courses": ["International Relations", "Computer Science", "Business"],
+      "whatsapp": "+48500123456"
+    },
+    {
+      "name": "Vistula University",
+      "location": "Warsaw, Poland",
+      "country": "Poland",
+      "tuitionFee": 1900,
+      "tuition": "€1,900 / year",
+      "courses": ["Management", "Finance", "Graphics"],
+      "whatsapp": "+48500999888"
+    },
+    {
+      "name": "Jagiellonian University",
+      "location": "Krakow, Poland",
+      "country": "Poland",
+      "tuitionFee": 4000,
+      "tuition": "€4,000 / year",
+      "courses": ["Law", "Philosophy", "European Studies"],
+      "whatsapp": "+48600111222"
+    },
+    {
+      "name": "RWTH Aachen University",
+      "location": "Aachen, Germany",
+      "country": "Germany",
+      "tuitionFee": 500,
+      "tuition": "€500 / sem (Admin only)",
+      "courses": ["Automotive Engineering", "Physics", "Computer Science"],
+      "whatsapp": "+49151234567"
+    },
+    {
+      "name": "Technical University of Munich (TUM)",
+      "location": "Munich, Germany",
+      "country": "Germany",
+      "tuitionFee": 1500,
+      "tuition": "€1,500 / sem (Intl)",
+      "courses": ["Aerospace", "Informatics", "Data Science"],
+      "whatsapp": "+49151999888"
+    },
+    {
+      "name": "University of Tartu",
+      "location": "Tartu, Estonia",
+      "country": "Estonia",
+      "tuitionFee": 3800,
+      "tuition": "€3,800 / year",
+      "courses": ["Software Engineering", "Bioengineering", "Semiotics"],
+      "whatsapp": "+3725000111"
+    },
+    {
+      "name": "Tallinn University of Technology",
+      "location": "Tallinn, Estonia",
+      "country": "Estonia",
+      "tuitionFee": 3000,
+      "tuition": "€3,000 / year",
+      "courses": ["Cyber Security", "E-Governance", "Law"],
+      "whatsapp": "+3726000222"
+    },
+    {
+      "name": "University of Latvia",
+      "location": "Riga, Latvia",
+      "country": "Latvia",
+      "tuitionFee": 2200,
+      "tuition": "€2,200 / year",
+      "courses": ["International Business", "Medicine", "Humanities"],
+      "whatsapp": "+3712000333"
+    },
+    {
+      "name": "Riga Technical University",
+      "location": "Riga, Latvia",
+      "country": "Latvia",
+      "tuitionFee": 2500,
+      "tuition": "€2,500 / year",
+      "courses": ["Civil Engineering", "Aviation", "Telecommunications"],
+      "whatsapp": "+3712000444"
+    }
+  ],
+  "housing": [
+    {
+      "title": "Premium Student Studio - Vilnius",
+      "location": "Old Town, Vilnius",
+      "price": "€450/mo",
+      "whatsapp": "+37060123456",
+      "description": "Fully furnished studio with high-speed internet and all utilities included."
+    },
+    {
+      "title": "Shared Apartment - Warsaw",
+      "location": "Praga, Warsaw",
+      "price": "€350/mo",
+      "whatsapp": "+48500123456",
+      "description": "Looking for a student flatmate. Near Vistula University."
+    },
+    {
+      "title": "Modern Dorm Room - Berlin",
+      "location": "Charlottenburg, Berlin",
+      "price": "€550/mo",
+      "whatsapp": "+49151234567",
+      "description": "Private room in a modern student residence with gym access."
+    }
+  ],
+  "services": [
+    {
+      "id": "visa",
+      "name": "Visa Consultation",
+      "description": "Step-by-step guidance for D-type national visas and residence permits.",
+      "whatsapp": "+2348012345678"
+    },
+    {
+      "id": "insurance",
+      "name": "Student Insurance",
+      "description": "Schengen-compliant health insurance plans starting from €50/year.",
+      "whatsapp": "+2348012345678"
+    },
+    {
+      "id": "translation",
+      "name": "Document Translation",
+      "description": "Certified translations of diplomas and transcripts into Polish/Lithuanian.",
+      "whatsapp": "+2348012345678"
+    }
+  ]
+}
