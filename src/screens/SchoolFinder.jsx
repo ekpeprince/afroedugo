@@ -3,6 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { getWhatsAppLink } from '../utils/whatsapp'
 import SmartImage from '../components/SmartImage'
 import InquiryModal from '../components/InquiryModal'
+import Link from 'next/link'
 import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
@@ -12,7 +13,7 @@ import { GOOGLE_MAPS_API_KEY, db } from '../firebase/config'
 import { useAuth } from '../hooks/useAuth'
 import { collection, addDoc, getDocs, query, where, deleteDoc } from 'firebase/firestore'
 
-const SchoolFinder = ({ onBack }) => {
+const SchoolFinder = ({ onBack, initialSchools }) => {
   // ... existing code ...
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [inquiryItem, setInquiryItem] = useState(null);
@@ -29,7 +30,8 @@ const SchoolFinder = ({ onBack }) => {
   });
 
   const { user } = useAuth();
-  const { data: verifiedSchools, loading: dbLoading, error: dbError } = useFirestore('schools');
+  const { data: liveSchools, loading: dbLoading, error: dbError } = useFirestore('schools');
+  const verifiedSchools = liveSchools.length > 0 ? liveSchools : (initialSchools || []);
   const [favorites, setFavorites] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState('Lithuania');
   const [selectedBudget, setSelectedBudget] = useState('All');
@@ -92,13 +94,21 @@ const SchoolFinder = ({ onBack }) => {
     suggestions: { status: googleStatus, data: googleData },
     setValue: setGoogleValue,
     clearSuggestions: clearGoogleSuggestions,
+    init,
   } = usePlacesAutocomplete({
     requestOptions: {
       types: ["university", "school"],
       componentRestrictions: { country: ["lt"] },
     },
     debounce: 300,
+    initOnMount: false,
   });
+
+  useEffect(() => {
+    if (isLoaded) {
+      init();
+    }
+  }, [isLoaded, init]);
 
   const handleInput = (e) => {
     const val = e.target.value;
@@ -218,7 +228,7 @@ const SchoolFinder = ({ onBack }) => {
     });
   }, [verifiedSchools, selectedCountry, selectedBudget, localSearch, searchResults]);
 
-  if (dbLoading) {
+  if (dbLoading && verifiedSchools.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -431,7 +441,9 @@ const SchoolFinder = ({ onBack }) => {
                     </span>
                   </div>
                   
-                  <h3 className="text-2xl font-bold mb-1 text-gray-900 leading-tight">{school.name}</h3>
+                  <Link href={`/schools/${school.id}`} className="hover:text-primary transition-all">
+                    <h3 className="text-2xl font-bold mb-1 text-gray-900 leading-tight">{school.name}</h3>
+                  </Link>
                   <p className="text-gray-500 text-sm mb-4 font-medium flex items-center gap-1">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/>

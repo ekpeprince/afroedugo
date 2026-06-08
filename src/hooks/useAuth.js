@@ -11,6 +11,11 @@ export const useAuth = () => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
+      if (user) {
+        document.cookie = "session-auth=true; path=/; max-age=31536000; SameSite=Lax";
+      } else {
+        document.cookie = "session-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
+      }
       setLoading(false);
     });
     return unsubscribe;
@@ -78,8 +83,8 @@ export const useAuth = () => {
 
   const loginWithTikTok = () => {
     // 1. TikTok Client Key from .env
-    const clientKey = import.meta.env.VITE_TIKTOK_CLIENT_KEY || "YOUR_CLIENT_KEY";
-    const redirectUri = import.meta.env.VITE_TIKTOK_REDIRECT_URI || window.location.origin;
+    const clientKey = process.env.NEXT_PUBLIC_TIKTOK_CLIENT_KEY || "YOUR_CLIENT_KEY";
+    const redirectUri = process.env.NEXT_PUBLIC_TIKTOK_REDIRECT_URI || window.location.origin;
     
     // 2. Generate authorization URL
     // Scope: user.info.basic

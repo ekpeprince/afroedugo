@@ -1,22 +1,58 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useFirestore } from '../hooks/useFirestore'
 import { useProfile } from '../hooks/useProfile'
 import { db } from '../firebase/config'
-import { doc, deleteDoc } from 'firebase/firestore'
+import { doc, deleteDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
 
-const ProfileScreen = ({ onBack, onLogout }) => {
+const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
   const { user, logout } = useAuth();
   const { profile, updateProfile, loading: profileLoading } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({ country: '', major: '', bio: '' });
 
-  // ... favorites and listings logic ...
-  const { data: favorites, loading: favLoading } = useFirestore('favorites');
-  const userFavorites = favorites.filter(f => f.userId === user?.uid);
+    const { data: housing, loading: housingLoading } = useFirestore('housing');
+    const userListings = housing.filter(h => h.userId === user?.uid);
 
-  const { data: housing, loading: housingLoading } = useFirestore('housing');
-  const userListings = housing.filter(h => h.userId === user?.uid);
+    const [userFavorites, setUserFavorites] = useState([]);
+    const [favLoading, setFavLoading] = useState(true);
+    const [userInquiries, setUserInquiries] = useState([]);
+    const [leadsLoading, setLeadsLoading] = useState(true);
+
+    useEffect(() => {
+      if (!user) return;
+
+      const qFav = query(collection(db, 'favorites'), where('userId', '==', user.uid));
+      const unsubscribeFav = onSnapshot(qFav, (snapshot) => {
+        const list = [];
+        snapshot.forEach(doc => {
+          list.push({ id: doc.id, ...doc.data() });
+        });
+        setUserFavorites(list);
+        setFavLoading(false);
+      }, (err) => {
+        console.error("Error fetching favorites:", err);
+        setFavLoading(false);
+      });
+
+      const qLeads = query(collection(db, 'leads'), where('userId', '==', user.uid));
+      const unsubscribeLeads = onSnapshot(qLeads, (snapshot) => {
+        const list = [];
+        snapshot.forEach(doc => {
+          list.push({ id: doc.id, ...doc.data() });
+        });
+        setUserInquiries(list);
+        setLeadsLoading(false);
+      }, (err) => {
+        console.error("Error fetching leads:", err);
+        setLeadsLoading(false);
+      });
+
+      return () => {
+        unsubscribeFav();
+        unsubscribeLeads();
+      };
+    }, [user]);
 
   const handleLogout = async () => {
     await logout();
@@ -49,8 +85,7 @@ const ProfileScreen = ({ onBack, onLogout }) => {
     setIsEditing(false);
   };
 
-  const { data: leads, loading: leadsLoading } = useFirestore('leads');
-  const userInquiries = leads.filter(l => l.userId === user?.uid);
+
 
   return (
     <div className="min-h-screen bg-transparent pb-20">

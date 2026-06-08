@@ -5,11 +5,15 @@ import { collection, addDoc, getDocs, query, where, deleteDoc } from 'firebase/f
 import { useAuth } from '../hooks/useAuth'
 import { useChat } from '../hooks/useChat'
 import { getWhatsAppLink } from '../utils/whatsapp'
+import SmartImage from '../components/SmartImage'
+import InquiryModal from '../components/InquiryModal'
+import Link from 'next/link'
 
-const HousingFinder = ({ onBack, onNavigate, onOpenChat }) => {
+const HousingFinder = ({ onBack, onNavigate, onOpenChat, initialHousing }) => {
   const { user } = useAuth();
   const { getOrCreateConversation } = useChat();
-  const { data: housing, loading, error } = useFirestore('housing');
+  const { data: liveHousing, loading, error } = useFirestore('housing');
+  const housing = liveHousing.length > 0 ? liveHousing : (initialHousing || []);
 
   // ... existing logic ...
 
@@ -72,7 +76,7 @@ const HousingFinder = ({ onBack, onNavigate, onOpenChat }) => {
     }
   };
 
-  if (loading) {
+  if (loading && housing.length === 0) {
     return (
       <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
@@ -116,7 +120,9 @@ const HousingFinder = ({ onBack, onNavigate, onOpenChat }) => {
             
             <div className="p-8">
               <div className="flex justify-between items-start mb-2">
-                <h3 className="text-2xl font-black text-gray-900 leading-tight">{item.title}</h3>
+                  <Link href={`/housing/${item.id}`} className="hover:text-primary transition-all">
+                    <h3 className="text-2xl font-black text-gray-900 leading-tight">{item.title}</h3>
+                  </Link>
                 <span className="text-primary font-black bg-primary/5 px-4 py-1.5 rounded-full text-sm">{item.price}</span>
               </div>
               <p className="text-gray-400 text-sm mb-8 font-bold flex items-center gap-1.5">

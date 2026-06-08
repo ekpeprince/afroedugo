@@ -7,6 +7,7 @@ import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { useChat } from '../hooks/useChat'
 import CommentSection from '../components/CommentSection'
+import SmartImage from '../components/SmartImage'
 
 const CommunityScreen = ({ onBack, onOpenChat }) => {
   const { user } = useAuth();

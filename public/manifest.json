@@ -1,0 +1,22 @@
+{
+  "name": "AfroEduGo - African Students Guide to Europe",
+  "short_name": "AfroEduGo",
+  "description": "Guidance for African students moving to Europe: Schools, Housing, Community, and Services.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FDFCFB",
+  "theme_color": "#065F46",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
