@@ -67,7 +67,7 @@ const MainMenu = ({ onNavigate }) => {
   ]
 
   return (
-    <div className="min-h-screen bg-transparent p-6 flex flex-col">
+    <div className="min-h-screen bg-transparent p-6 pb-32 flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between py-6 mb-4">
         <div>
