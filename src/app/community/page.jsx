@@ -14,6 +14,7 @@ export default function CommunityPage() {
       <CommunityScreen 
         onBack={() => router.push('/')} 
         onOpenChat={openChat}
+        onLogin={() => router.push('/auth')}
       />
     </div>
   );

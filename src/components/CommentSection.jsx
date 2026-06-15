@@ -3,7 +3,7 @@ import { db } from '../firebase/config';
 import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
 
-const CommentSection = ({ postId, postAuthorId, postTitle }) => {
+const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
   const { user } = useAuth();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -113,7 +113,13 @@ const CommentSection = ({ postId, postAuthorId, postTitle }) => {
           </button>
         </form>
       ) : (
-        <p className="text-[10px] text-gray-400 font-bold text-center">Please login to reply.</p>
+        <button
+          type="button"
+          onClick={onLogin}
+          className="text-[10px] text-primary hover:text-primary-600 font-bold text-center w-full hover:underline transition-all cursor-pointer"
+        >
+          Please login to reply.
+        </button>
       )}
     </div>
   );

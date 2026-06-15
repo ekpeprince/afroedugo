@@ -9,7 +9,7 @@ import { useChat } from '../hooks/useChat'
 import CommentSection from '../components/CommentSection'
 import SmartImage from '../components/SmartImage'
 
-const CommunityScreen = ({ onBack, onOpenChat }) => {
+const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
   const { user } = useAuth();
   const { getOrCreateConversation } = useChat();
   const { profile } = useProfile();
@@ -280,6 +280,7 @@ const CommunityScreen = ({ onBack, onOpenChat }) => {
                           postId={msg.id} 
                           postAuthorId={msg.userId}
                           postTitle={msg.text.slice(0, 30) + '...'}
+                          onLogin={onLogin}
                         />
                       )}
                     </div>
@@ -343,7 +344,15 @@ const CommunityScreen = ({ onBack, onOpenChat }) => {
             </button>
           </div>
           {!user && (
-            <p className="text-center text-[10px] font-black uppercase tracking-widest text-red-400 mt-2">Login to join the conversation</p>
+            <div className="flex justify-center mt-2">
+              <button 
+                type="button"
+                onClick={onLogin}
+                className="px-6 py-2.5 bg-red-500 hover:bg-red-600 active:scale-95 text-white font-black text-[10px] uppercase tracking-widest rounded-full shadow-lg shadow-red-500/20 transition-all cursor-pointer"
+              >
+                Login to Join the Conversation
+              </button>
+            </div>
           )}
         </form>
       </div>
