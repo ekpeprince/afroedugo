@@ -9,7 +9,7 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
   const { user, logout } = useAuth();
   const { profile, updateProfile, loading: profileLoading } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({ country: '', major: '', bio: '' });
+  const [editData, setEditData] = useState({ country: '', major: '', bio: '', role: 'incoming' });
 
     const { data: housing, loading: housingLoading } = useFirestore('housing');
     const userListings = housing.filter(h => h.userId === user?.uid);
@@ -75,7 +75,8 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
     setEditData({
       country: profile?.country || '',
       major: profile?.major || '',
-      bio: profile?.bio || ''
+      bio: profile?.bio || '',
+      role: profile?.role || 'incoming'
     });
     setIsEditing(true);
   };
@@ -101,7 +102,12 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
               )}
             </div>
             <div>
-              <h2 className="text-2xl font-black tracking-tight leading-none mb-2">{profile?.displayName || user?.email?.split('@')[0]}</h2>
+              <div className="flex items-center gap-3 mb-2">
+                <h2 className="text-2xl font-black tracking-tight leading-none">{profile?.displayName || user?.email?.split('@')[0]}</h2>
+                <span className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider ${profile?.role === 'current' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
+                  {profile?.role === 'current' ? '🎓 Current' : '✈️ Incoming'}
+                </span>
+              </div>
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
                 <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest">Active Now • {user?.email}</p>
@@ -120,20 +126,22 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
       </header>
 
       <div className="p-8 space-y-12">
-        {/* Admin Access (Eventually gate by user.role === 'admin') */}
-        <button 
-          onClick={() => onNavigate('admin')}
-          className="w-full bg-slate-900 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl shadow-slate-200 border border-slate-800 active:scale-95 transition-all group"
-        >
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-xl">🛡️</div>
-            <div className="text-left">
-              <h4 className="text-white font-black leading-tight">Control Room</h4>
-              <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Ops & Moderation</p>
+        {/* Admin Access (Gated by profile.role === 'admin') */}
+        {profile?.role === 'admin' && (
+          <button 
+            onClick={() => onNavigate('admin')}
+            className="w-full bg-slate-900 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl shadow-slate-200 border border-slate-800 active:scale-95 transition-all group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-xl">🛡️</div>
+              <div className="text-left">
+                <h4 className="text-white font-black leading-tight">Control Room</h4>
+                <p className="text-slate-400 text-[10px] font-black uppercase tracking-widest">Ops & Moderation</p>
+              </div>
             </div>
-          </div>
-          <div className="text-slate-500 group-hover:translate-x-1 transition-transform">→</div>
-        </button>
+            <div className="text-slate-500 group-hover:translate-x-1 transition-transform">→</div>
+          </button>
+        )}
 
         {/* Viral Growth Loop (Join Me) */}
         <button 
@@ -177,6 +185,24 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
                 />
               </div>
               <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Student Status</label>
+                <div className="relative mt-1">
+                  <select 
+                    value={editData.role}
+                    onChange={e => setEditData({...editData, role: e.target.value})}
+                    className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1 appearance-none pr-10"
+                  >
+                    <option value="incoming">✈️ Incoming Student</option>
+                    <option value="current">🎓 Current Student</option>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                    <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                      <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Short Bio</label>
                 <textarea 
                   value={editData.bio}
@@ -197,7 +223,7 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
               </div>
             </div>
           </section>
-        ) : profile && (profile.country || profile.major || profile.bio) && (
+        ) : profile && (profile.country || profile.major || profile.bio || profile.role) && (
           <section className="bg-indigo-900 text-white p-8 rounded-[3rem] shadow-2xl relative overflow-hidden">
              <div className="absolute top-0 right-0 p-8 opacity-10">
                <svg width="100" height="100" viewBox="0 0 24 24" fill="currentColor">
@@ -207,6 +233,9 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
              <div className="relative z-10">
                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-4">Verified Social Profile</h3>
                <div className="flex flex-wrap gap-2 mb-6">
+                 <span className={`px-4 py-1.5 rounded-full text-xs font-black border border-white/5 ${profile.role === 'current' ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300' : 'bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-300'}`}>
+                   {profile.role === 'current' ? '🎓 Current Student' : '✈️ Incoming Student'}
+                 </span>
                  {profile.country && <span className="bg-white/10 px-4 py-1.5 rounded-full text-xs font-black border border-white/5">{profile.country}</span>}
                  {profile.major && <span className="bg-white/10 px-4 py-1.5 rounded-full text-xs font-black border border-white/5">{profile.major}</span>}
                </div>

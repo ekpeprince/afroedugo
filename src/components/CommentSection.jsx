@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
-import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
 
 const CommentSection = ({ postId, postAuthorId, postTitle }) => {
@@ -36,6 +36,11 @@ const CommentSection = ({ postId, postAuthorId, postTitle }) => {
         userName: user.email.split('@')[0],
         text: newComment,
         createdAt: serverTimestamp(),
+      });
+
+      // Update the comment count on the discussion post
+      await updateDoc(doc(db, 'discussions', postId), {
+        commentCount: increment(1)
       });
 
       // 2. Notify the author (if it's not the same person)

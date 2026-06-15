@@ -57,6 +57,7 @@ export default function HousingDetailClient({ item }) {
           src={item.imageUrl} 
           alt={item.title} 
           className="h-full w-full rounded-b-[3rem] shadow-xl"
+          type="housing"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-b-[3rem]"></div>
         

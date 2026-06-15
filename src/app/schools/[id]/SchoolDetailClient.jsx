@@ -41,6 +41,7 @@ export default function SchoolDetailClient({ school }) {
           src={school.imageUrl} 
           alt={school.name} 
           className="h-full w-full rounded-b-[3rem] shadow-xl"
+          type="school"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent rounded-b-[3rem]"></div>
         

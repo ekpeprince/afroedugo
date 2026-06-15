@@ -5,6 +5,7 @@ import { GlobalStateProvider, useGlobalState } from '../context/GlobalStateConte
 import ChatDrawer from './ChatDrawer';
 import ViralJoinModal from './ViralJoinModal';
 import { useAuth } from '../hooks/useAuth';
+import NotificationManager from './NotificationManager';
 
 function GlobalModalsContainer({ children }) {
   const { user } = useAuth();
@@ -18,6 +19,9 @@ function GlobalModalsContainer({ children }) {
   return (
     <>
       {children}
+
+      {/* Real-time OS notifications */}
+      <NotificationManager />
 
       {/* Real-time Chat Drawer */}
       <ChatDrawer 

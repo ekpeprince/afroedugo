@@ -12,6 +12,31 @@ import { useLoadScript } from "@react-google-maps/api";
 import { GOOGLE_MAPS_API_KEY, db } from '../firebase/config'
 import { useAuth } from '../hooks/useAuth'
 import { collection, addDoc, getDocs, query, where, deleteDoc } from 'firebase/firestore'
+import MapContainer from '../components/MapContainer'
+
+const locationCoords = {
+  "vilnius, lithuania": { lat: 54.6872, lng: 25.2797 },
+  "kaunas, lithuania": { lat: 54.8985, lng: 23.9036 },
+  "warsaw, poland": { lat: 52.2297, lng: 21.0122 },
+  "krakow, poland": { lat: 50.0647, lng: 19.9450 },
+  "aachen, germany": { lat: 50.7753, lng: 6.0839 },
+  "munich, germany": { lat: 48.1351, lng: 11.5820 },
+  "tartu, estonia": { lat: 58.3780, lng: 26.7289 },
+  "tallinn, estonia": { lat: 59.4370, lng: 24.7536 },
+  "riga, latvia": { lat: 56.9496, lng: 24.1052 },
+  "berlin, germany": { lat: 52.5200, lng: 13.4050 }
+};
+
+const getCoordsForLocation = (location) => {
+  if (!location) return { lat: 54.6872, lng: 25.2797 };
+  const normalized = location.toLowerCase().trim();
+  for (const [key, coords] of Object.entries(locationCoords)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return coords;
+    }
+  }
+  return { lat: 54.6872, lng: 25.2797 }; // Fallback
+};
 
 const SchoolFinder = ({ onBack, initialSchools }) => {
   // ... existing code ...
@@ -31,13 +56,32 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
 
   const { user } = useAuth();
   const { data: liveSchools, loading: dbLoading, error: dbError } = useFirestore('schools');
-  const verifiedSchools = liveSchools.length > 0 ? liveSchools : (initialSchools || []);
+  const verifiedSchools = useMemo(() => {
+    const raw = (liveSchools && liveSchools.length > 0) ? liveSchools : (initialSchools || []);
+    return raw.map(school => {
+      if (school.name && school.name.trim() === "Smk Collage Of Applied Science") {
+        return { ...school, name: "SMK University of Applied Sciences" };
+      }
+      return school;
+    });
+  }, [liveSchools, initialSchools]);
   const [favorites, setFavorites] = useState([]);
   const [selectedCountry, setSelectedCountry] = useState('Lithuania');
   const [selectedBudget, setSelectedBudget] = useState('All');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [localSearch, setLocalSearch] = useState("");
+  const [viewMode, setViewMode] = useState('list');
+
+  const schoolsWithCoords = useMemo(() => {
+    return verifiedSchools.map(school => {
+      if (school.lat && school.lng) {
+        return school;
+      }
+      const coords = getCoordsForLocation(school.location);
+      return { ...school, ...coords };
+    });
+  }, [verifiedSchools]);
 
   // Fetch local favorites
   useEffect(() => {
@@ -205,13 +249,13 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
     // If user has selected a specific Google result
     if (searchResults.length > 0) {
       return searchResults.map(result => {
-        const verified = verifiedSchools.find(s => isFuzzyMatch(s.name, result.name));
+        const verified = schoolsWithCoords.find(s => isFuzzyMatch(s.name, result.name));
         return verified ? { ...verified, isVerified: true } : { ...result, isGlobal: true };
       });
     }
 
     // Normal filtering logic
-    return verifiedSchools.filter(school => {
+    return schoolsWithCoords.filter(school => {
       // Country Filter
       const countryMatch = selectedCountry === 'All' || school.country === selectedCountry;
       
@@ -226,7 +270,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
 
       return countryMatch && budgetMatch && searchMatch;
     });
-  }, [verifiedSchools, selectedCountry, selectedBudget, localSearch, searchResults]);
+  }, [schoolsWithCoords, selectedCountry, selectedBudget, localSearch, searchResults]);
 
   if (dbLoading && verifiedSchools.length === 0) {
     return (
@@ -245,16 +289,25 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
             <h2 className="text-2xl font-bold">Global School Finder</h2>
           </div>
           
-          {/* Budget Dropdown */}
-          <select 
-            value={selectedBudget}
-            onChange={(e) => setSelectedBudget(e.target.value === 'All' ? 'All' : Number(e.target.value))}
-            className="bg-gray-50 border-none outline-none text-xs font-bold px-3 py-2 rounded-xl text-gray-500 hover:text-primary cursor-pointer transition-colors"
-          >
-            {budgetOptions.map(opt => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => setViewMode(prev => prev === 'list' ? 'map' : 'list')}
+              className="bg-gray-50 hover:bg-gray-100 text-xs font-black px-3 py-2 rounded-xl border border-gray-100 transition-all active:scale-95 animate-in fade-in duration-300"
+            >
+              {viewMode === 'list' ? '🗺️ Map' : '📋 List'}
+            </button>
+            
+            {/* Budget Dropdown */}
+            <select 
+              value={selectedBudget}
+              onChange={(e) => setSelectedBudget(e.target.value === 'All' ? 'All' : Number(e.target.value))}
+              className="bg-gray-50 border-none outline-none text-xs font-bold px-3 py-2 rounded-xl text-gray-500 hover:text-primary cursor-pointer transition-colors"
+            >
+              {budgetOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Global Search Bar */}
@@ -331,8 +384,14 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
         )}
       </header>
 
-      <div className="p-6 space-y-8">
-        {/* Smart Recommendations Section */}
+      <div className="p-6 space-y-8 pt-44">
+        {viewMode === 'map' ? (
+          <div className="h-[65vh] w-full rounded-[2.5rem] overflow-hidden shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
+            <MapContainer items={combinedResults} type="school" />
+          </div>
+        ) : (
+          <>
+            {/* Smart Recommendations Section */}
         {user && favorites.length > 0 && selectedCountry === 'Lithuania' && combinedResults.length > 0 && (
           <div className="mb-2">
             <div className="flex items-center gap-2 mb-4 px-2">
@@ -349,7 +408,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                     onClick={() => setLocalSearch(school.name)}
                     className="flex-shrink-0 w-64 bg-white p-4 rounded-3xl shadow-sm border border-gray-50 flex items-center gap-4 hover:shadow-md transition-all text-left"
                   >
-                    <SmartImage src={school.imageUrl} className="w-12 h-12 rounded-xl object-cover" />
+                    <SmartImage src={school.imageUrl} className="w-12 h-12 rounded-xl object-cover" type="school" />
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-gray-900 text-sm truncate">{school.name}</h4>
                       <p className="text-[10px] text-gray-400 font-bold uppercase">{school.country}</p>
@@ -410,6 +469,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                     src={school.imageUrl} 
                     alt={school.name} 
                     className="h-56 w-full group-hover:scale-105 transition-transform duration-700"
+                    type="school"
                   />
                   {/* Heart Button Overlay */}
                   <button 
@@ -527,7 +587,9 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
             )
           ))
         )}
-      </div>
+      </>
+    )}
+  </div>
 
       <InquiryModal 
         isOpen={isInquiryOpen} 

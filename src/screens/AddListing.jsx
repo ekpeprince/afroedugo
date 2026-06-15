@@ -1,11 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { db, storage } from '../firebase/config';
+import { db, storage, GOOGLE_MAPS_API_KEY } from '../firebase/config';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../hooks/useAuth';
+import { useLoadScript } from '@react-google-maps/api';
 
 const AddListing = ({ onBack }) => {
   const { user, loading: authLoading } = useAuth();
+  const { isLoaded } = useLoadScript({
+    googleMapsApiKey: GOOGLE_MAPS_API_KEY,
+    libraries: ['places']
+  });
+
   const [formData, setFormData] = useState({
     title: '',
     location: '',
@@ -13,6 +19,26 @@ const AddListing = ({ onBack }) => {
     whatsapp: '',
     description: ''
   });
+
+  const geocodeAddress = (address) => {
+    return new Promise((resolve) => {
+      if (typeof window === 'undefined' || !window.google || !window.google.maps) {
+        resolve(null);
+        return;
+      }
+      const geocoder = new window.google.maps.Geocoder();
+      geocoder.geocode({ address }, (results, status) => {
+        if (status === 'OK' && results[0]) {
+          const lat = results[0].geometry.location.lat();
+          const lng = results[0].geometry.location.lng();
+          resolve({ lat, lng });
+        } else {
+          console.warn('Geocoding failed for address:', address, status);
+          resolve(null);
+        }
+      });
+    });
+  };
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState(null);
@@ -94,13 +120,24 @@ const AddListing = ({ onBack }) => {
       await uploadBytes(storageRef, optimizedBlob);
       const imageUrl = await getDownloadURL(storageRef);
 
-      // 3. Save to Firestore
+      // 3. Geocode location
+      let coords = null;
+      if (isLoaded) {
+        try {
+          coords = await geocodeAddress(formData.location);
+        } catch (err) {
+          console.warn('Geocoding warning:', err);
+        }
+      }
+
+      // 4. Save to Firestore
       await addDoc(collection(db, 'housing'), {
         ...formData,
         imageUrl,
         userId: user.uid,
         userEmail: user.email,
         createdAt: serverTimestamp(),
+        ...(coords || {})
       });
 
       alert('Listing published successfully!');

@@ -19,39 +19,69 @@ const discussionData = [
     text: "Can someone recommend a good public university in Germany for Data Science? I'm looking for zero tuition fees.",
     category: "general",
     user: "Kofi Mensah",
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    likes: [],
+    commentCount: 0,
+    userRole: "incoming",
+    userCountry: "Ghana",
+    userMajor: "Data Science"
   },
   {
     text: "Is there an Afro student association in Vilnius? Just landed and looking for my community!",
     category: "general",
     user: "Ada Obi",
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    likes: [],
+    commentCount: 0,
+    userRole: "current",
+    userCountry: "Nigeria",
+    userMajor: "Medicine"
   },
   // VISA HELP
   {
     text: "What documents do I need for the D-type visa to Poland? Is the insurance from my home country enough?",
     category: "visa",
     user: "Samuel T.",
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    likes: [],
+    commentCount: 0,
+    userRole: "incoming",
+    userCountry: "Kenya",
+    userMajor: "Business Admin"
   },
   {
     text: "Wait times at the Estonian embassy in Lagos are quite long right now. Plan ahead, guys!",
     category: "visa",
     user: "Chioma P.",
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    likes: [],
+    commentCount: 0,
+    userRole: "current",
+    userCountry: "Nigeria",
+    userMajor: "Cybersecurity"
   },
   // HOUSING TIPS
   {
     text: "Pro-tip for Kaunas: Look for apartments in Zaliakalnis. It's affordable and very safe for students.",
     category: "housing",
     user: "David Nkosi",
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    likes: [],
+    commentCount: 0,
+    userRole: "current",
+    userCountry: "South Africa",
+    userMajor: "IT Engineering"
   },
   {
     text: "Always ask for a contract in English AND Lithuanian. Don't sign anything you don't fully understand!",
     category: "housing",
     user: "Agent Sarah",
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    likes: [],
+    commentCount: 0,
+    userRole: "current",
+    userCountry: "Lithuania",
+    userMajor: "Law"
   }
 ];
 

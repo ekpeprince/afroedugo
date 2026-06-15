@@ -1,15 +1,31 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 
-const SmartImage = ({ src, alt, className }) => {
+const SmartImage = ({ src, alt, className, type = 'general', fallbackSrc = null }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const getFallbackSrc = () => {
+    if (fallbackSrc) return fallbackSrc;
+    if (type === 'school') {
+      return 'https://images.unsplash.com/photo-1498243691581-b148c5c44725?q=80&w=800&auto=format&fit=crop';
+    }
+    if (type === 'housing') {
+      return 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?q=80&w=800&auto=format&fit=crop';
+    }
+    return 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=800&auto=format&fit=crop';
+  };
 
   // Fallback if no src is provided
   if (!src) {
     return (
       <div className={`relative overflow-hidden bg-gray-100 flex items-center justify-center text-gray-400 text-xs ${className}`}>
-        No Image
+        <img
+          src={getFallbackSrc()}
+          alt="Default Placeholder"
+          className="w-full h-full object-cover absolute inset-0 opacity-60"
+        />
+        <span className="relative z-10 font-bold">No Image</span>
       </div>
     );
   }
@@ -38,9 +54,11 @@ const SmartImage = ({ src, alt, className }) => {
           }}
         />
       ) : (
-        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center text-gray-400 text-xs text-center p-2">
-          Image failed to load
-        </div>
+        <img
+          src={getFallbackSrc()}
+          alt={alt || "Fallback Placeholder"}
+          className="w-full h-full object-cover"
+        />
       )}
     </div>
   );

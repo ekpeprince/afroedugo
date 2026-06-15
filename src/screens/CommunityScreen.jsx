@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { db, storage } from '../firebase/config'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, doc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
@@ -33,6 +33,23 @@ const CommunityScreen = ({ onBack, onOpenChat }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [newMessage, setNewMessage] = useState('')
+
+  const handleToggleLike = async (postId, likes = []) => {
+    if (!user) {
+      alert("Please login to react to posts!");
+      return;
+    }
+    const isLiked = likes?.includes(user.uid);
+    const postRef = doc(db, 'discussions', postId);
+
+    try {
+      await updateDoc(postRef, {
+        likes: isLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
+      });
+    } catch (err) {
+      console.error("Error toggling like:", err);
+    }
+  };
   const [isSending, setIsSending] = useState(false)
   const [expandedPost, setExpandedPost] = useState(null)
   const [attachedImage, setAttachedImage] = useState(null);
@@ -85,6 +102,9 @@ const CommunityScreen = ({ onBack, onOpenChat }) => {
         userEmail: user.email,
         userCountry: profile?.country || '',
         userMajor: profile?.major || '',
+        userRole: profile?.role || 'incoming',
+        likes: [],
+        commentCount: 0,
         imageUrl: imageUrl
       });
 
@@ -179,6 +199,9 @@ const CommunityScreen = ({ onBack, onOpenChat }) => {
                         <div>
                           <div className="flex items-center gap-2">
                             <span className="font-black text-white text-sm tracking-tight">{msg.user}</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wide ${msg.userRole === 'current' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/20' : 'bg-blue-500/20 text-blue-400 border border-blue-500/20'}`}>
+                              {msg.userRole === 'current' ? '🎓 Current' : '✈️ Incoming'}
+                            </span>
                             <span className="text-[9px] text-gray-500 font-bold">
                               {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleDateString() : 'Just now'}
                             </span>
@@ -217,15 +240,38 @@ const CommunityScreen = ({ onBack, onOpenChat }) => {
                         </div>
                       )}
 
-                      <div className="flex items-center gap-4 border-t border-gray-50 pt-4">
+                      <div className="flex items-center gap-6 border-t border-white/10 pt-4">
+                        <button 
+                          onClick={() => handleToggleLike(msg.id, msg.likes)}
+                          className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                            user && msg.likes?.includes(user.uid) 
+                              ? 'text-red-500 hover:text-red-600' 
+                              : 'text-gray-400 hover:text-red-400'
+                          }`}
+                        >
+                          <svg 
+                            width="14" 
+                            height="14" 
+                            viewBox="0 0 24 24" 
+                            fill={user && msg.likes?.includes(user.uid) ? "currentColor" : "none"} 
+                            stroke="currentColor" 
+                            strokeWidth="3"
+                          >
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                          </svg>
+                          <span>{msg.likes?.length || 0} Likes</span>
+                        </button>
+
                         <button 
                           onClick={() => setExpandedPost(expandedPost === msg.id ? null : msg.id)}
-                          className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary hover:scale-105 transition-transform"
+                          className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest transition-colors ${
+                            expandedPost === msg.id ? 'text-primary' : 'text-gray-400 hover:text-primary'
+                          }`}
                         >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                             <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                           </svg>
-                          {expandedPost === msg.id ? 'Close Replies' : 'Replies'}
+                          <span>{msg.commentCount || 0} Replies</span>
                         </button>
                       </div>
 

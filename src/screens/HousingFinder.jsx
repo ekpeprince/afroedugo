@@ -8,12 +8,51 @@ import { getWhatsAppLink } from '../utils/whatsapp'
 import SmartImage from '../components/SmartImage'
 import InquiryModal from '../components/InquiryModal'
 import Link from 'next/link'
+import MapContainer from '../components/MapContainer'
+
+const locationCoords = {
+  "vilnius, lithuania": { lat: 54.6872, lng: 25.2797 },
+  "kaunas, lithuania": { lat: 54.8985, lng: 23.9036 },
+  "warsaw, poland": { lat: 52.2297, lng: 21.0122 },
+  "krakow, poland": { lat: 50.0647, lng: 19.9450 },
+  "aachen, germany": { lat: 50.7753, lng: 6.0839 },
+  "munich, germany": { lat: 48.1351, lng: 11.5820 },
+  "tartu, estonia": { lat: 58.3780, lng: 26.7289 },
+  "tallinn, estonia": { lat: 59.4370, lng: 24.7536 },
+  "riga, latvia": { lat: 56.9496, lng: 24.1052 },
+  "berlin, germany": { lat: 52.5200, lng: 13.4050 },
+  "old town, vilnius": { lat: 54.6828, lng: 25.2895 },
+  "praga, warsaw": { lat: 52.2516, lng: 21.0368 },
+  "charlottenburg, berlin": { lat: 52.5162, lng: 13.2982 }
+};
+
+const getCoordsForLocation = (location) => {
+  if (!location) return { lat: 54.6872, lng: 25.2797 };
+  const normalized = location.toLowerCase().trim();
+  for (const [key, coords] of Object.entries(locationCoords)) {
+    if (normalized.includes(key) || key.includes(normalized)) {
+      return coords;
+    }
+  }
+  return { lat: 54.6872, lng: 25.2797 }; // Fallback
+};
 
 const HousingFinder = ({ onBack, onNavigate, onOpenChat, initialHousing }) => {
   const { user } = useAuth();
   const { getOrCreateConversation } = useChat();
   const { data: liveHousing, loading, error } = useFirestore('housing');
   const housing = liveHousing.length > 0 ? liveHousing : (initialHousing || []);
+  const [viewMode, setViewMode] = useState('list');
+
+  const housingWithCoords = React.useMemo(() => {
+    return housing.map(item => {
+      if (item.lat && item.lng) {
+        return item;
+      }
+      const coords = getCoordsForLocation(item.location);
+      return { ...item, ...coords };
+    });
+  }, [housing]);
 
   // ... existing logic ...
 
@@ -88,18 +127,32 @@ const HousingFinder = ({ onBack, onNavigate, onOpenChat, initialHousing }) => {
     <div className="min-h-screen bg-transparent flex flex-col relative">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 bg-white/40 backdrop-blur-2xl z-30 px-6 py-4 flex items-center justify-between border-b border-white/10">
-        <button onClick={onBack} className="text-2xl hover:text-primary transition-colors">←</button>
-        <h2 className="text-2xl font-black tracking-tight">Housing Finder</h2>
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="text-2xl hover:text-primary transition-colors">←</button>
+          <h2 className="text-2xl font-black tracking-tight">Housing Finder</h2>
+        </div>
+        <button 
+          onClick={() => setViewMode(prev => prev === 'list' ? 'map' : 'list')}
+          className="bg-gray-50 hover:bg-gray-100 text-xs font-black px-4 py-2.5 rounded-xl border border-gray-100 transition-all active:scale-95 animate-in fade-in duration-300"
+        >
+          {viewMode === 'list' ? '🗺️ Map' : '📋 List'}
+        </button>
       </header>
 
       <div className="p-6 space-y-8 pt-24">
-        {housing.map((item) => (
+        {viewMode === 'map' ? (
+          <div className="h-[65vh] w-full rounded-[2.5rem] overflow-hidden shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
+            <MapContainer items={housingWithCoords} type="housing" />
+          </div>
+        ) : (
+          housingWithCoords.map((item) => (
           <div key={item.id} className="bg-white rounded-[2.5rem] overflow-hidden shadow-xl shadow-gray-200/50 border border-gray-100 flex flex-col group">
             <div className="relative overflow-hidden">
               <SmartImage 
                 src={item.imageUrl} 
                 alt={item.title} 
                 className="h-64 w-full group-hover:scale-105 transition-transform duration-700"
+                type="housing"
               />
               <button 
                 onClick={(e) => {
@@ -160,7 +213,8 @@ const HousingFinder = ({ onBack, onNavigate, onOpenChat, initialHousing }) => {
               </div>
             </div>
           </div>
-        ))}
+          ))
+        )}
       </div>
 
       <InquiryModal 

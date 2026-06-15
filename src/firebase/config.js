@@ -20,8 +20,7 @@ const storage = getStorage(app);
 const auth = getAuth(app);
 
 // Google Maps Configuration
-// REPLACE WITH YOUR ACTUAL GOOGLE MAPS API KEY
-const GOOGLE_MAPS_API_KEY = "YOUR_GOOGLE_MAPS_API_KEY";
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY";
 
 // Enable Offline Persistence (Client-only)
 if (typeof window !== 'undefined') {

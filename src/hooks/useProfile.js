@@ -27,6 +27,7 @@ export const useProfile = () => {
           bio: '',
           country: '',
           major: '',
+          role: 'incoming',
           photoUrl: '',
           createdAt: new Date()
         };
