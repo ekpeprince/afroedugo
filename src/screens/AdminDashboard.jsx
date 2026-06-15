@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { db } from '../firebase/config'
 import { collection, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, getDocs, where, addDoc, serverTimestamp } from 'firebase/firestore'
 import { useAuth } from '../hooks/useAuth'
+import { getWhatsAppLink } from '../utils/whatsapp'
 
 const AdminDashboard = ({ onBack }) => {
   const { user } = useAuth();
@@ -139,9 +140,22 @@ const AdminDashboard = ({ onBack }) => {
                     >✅</button>
                   </div>
                 </div>
-                <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-2xl italic">
+                <p className="text-gray-600 text-sm leading-relaxed bg-gray-50 p-4 rounded-2xl italic mb-3">
                   "{lead.message || "No message provided."}"
                 </p>
+                {lead.phone && (
+                  <div className="flex items-center justify-between bg-emerald-50/50 border border-emerald-100/50 p-3 rounded-2xl mb-4">
+                    <span className="text-xs text-gray-600 font-bold">📞 {lead.phone}</span>
+                    <a 
+                      href={getWhatsAppLink(lead.phone, `Hi ${lead.studentName || 'there'}, I received your inquiry for "${lead.itemTitle}" on AfroEduGo. How can I help you?`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all shadow-md shadow-emerald-600/10 hover:scale-105 active:scale-95"
+                    >
+                      💬 Chat on WhatsApp
+                    </a>
+                  </div>
+                )}
                 <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
                   <span className="text-[10px] text-gray-300 font-bold uppercase">Ref: {lead.id.slice(0, 8)}</span>
                   <span className="text-[10px] text-gray-400 font-bold">{lead.createdAt?.toDate()?.toLocaleString() || 'Recent'}</span>
