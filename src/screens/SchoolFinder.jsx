@@ -436,7 +436,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
             </p>
 
             <a
-              href={getWhatsAppLink('+2348012345678', `Hi AfroEduGo! I am interested in studying in ${selectedCountry}. Please notify me when you launch there!`)}
+              href={getWhatsAppLink('+37063423845', `Hi AfroEduGo! I am interested in studying in ${selectedCountry}. Please notify me when you launch there!`)}
               target="_blank"
               rel="noopener noreferrer"
               className="bg-primary hover:bg-primary/95 text-white px-8 py-4.5 rounded-3xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/25 flex items-center gap-3"

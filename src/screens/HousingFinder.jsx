@@ -194,7 +194,7 @@ const HousingFinder = ({ onBack, onNavigate, onOpenChat, initialHousing }) => {
                     💬 Message Host
                   </button>
                   <a
-                    href={getWhatsAppLink(item.whatsapp || '+3712000000', `Hi, I'm interested in: ${item.title}`)}
+                    href={getWhatsAppLink(item.whatsapp || '+37063423845', `Hi, I'm interested in: ${item.title}`)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-16 h-16 flex items-center justify-center bg-gray-50 text-gray-400 rounded-[1.5rem] hover:text-green-500 hover:bg-green-50 transition-all active:scale-95 border border-gray-100"
