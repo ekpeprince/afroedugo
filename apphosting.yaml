@@ -1,0 +1,16 @@
+# Firebase App Hosting Configuration File
+# This file configures the build and runtime environment for the Next.js SSR application.
+
+env:
+  - variable: NEXT_PUBLIC_FIREBASE_API_KEY
+    value: "AIzaSyBOr3R-Subxwq2HjZGB1v7Wz31ttkcJBpQ"
+  - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    value: "afroedugo-b0b3f.firebaseapp.com"
+  - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    value: "afroedugo-b0b3f"
+  - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    value: "afroedugo-b0b3f.firebasestorage.app"
+  - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    value: "86185831384"
+  - variable: NEXT_PUBLIC_FIREBASE_APP_ID
+    value: "1:86185831384:web:1fffe955dcd6d044a9a0ad"
