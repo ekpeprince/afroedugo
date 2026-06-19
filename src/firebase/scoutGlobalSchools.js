@@ -24,7 +24,7 @@ const globalSchools = [
     tuitionFee: 3400,
     tuitionRange: "Medium",
     courses: ["International Business", "Marketing", "Video Production"],
-    imageUrl: "https://images.unsplash.com/photo-1541339907198-e08756ebafe3?auto=format&fit=crop&q=80&w=800",
+    imageUrl: "/smk_school.jpg",
     whatsapp: "+37060175094"
   },
   {

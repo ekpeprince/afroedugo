@@ -4,6 +4,7 @@ import { getWhatsAppLink } from '../utils/whatsapp'
 import SmartImage from '../components/SmartImage'
 import InquiryModal from '../components/InquiryModal'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import usePlacesAutocomplete, {
   getGeocode,
   getLatLng,
@@ -38,12 +39,42 @@ const getCoordsForLocation = (location) => {
   return { lat: 54.6872, lng: 25.2797 }; // Fallback
 };
 
+const courseMatchesCategory = (courses, category) => {
+  if (category === 'All') return true;
+  if (!courses || courses.length === 0) return false;
+  
+  const cLower = courses.map(c => c.toLowerCase());
+  
+  if (category === 'Bachelor') {
+    return cLower.some(c => !c.includes('master') && !c.includes('msc') && !c.includes('phd') && !c.includes('doctor') && !c.includes('society'));
+  }
+  if (category === 'Masters') {
+    const keywords = ['master', 'msc', 'software', 'cyber', 'data', 'learning', 'e-governance', 'alternative energy', 'aerospace', 'hci', 'interaction'];
+    return cLower.some(c => keywords.some(k => c.includes(k)));
+  }
+  if (category === 'PhD') {
+    const keywords = ['phd', 'doctor', 'philosophy', 'semiotics', 'bioengineering', 'physics', 'mind', 'brain'];
+    return cLower.some(c => keywords.some(k => c.includes(k)));
+  }
+  if (category === 'IT') {
+    const keywords = ['it', 'computer', 'software', 'artificial', 'mechatronics', 'aviation', 'telecommunication', 'cyber', 'data', 'automotive', 'engineering', 'informatics', 'interaction', 'design', 'learning'];
+    return cLower.some(c => keywords.some(k => c.includes(k)));
+  }
+  if (category === 'Business') {
+    const keywords = ['business', 'marketing', 'management', 'tourism', 'hotel', 'economics', 'finance', 'relation', 'european', 'law', 'e-governance', 'administration'];
+    return cLower.some(c => keywords.some(k => c.includes(k)));
+  }
+  if (category === 'Science') {
+    const keywords = ['medicine', 'physics', 'architecture', 'philosophy', 'aerospace', 'bioengineering', 'semiotics', 'cyber', 'data', 'biotechnology', 'history', 'mind', 'brain', 'psychology'];
+    return cLower.some(c => keywords.some(k => c.includes(k)));
+  }
+  return true;
+};
+
 const SchoolFinder = ({ onBack, initialSchools }) => {
-  // ... existing code ...
+  const router = useRouter();
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [inquiryItem, setInquiryItem] = useState(null);
-
-  // ... handleToggleFavorite, handlesSearch etc ...
 
   const openInquiry = (item) => {
     setInquiryItem(item);
@@ -66,8 +97,9 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
     });
   }, [liveSchools, initialSchools]);
   const [favorites, setFavorites] = useState([]);
-  const [selectedCountry, setSelectedCountry] = useState('Lithuania');
+  const [selectedCountry, setSelectedCountry] = useState('All');
   const [selectedBudget, setSelectedBudget] = useState('All');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [localSearch, setLocalSearch] = useState("");
@@ -125,7 +157,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
     }
   };
 
-  const countries = ['Lithuania', 'Poland', 'Estonia', 'Latvia', 'Germany'];
+  const countries = ['All', 'Lithuania', 'Poland', 'Estonia', 'Latvia', 'Germany'];
   const budgetOptions = [
     { label: 'Any Budget', value: 'All' },
     { label: 'Under €2,000', value: 2000 },
@@ -243,34 +275,32 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
   const combinedResults = useMemo(() => {
     const searchTerm = localSearch.toLowerCase();
     
-    // Recommendations logic: If searching but no results, or just starting
-    // (This can be expanded with more complex AI logic later)
-
-    // If user has selected a specific Google result
+    let list = [];
     if (searchResults.length > 0) {
-      return searchResults.map(result => {
+      list = searchResults.map(result => {
         const verified = schoolsWithCoords.find(s => isFuzzyMatch(s.name, result.name));
         return verified ? { ...verified, isVerified: true } : { ...result, isGlobal: true };
       });
+    } else {
+      list = schoolsWithCoords.filter(school => {
+        // Country Filter
+        const countryMatch = selectedCountry === 'All' || school.country === selectedCountry;
+        
+        // Budget Filter (Numeric)
+        const budgetMatch = selectedBudget === 'All' || school.tuitionFee <= selectedBudget;
+        
+        // Multi-field Search (Name, City, Courses)
+        const searchMatch = !searchTerm || 
+          school.name.toLowerCase().includes(searchTerm) ||
+          school.location.toLowerCase().includes(searchTerm) ||
+          (school.courses && school.courses.some(c => c.toLowerCase().includes(searchTerm)));
+
+        return countryMatch && budgetMatch && searchMatch;
+      });
     }
 
-    // Normal filtering logic
-    return schoolsWithCoords.filter(school => {
-      // Country Filter
-      const countryMatch = selectedCountry === 'All' || school.country === selectedCountry;
-      
-      // Budget Filter (Numeric)
-      const budgetMatch = selectedBudget === 'All' || school.tuitionFee <= selectedBudget;
-      
-      // Multi-field Search (Name, City, Courses)
-      const searchMatch = !searchTerm || 
-        school.name.toLowerCase().includes(searchTerm) ||
-        school.location.toLowerCase().includes(searchTerm) ||
-        (school.courses && school.courses.some(c => c.toLowerCase().includes(searchTerm)));
-
-      return countryMatch && budgetMatch && searchMatch;
-    });
-  }, [schoolsWithCoords, selectedCountry, selectedBudget, localSearch, searchResults]);
+    return list.filter(school => courseMatchesCategory(school.courses, selectedCategory));
+  }, [schoolsWithCoords, selectedCountry, selectedBudget, localSearch, searchResults, selectedCategory]);
 
   if (dbLoading && verifiedSchools.length === 0) {
     return (
@@ -281,124 +311,170 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
   }
 
   return (
-    <div className="min-h-screen bg-transparent flex flex-col pb-20">
-      <header className="fixed top-0 left-0 right-0 bg-white/30 backdrop-blur-2xl z-30 px-6 py-4 flex items-center justify-between border-b border-white/10">
-        <div className="flex items-center justify-between w-full mb-4">
-          <div className="flex items-center gap-4">
-            <button onClick={onBack} className="text-2xl hover:text-primary transition-colors">←</button>
-            <h2 className="text-2xl font-bold">Global School Finder</h2>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => setViewMode(prev => prev === 'list' ? 'map' : 'list')}
-              className="bg-gray-50 hover:bg-gray-100 text-xs font-black px-3 py-2 rounded-xl border border-gray-100 transition-all active:scale-95 animate-in fade-in duration-300"
-            >
-              {viewMode === 'list' ? '🗺️ Map' : '📋 List'}
-            </button>
-            
-            {/* Budget Dropdown */}
-            <select 
-              value={selectedBudget}
-              onChange={(e) => setSelectedBudget(e.target.value === 'All' ? 'All' : Number(e.target.value))}
-              className="bg-gray-50 border-none outline-none text-xs font-bold px-3 py-2 rounded-xl text-gray-500 hover:text-primary cursor-pointer transition-colors"
-            >
-              {budgetOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
-          </div>
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
+      {/* studyin.lt Inspired Sticky Header */}
+      <header className="fixed top-0 left-0 right-0 bg-white/70 backdrop-blur-xl z-30 px-6 py-3 flex items-center justify-between border-b border-gray-100/50">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="text-xl hover:text-primary transition-colors font-bold">←</button>
+          <h2 className="text-xs font-black uppercase tracking-widest text-gray-500">Accredited Programmes</h2>
         </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setViewMode(prev => prev === 'list' ? 'map' : 'list')}
+            className="bg-gray-50 hover:bg-gray-150 text-[10px] font-black px-3.5 py-2 rounded-xl border border-gray-100 transition-all active:scale-95 flex items-center gap-1.5 shadow-sm"
+          >
+            {viewMode === 'list' ? '🗺️ Map View' : '📋 List View'}
+          </button>
+        </div>
+      </header>
 
-        {/* Global Search Bar */}
-        <div className="relative mb-6">
-          <div className="flex items-center bg-gray-50 rounded-2xl border border-gray-100 p-2 shadow-inner group focus-within:ring-2 ring-primary/20 transition-all">
-            <div className="p-2 text-gray-400">
-              {isSearching ? (
-                <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full"></div>
-              ) : (
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-                </svg>
+      {/* Main Content Area */}
+      <div className="p-4 md:p-6 space-y-6 pt-16 max-w-7xl mx-auto w-full">
+        {/* studyin.lt Style Hero Section */}
+        <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 rounded-[2rem] p-6 md:p-10 text-center text-white relative overflow-hidden shadow-xl">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_50%)]"></div>
+          <div className="relative z-10 max-w-3xl mx-auto">
+            <span className="bg-primary/20 text-primary-300 border border-primary/30 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 inline-block">
+              Study in Europe
+            </span>
+            <h1 className="text-2xl md:text-5xl font-black tracking-tight leading-tight mb-3">
+              Co-create your future in Europe
+            </h1>
+            <p className="text-gray-300 font-bold text-xs md:text-sm max-w-lg mx-auto mb-6 leading-relaxed">
+              Find English-taught Bachelor's, Master's, and PhD degree programs.
+            </p>
+
+            {/* Centered Global Search Bar */}
+            <div className="relative max-w-xl mx-auto z-20">
+              <div className="flex items-center bg-white/10 backdrop-blur-md rounded-xl border border-white/10 p-1.5 shadow-xl focus-within:ring-2 ring-primary/20 focus-within:bg-white/15 transition-all">
+                <div className="p-2 text-white/50">
+                  {isSearching ? (
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+                    </svg>
+                  )}
+                </div>
+                <input
+                  value={localSearch}
+                  onChange={handleInput}
+                  placeholder="Search programmes, courses, or universities..."
+                  className="flex-1 bg-transparent p-2 outline-none font-bold text-white placeholder:text-white/40 text-xs"
+                />
+                {localSearch && (
+                  <button 
+                    onClick={handleClear}
+                    className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-white/50"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M18 6 6 18M6 6l12 12"/>
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {/* Autocomplete Search Suggestions */}
+              {GOOGLE_MAPS_API_KEY !== "YOUR_GOOGLE_MAPS_API_KEY" && googleStatus === "OK" && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-30 text-left">
+                  {googleData.map((suggestion) => (
+                    <button
+                      key={suggestion.place_id}
+                      onClick={() => handleSelect(suggestion)}
+                      className="w-full text-left p-3 hover:bg-primary/5 border-b border-gray-50 last:border-0 transition-colors flex items-start gap-2.5 text-xs"
+                    >
+                      <div className="p-1.5 bg-gray-100 rounded-lg text-gray-400 mt-0.5">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-900 leading-tight">{suggestion.structured_formatting.main_text}</h4>
+                        <p className="text-[10px] text-gray-400 mt-0.5">{suggestion.structured_formatting.secondary_text}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
-            <input
-              value={localSearch}
-              onChange={handleInput}
-              placeholder="Search by name, city, or course..."
-              className="flex-1 bg-transparent p-3 outline-none font-bold text-gray-700 placeholder:text-gray-300"
-            />
-            {localSearch && (
-              <button 
-                onClick={handleClear}
-                className="p-2 hover:bg-gray-200 rounded-xl transition-colors text-gray-400"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M18 6 6 18M6 6l12 12"/>
-                </svg>
-              </button>
-            )}
           </div>
+          <div className="absolute -right-20 -bottom-20 text-[200px] opacity-5 select-none pointer-events-none">🌍</div>
+        </div>
 
-          {/* Search Suggestions (Only show if key is valid and results exist) */}
-          {GOOGLE_MAPS_API_KEY !== "YOUR_GOOGLE_MAPS_API_KEY" && googleStatus === "OK" && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-30">
-              {googleData.map((suggestion) => (
+        {/* Sticky Filters Wrapper */}
+        <div className="sticky top-[60px] z-20 space-y-4 bg-gray-50/95 backdrop-blur-md py-3 -mx-2 px-2">
+          {/* Explore Opportunities (Pill Filters) */}
+          <div className="bg-white p-4 rounded-[2rem] border border-gray-100 shadow-sm text-center">
+            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Let's explore the opportunities</h3>
+            <div className="flex flex-wrap justify-center gap-2">
+              {[
+                { id: 'All', label: 'All Degrees', icon: '🌟' },
+                { id: 'Bachelor', label: 'Bachelor Programs', icon: '🎓' },
+                { id: 'Masters', label: 'Master Degrees', icon: '🚀' },
+                { id: 'PhD', label: 'PhD / Doctorates', icon: '🔬' },
+                { id: 'IT', label: 'IT & Tech', icon: '💻' },
+                { id: 'Business', label: 'Business & Management', icon: '📊' },
+                { id: 'Science', label: 'Science & Health', icon: '🩺' }
+              ].map(cat => (
                 <button
-                  key={suggestion.place_id}
-                  onClick={() => handleSelect(suggestion)}
-                  className="w-full text-left p-4 hover:bg-primary/5 border-b border-gray-50 last:border-0 transition-colors flex items-start gap-3"
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-wider transition-all ${
+                    selectedCategory === cat.id 
+                      ? 'bg-primary text-white shadow-lg shadow-primary/10' 
+                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                  }`}
                 >
-                  <div className="p-2 bg-gray-100 rounded-lg text-gray-400 mt-1">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-gray-900 leading-tight">{suggestion.structured_formatting.main_text}</h4>
-                    <p className="text-xs text-gray-400 mt-0.5">{suggestion.structured_formatting.secondary_text}</p>
-                  </div>
+                  <span className="mr-1">{cat.icon}</span>
+                  {cat.label}
                 </button>
               ))}
             </div>
-          )}
+          </div>
+
+          {/* Country & Budget Filters */}
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 bg-white p-3 rounded-[2rem] border border-gray-100 shadow-sm">
+            {/* Country Tabs */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5 no-scrollbar">
+              {countries.map(country => (
+                <button
+                  key={country}
+                  onClick={() => setSelectedCountry(country)}
+                  className={`px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-wider whitespace-nowrap transition-all ${
+                    selectedCountry === country 
+                      ? 'bg-gray-900 text-white shadow-sm' 
+                      : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                  }`}
+                >
+                  {country === 'All' ? '🌐 All Countries' : country}
+                </button>
+              ))}
+            </div>
+
+            {/* Budget Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Budget:</span>
+              <select 
+                value={selectedBudget}
+                onChange={(e) => setSelectedBudget(e.target.value === 'All' ? 'All' : Number(e.target.value))}
+                className="bg-gray-50 border-none outline-none text-[10px] font-black px-3 py-2 rounded-xl text-gray-500 hover:text-primary cursor-pointer transition-colors border border-gray-100"
+              >
+                {budgetOptions.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
-        {/* Country Tabs (Only show if not searching results) */}
-        {searchResults.length === 0 && (
-          <div className="flex items-center gap-3 overflow-x-auto no-scrollbar -mx-6 px-6">
-            {countries.map(country => (
-              <button
-                key={country}
-                onClick={() => setSelectedCountry(country)}
-                className={`px-6 py-2.5 rounded-full font-bold whitespace-nowrap transition-all ${
-                  selectedCountry === country 
-                  ? 'bg-primary text-white shadow-lg shadow-primary/20' 
-                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                }`}
-              >
-                {country}
-              </button>
-            ))}
-          </div>
-        )}
-      </header>
-
-      <div className="p-6 space-y-8 pt-44">
-        {viewMode === 'map' ? (
-          <div className="h-[65vh] w-full rounded-[2.5rem] overflow-hidden shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
-            <MapContainer items={combinedResults} type="school" />
-          </div>
-        ) : (
-          <>
-            {/* Smart Recommendations Section */}
+        {/* Smart Recommendations Section */}
         {user && favorites.length > 0 && selectedCountry === 'Lithuania' && combinedResults.length > 0 && (
           <div className="mb-2">
-            <div className="flex items-center gap-2 mb-4 px-2">
-              <span className="text-lg">✨</span>
-              <h3 className="text-sm font-black uppercase tracking-widest text-gray-400">Recommended for You</h3>
+            <div className="flex items-center gap-2 mb-3 px-2">
+              <span className="text-base">✨</span>
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400">Recommended for You</h3>
             </div>
-            <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-6 px-6 pb-4">
+            <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-4 px-4 pb-2">
               {verifiedSchools
                 .filter(s => !favorites.includes(s.id) && s.country === verifiedSchools.find(fs => fs.id === favorites[0])?.country)
                 .slice(0, 5)
@@ -406,12 +482,12 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                   <button 
                     key={school.id}
                     onClick={() => setLocalSearch(school.name)}
-                    className="flex-shrink-0 w-64 bg-white p-4 rounded-3xl shadow-sm border border-gray-50 flex items-center gap-4 hover:shadow-md transition-all text-left"
+                    className="flex-shrink-0 w-56 bg-white p-3 rounded-2xl shadow-sm border border-gray-50 flex items-center gap-3 hover:shadow-md transition-all text-left animate-in fade-in"
                   >
-                    <SmartImage src={school.imageUrl} className="w-12 h-12 rounded-xl object-cover" type="school" />
+                    <SmartImage src={school.imageUrl} className="w-10 h-10 rounded-lg object-cover" type="school" />
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-bold text-gray-900 text-sm truncate">{school.name}</h4>
-                      <p className="text-[10px] text-gray-400 font-bold uppercase">{school.country}</p>
+                      <h4 className="font-bold text-gray-900 text-xs truncate">{school.name}</h4>
+                      <p className="text-[9px] text-gray-400 font-bold uppercase">{school.country}</p>
                     </div>
                   </button>
                 ))}
@@ -419,177 +495,199 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
           </div>
         )}
 
-        {selectedCountry !== 'Lithuania' ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-10 bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-100/50 min-h-[50vh] animate-in fade-in zoom-in-95 duration-500">
-            <div className="relative mb-8">
-              <div className="w-28 h-28 bg-gradient-to-tr from-primary to-rose-400 rounded-full flex items-center justify-center text-white shadow-2xl relative z-10 animate-bounce duration-[3000ms]">
-                <span className="text-5xl">🌍</span>
-              </div>
-              <div className="absolute top-0 left-0 w-28 h-28 bg-primary/20 rounded-full animate-ping z-0"></div>
-            </div>
-
-            <h3 className="text-3xl font-black text-gray-900 mb-3 tracking-tight">
-              {selectedCountry} is Coming Soon! 🚀
-            </h3>
-            <p className="text-gray-500 font-bold max-w-sm leading-relaxed mb-8 text-sm">
-              We are currently vetting and verifying universities, student housing, and visa support paths for {selectedCountry} to ensure a safe, smooth transition.
-            </p>
-
-            <a
-              href={getWhatsAppLink('+37063423845', `Hi AfroEduGo! I am interested in studying in ${selectedCountry}. Please notify me when you launch there!`)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-primary hover:bg-primary/95 text-white px-8 py-4.5 rounded-3xl font-black text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl shadow-primary/25 flex items-center gap-3"
-            >
-              <span>📲 Notify Me via WhatsApp</span>
-            </a>
+        {/* Listings / Map Render */}
+        {selectedCountry === 'All' && selectedCategory === 'All' && !localSearch.trim() && searchResults.length === 0 ? null : viewMode === 'map' ? (
+          <div className="h-[60vh] w-full rounded-[2rem] overflow-hidden shadow-lg border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
+            <MapContainer items={combinedResults} type="school" />
           </div>
         ) : combinedResults.length === 0 ? (
-          <div className="text-center py-20 bg-white rounded-[2.5rem] border-2 border-dashed border-gray-100 p-10">
-            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6 text-gray-300">
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <div className="text-center py-16 bg-white rounded-[2rem] border-2 border-dashed border-gray-100 p-8">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M12 12l0 0"/>
               </svg>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">No schools found</h3>
-            <p className="text-gray-400 font-medium max-w-xs mx-auto">Try adjusting your filters or search terms to find more options.</p>
+            <h3 className="text-lg font-bold text-gray-900 mb-1">No schools found</h3>
+            <p className="text-gray-400 font-medium text-xs max-w-xs mx-auto">Try adjusting your filters or search terms to find more options.</p>
             <button 
-              onClick={() => {setSelectedCountry('Lithuania'); setSelectedBudget('All'); setLocalSearch("");}}
-              className="mt-6 text-primary font-bold text-sm hover:underline"
+              onClick={() => {setSelectedCountry('All'); setSelectedBudget('All'); setSelectedCategory('All'); setLocalSearch("");}}
+              className="mt-4 text-primary font-bold text-xs hover:underline"
             >
               Reset all filters
             </button>
           </div>
         ) : (
-          combinedResults.map((school) => (
-            school.isVerified || !school.isGlobal ? (
-              <div key={school.id} className="bg-white rounded-[2.5rem] overflow-hidden shadow-xl shadow-gray-200/50 border border-gray-100 group">
-                <div className="relative overflow-hidden">
-                  <SmartImage 
-                    src={school.imageUrl} 
-                    alt={school.name} 
-                    className="h-56 w-full group-hover:scale-105 transition-transform duration-700"
-                    type="school"
-                  />
-                  {/* Heart Button Overlay */}
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleToggleFavorite(school);
-                    }}
-                    className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all z-10 ${
-                      favorites.includes(school.id) 
-                        ? 'bg-red-500 text-white shadow-lg' 
-                        : 'bg-white/80 backdrop-blur-md text-gray-400 hover:text-red-500'
-                    }`}
-                  >
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill={favorites.includes(school.id) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5">
-                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                    </svg>
-                  </button>
-                </div>
-                <div className="p-8">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 1 9 7 2 8l5 5-2 7 7-3 7 3-2-7 5-5-7-1-3-6z"/>
-                      </svg>
-                      Verified Partner
-                    </span>
-                    <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-lg text-xs font-bold uppercase tracking-wider">
-                      {school.country}
-                    </span>
-                  </div>
-                  
-                  <Link href={`/schools/${school.id}`} className="hover:text-primary transition-all">
-                    <h3 className="text-2xl font-bold mb-1 text-gray-900 leading-tight">{school.name}</h3>
-                  </Link>
-                  <p className="text-gray-500 text-sm mb-4 font-medium flex items-center gap-1">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    {school.location}
-                  </p>
-
-                  {school.courses && (
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {school.courses.map(course => (
-                        <span key={course} className="bg-gray-50 text-gray-500 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-gray-100">
-                          {course}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex items-center justify-between gap-4 mt-6">
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-gray-400 font-bold uppercase">Estimated Fee</span>
-                      <span className="text-xl font-black text-gray-900">{school.tuition}</span>
-                    </div>
-                    <button
-                      onClick={() => openInquiry(school)}
-                      className="flex-1 bg-primary text-white py-4 rounded-2xl font-bold text-center shadow-lg shadow-primary/20 hover:scale-105 transition-all active:scale-95"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {combinedResults.map((school) => (
+              school.isVerified || !school.isGlobal ? (
+                <div 
+                  key={school.id} 
+                  onClick={() => router.push(`/schools/${school.id}`)}
+                  className="bg-white rounded-[2rem] overflow-hidden shadow-lg shadow-gray-200/40 border border-gray-100 group cursor-pointer hover:shadow-xl hover:scale-[1.005] transition-all flex flex-col h-full justify-between"
+                >
+                  <div className="relative overflow-hidden">
+                    <SmartImage 
+                      src={school.imageUrl} 
+                      alt={school.name} 
+                      className="h-44 w-full group-hover:scale-103 transition-transform duration-500 object-cover"
+                      type="school"
+                    />
+                    {/* Heart Button Overlay */}
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleToggleFavorite(school);
+                      }}
+                      className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all z-10 ${
+                        favorites.includes(school.id) 
+                          ? 'bg-red-500 text-white shadow-md' 
+                          : 'bg-white/80 backdrop-blur-md text-gray-400 hover:text-red-500'
+                      }`}
                     >
-                      Enroll Now
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill={favorites.includes(school.id) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                      </svg>
                     </button>
                   </div>
-                </div>
-              </div>
-            ) : (
-              <div key={school.id} className="bg-white rounded-[2.5rem] p-8 shadow-lg border border-gray-100 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <span className="bg-gray-100 text-gray-500 px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest">
-                    Global Discovery
-                  </span>
-                  {school.rating && (
-                    <div className="flex items-center gap-1.5 bg-amber-50 text-amber-600 px-3 py-1 rounded-lg">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 1 9 7 2 8l5 5-2 7 7-3 7 3-2-7 5-5-7-1-3-6z"/>
-                      </svg>
-                      <span className="text-xs font-black">{school.rating}</span>
-                      <span className="text-[10px] opacity-60 font-bold">({school.userRatingsTotal})</span>
+                  
+                  <div className="p-6 flex flex-col justify-between flex-grow">
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest flex items-center gap-1">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1 9 7 2 8l5 5-2 7 7-3 7 3-2-7 5-5-7-1-3-6z"/>
+                          </svg>
+                          Verified Partner
+                        </span>
+                        <span className="bg-blue-50 text-blue-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider">
+                          {school.country}
+                        </span>
+                      </div>
+                      
+                      <Link href={`/schools/${school.id}`} className="hover:text-primary transition-all" onClick={(e) => e.stopPropagation()}>
+                        <h3 className="text-xl font-bold mb-1 text-gray-900 leading-tight">{school.name}</h3>
+                      </Link>
+                      <p className="text-gray-500 text-xs mb-3 font-medium flex items-center gap-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        {school.location}
+                      </p>
+
+                      {school.courses && (
+                        <div className="flex flex-wrap gap-1.5 mb-4">
+                          {school.courses.map(course => (
+                            <span key={course} className="bg-gray-50 text-gray-500 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-gray-100">
+                              {course}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    <div className="flex items-center justify-between gap-4 mt-4 pt-3 border-t border-gray-50">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] text-gray-400 font-bold uppercase">Estimated Fee</span>
+                        <span className="text-lg font-black text-gray-900">{school.tuition}</span>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openInquiry(school);
+                        }}
+                        className="bg-primary text-white px-5 py-3 rounded-xl font-bold text-xs shadow-md shadow-primary/10 hover:scale-103 transition-all active:scale-97"
+                      >
+                        Enroll Now
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">{school.name}</h3>
-                  <p className="text-sm text-gray-400 font-medium flex items-center gap-1">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/>
-                    </svg>
-                    {school.location}
-                  </p>
-                </div>
-                <div className="flex gap-3">
-                  <button 
-                    onClick={() => openInquiry(school)}
-                    className="flex-1 bg-gray-900 text-white py-4 rounded-2xl font-bold hover:bg-black transition-colors flex items-center justify-center gap-2"
-                  >
-                    Request Info
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14m-7-7 7 7-7 7"/>
-                    </svg>
-                  </button>
-                  {school.website && (
-                    <a 
-                      href={school.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-4 bg-gray-50 text-gray-400 rounded-2xl hover:text-primary hover:bg-primary/5 transition-all"
+              ) : (
+                <div key={school.id} className="bg-white rounded-[2rem] p-6 shadow-lg border border-gray-100 flex flex-col justify-between h-full gap-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-widest">
+                        Global Discovery
+                      </span>
+                      {school.rating && (
+                        <div className="flex items-center gap-1 bg-amber-50 text-amber-600 px-2.5 py-0.5 rounded">
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 1 9 7 2 8l5 5-2 7 7-3 7 3-2-7 5-5-7-1-3-6z"/>
+                          </svg>
+                          <span className="text-xs font-black">{school.rating}</span>
+                          <span className="text-[9px] opacity-60 font-bold">({school.userRatingsTotal})</span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">{school.name}</h3>
+                      <p className="text-xs text-gray-400 font-medium flex items-center gap-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        {school.location}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2.5">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); openInquiry(school); }}
+                      className="flex-1 bg-gray-900 text-white py-3 rounded-xl font-bold text-xs hover:bg-black transition-colors flex items-center justify-center gap-1.5"
                     >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                      Request Info
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14m-7-7 7 7-7 7"/>
                       </svg>
-                    </a>
-                  )}
+                    </button>
+                    {school.website && (
+                      <a 
+                        href={school.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="p-3 bg-gray-50 text-gray-400 rounded-xl hover:text-primary hover:bg-primary/5 transition-all"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                        </svg>
+                      </a>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )
-          ))
+              )
+            ))}
+          </div>
         )}
-      </>
-    )}
-  </div>
+
+        {/* Newsletter section */}
+        <section className="mt-8">
+          <div className="bg-gradient-to-r from-primary to-indigo-900 rounded-[2rem] p-6 md:p-10 text-center text-white relative overflow-hidden group shadow-xl">
+            <div className="relative z-10 max-w-2xl mx-auto">
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/70 mb-2 inline-block">STAY CONNECTED</span>
+              <h3 className="text-xl md:text-3xl font-black mb-3 leading-tight">Dreaming of studying in Europe?</h3>
+              <p className="text-white/70 text-xs font-medium max-w-md mx-auto mb-6 leading-relaxed">
+                Sign up for the AfroEduGo newsletter to receive visa tips, tuition alerts, and verified housing offers directly in your inbox.
+              </p>
+              
+              <form onSubmit={(e) => { e.preventDefault(); alert("Thanks for subscribing! Check your email for updates."); }} className="flex flex-col sm:flex-row gap-2.5 max-w-md mx-auto bg-white/10 p-1.5 rounded-xl border border-white/10 backdrop-blur-md">
+                <input 
+                  type="email" 
+                  required 
+                  placeholder="Enter your email address" 
+                  className="flex-1 bg-transparent px-3 py-2 outline-none text-white font-bold placeholder:text-white/40 text-xs"
+                />
+                <button 
+                  type="submit" 
+                  className="bg-white text-primary px-5 py-2 rounded-lg font-black text-[10px] uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-md"
+                >
+                  Subscribe
+                </button>
+              </form>
+            </div>
+            <div className="absolute -right-10 -bottom-10 text-[150px] opacity-5 select-none pointer-events-none">📬</div>
+          </div>
+        </section>
+      </div>
 
       <InquiryModal 
         isOpen={isInquiryOpen} 

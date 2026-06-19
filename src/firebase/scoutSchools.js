@@ -51,7 +51,7 @@ const schoolsData = [
     location: "Kaunas, Lithuania",
     specialty: "Marketing, Business, IT",
     tuition: "Min. €3,400 / year",
-    imageUrl: "https://www.smk.lt/uploads/media/619f7b0f6e9b8.png",
+    imageUrl: "/smk_school.jpg",
     whatsapp: "+37060175094"
   }
 ];
