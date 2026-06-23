@@ -30,7 +30,7 @@ service cloud.firestore {
     // --- Schools Collection ---
     match /schools/{schoolId} {
       allow read: if true; // Publicly readable
-      allow write: if false; // Only admin via Firebase Admin SDK / Console
+      allow write: if isAdmin(); // Only admin can modify schools
     }
  
     // --- Housing Collection ---
@@ -46,6 +46,20 @@ service cloud.firestore {
         (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isReported']))
       );
       // Allow the owner or an admin to delete the post
+      allow delete: if isAuthenticated() && (
+        (resource.data.userId == request.auth.uid) || isAdmin()
+      );
+    }
+ 
+    // --- Services Collection ---
+    match /services/{serviceId} {
+      allow read: if true; // Publicly readable
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        (resource.data.userId == request.auth.uid) || 
+        isAdmin() || 
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isReported']))
+      );
       allow delete: if isAuthenticated() && (
         (resource.data.userId == request.auth.uid) || isAdmin()
       );

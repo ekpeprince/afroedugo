@@ -9,6 +9,36 @@ const MainMenu = ({ onNavigate }) => {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [isTrayOpen, setIsTrayOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Stash the event so it can be triggered later.
+      setDeferredPrompt(e);
+      // Update UI notify the user they can install the PWA
+      setShowInstallBanner(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    // Show the install prompt
+    deferredPrompt.prompt();
+    // Wait for the user to respond to the prompt
+    const { outcome } = await deferredPrompt.userChoice;
+    // We no longer need the prompt. Clear it up
+    setDeferredPrompt(null);
+    setShowInstallBanner(false);
+  };
 
   useEffect(() => {
     if (user) {
@@ -135,8 +165,35 @@ const MainMenu = ({ onNavigate }) => {
         </div>
       </header>
 
+      {/* PWA Install Banner */}
+      {showInstallBanner && (
+        <div className="mx-6 mt-4 bg-gradient-to-r from-primary to-indigo-600 text-white p-4 rounded-2xl shadow-xl flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-xl">📱</div>
+            <div>
+              <h4 className="font-black text-sm leading-tight">Install AfroEduGo</h4>
+              <p className="text-[10px] font-bold text-white/80">Get the app on your home screen</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setShowInstallBanner(false)}
+              className="px-3 py-2 text-xs font-bold text-white/80 hover:text-white transition-colors"
+            >
+              Later
+            </button>
+            <button 
+              onClick={handleInstallClick}
+              className="bg-white text-primary px-4 py-2 rounded-xl text-xs font-black shadow-md active:scale-95 transition-transform"
+            >
+              Install
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Hero Greeting */}
-      <div className="mb-10 mt-4">
+      <div className="mb-10 mt-6 mx-6">
         <h2 className="text-4xl font-black text-gray-900 leading-[1.1] mb-2">
           {user ? `Hello, ${user.email.split('@')[0]}!` : "Your Future Starts Here."}
         </h2>

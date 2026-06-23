@@ -9,8 +9,10 @@ const AdminDashboard = ({ onBack }) => {
   const [leads, setLeads] = useState([]);
   const [discussions, setDiscussions] = useState([]);
   const [housing, setHousing] = useState([]);
+  const [services, setServices] = useState([]);
+  const [schools, setSchools] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('leads'); // 'leads' or 'moderation'
+  const [activeTab, setActiveTab] = useState('leads'); // 'leads', 'moderation', 'housing', 'services', 'schools', 'settings'
 
   useEffect(() => {
     // 1. Fetch Leads
@@ -29,6 +31,18 @@ const AdminDashboard = ({ onBack }) => {
     const qHousing = query(collection(db, 'housing'), orderBy('createdAt', 'desc'));
     const unsubscribeHousing = onSnapshot(qHousing, (snapshot) => {
       setHousing(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    // 4. Fetch Services for Moderation
+    const qServices = query(collection(db, 'services'), orderBy('createdAt', 'desc'));
+    const unsubscribeServices = onSnapshot(qServices, (snapshot) => {
+      setServices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    // 5. Fetch Schools
+    const qSchools = query(collection(db, 'schools'));
+    const unsubscribeSchools = onSnapshot(qSchools, (snapshot) => {
+      setSchools(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     });
 
@@ -36,6 +50,8 @@ const AdminDashboard = ({ onBack }) => {
       unsubscribeLeads();
       unsubscribePosts();
       unsubscribeHousing();
+      unsubscribeServices();
+      unsubscribeSchools();
     };
   }, []);
 
@@ -61,6 +77,44 @@ const AdminDashboard = ({ onBack }) => {
     }
   };
 
+  const handleUpdateHousingStatus = async (housingId, newStatus) => {
+    try {
+      await updateDoc(doc(db, 'housing', housingId), { status: newStatus });
+      const item = housing.find(h => h.id === housingId);
+      if (item && item.userId) {
+        await addDoc(collection(db, 'notifications'), {
+          userId: item.userId,
+          title: '🏠 Listing Update',
+          message: `Your housing listing "${item.title}" has been ${newStatus}.`,
+          type: 'status',
+          read: false,
+          createdAt: serverTimestamp()
+        });
+      }
+    } catch (err) {
+      console.error("Error updating housing status:", err);
+    }
+  };
+
+  const handleUpdateServiceStatus = async (serviceId, newStatus) => {
+    try {
+      await updateDoc(doc(db, 'services', serviceId), { status: newStatus });
+      const item = services.find(s => s.id === serviceId);
+      if (item && item.userId) {
+        await addDoc(collection(db, 'notifications'), {
+          userId: item.userId,
+          title: '💼 Service Listing Update',
+          message: `Your service "${item.name}" has been ${newStatus}.`,
+          type: 'status',
+          read: false,
+          createdAt: serverTimestamp()
+        });
+      }
+    } catch (err) {
+      console.error("Error updating service status:", err);
+    }
+  };
+
   const handleDeletePost = async (postId) => {
     if (window.confirm("Are you sure you want to delete this post?")) {
       try {
@@ -68,22 +122,6 @@ const AdminDashboard = ({ onBack }) => {
       } catch (err) {
         console.error("Error deleting post:", err);
       }
-    }
-  };
-
-  const handleHousingAction = async (housingId, action) => {
-    try {
-      if (action === 'approve') {
-        await updateDoc(doc(db, 'housing', housingId), { status: 'approved', isReported: false });
-      } else if (action === 'reject') {
-        await updateDoc(doc(db, 'housing', housingId), { status: 'rejected' });
-      } else if (action === 'delete') {
-        if (window.confirm("Are you sure you want to permanently delete this listing?")) {
-          await deleteDoc(doc(db, 'housing', housingId));
-        }
-      }
-    } catch (err) {
-      console.error("Error updating housing:", err);
     }
   };
 
@@ -122,24 +160,42 @@ const AdminDashboard = ({ onBack }) => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-8 bg-gray-100 p-1 rounded-2xl">
+        <div className="flex gap-2 mb-8 bg-gray-100 p-1 rounded-2xl overflow-x-auto no-scrollbar">
           <button 
             onClick={() => setActiveTab('leads')}
-            className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'leads' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
+            className={`flex-1 min-w-[100px] py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'leads' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
           >
             Leads
           </button>
           <button 
             onClick={() => setActiveTab('moderation')}
-            className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'moderation' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
+            className={`flex-1 min-w-[100px] py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'moderation' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
           >
             Moderation
           </button>
           <button 
             onClick={() => setActiveTab('housing')}
-            className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'housing' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
+            className={`flex-1 min-w-[100px] py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'housing' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
           >
             Housing
+          </button>
+          <button 
+            onClick={() => setActiveTab('services')}
+            className={`flex-1 min-w-[100px] py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'services' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
+          >
+            Services
+          </button>
+          <button 
+            onClick={() => setActiveTab('schools')}
+            className={`flex-1 min-w-[100px] py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'schools' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
+          >
+            Schools
+          </button>
+          <button 
+            onClick={() => setActiveTab('settings')}
+            className={`flex-1 min-w-[100px] py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'settings' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
+          >
+            Settings
           </button>
         </div>
 
@@ -243,19 +299,23 @@ const AdminDashboard = ({ onBack }) => {
                 </div>
                 <div className="flex gap-2 mt-2">
                   <button 
-                    onClick={() => handleHousingAction(item.id, 'approve')}
+                    onClick={() => handleUpdateHousingStatus(item.id, 'approved')}
                     className="flex-1 py-3 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xs uppercase hover:bg-emerald-100"
                   >
                     ✅ Approve
                   </button>
                   <button 
-                    onClick={() => handleHousingAction(item.id, 'reject')}
+                    onClick={() => handleUpdateHousingStatus(item.id, 'rejected')}
                     className="flex-1 py-3 bg-amber-50 text-amber-600 rounded-xl font-bold text-xs uppercase hover:bg-amber-100"
                   >
                     🚫 Hide
                   </button>
                   <button 
-                    onClick={() => handleHousingAction(item.id, 'delete')}
+                    onClick={() => {
+                      if (window.confirm("Delete this listing?")) {
+                        deleteDoc(doc(db, 'housing', item.id));
+                      }
+                    }}
                     className="flex-1 py-3 bg-red-50 text-red-600 rounded-xl font-bold text-xs uppercase hover:bg-red-100"
                   >
                     🗑️ Delete
@@ -263,6 +323,161 @@ const AdminDashboard = ({ onBack }) => {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {activeTab === 'services' && (
+          <div className="space-y-4">
+            {services.filter(s => s.status === 'pending').length === 0 ? (
+               <div className="text-center py-20 text-gray-400 font-bold">No pending service listings.</div>
+            ) : services.filter(s => s.status === 'pending').map(item => (
+              <div key={item.id} className="bg-white p-6 rounded-[2rem] shadow-lg border border-amber-200">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-amber-100 text-amber-700">
+                      Pending Approval
+                    </span>
+                    <h5 className="text-lg font-bold text-gray-900 mt-2">{item.name}</h5>
+                    <p className="text-xs text-gray-400 font-bold">{item.category} • {item.whatsapp}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleUpdateServiceStatus(item.id, 'approved')}
+                      className="bg-emerald-100 text-emerald-700 p-2 rounded-xl hover:bg-emerald-200 transition-colors"
+                      title="Approve"
+                    >
+                      ✓
+                    </button>
+                    <button 
+                      onClick={() => handleUpdateServiceStatus(item.id, 'rejected')}
+                      className="bg-red-100 text-red-700 p-2 rounded-xl hover:bg-red-200 transition-colors"
+                      title="Reject"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mb-4">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'schools' && (
+          <div className="space-y-6">
+            <button
+              onClick={async () => {
+                const name = prompt("Enter University Name:");
+                if (!name) return;
+                const location = prompt("Enter Location (e.g., Vilnius, Lithuania):", "Vilnius, Lithuania");
+                const website = prompt("Enter Website URL:", "https://example.com");
+                const price = prompt("Enter Tuition Fee (e.g., €3000):", "€3000");
+                try {
+                  await addDoc(collection(db, 'schools'), {
+                    name,
+                    location,
+                    website,
+                    price,
+                    rating: 4.5,
+                    createdAt: serverTimestamp()
+                  });
+                  alert("School added!");
+                } catch(e) {
+                  console.error(e);
+                  alert("Error adding school");
+                }
+              }}
+              className="w-full py-4 bg-primary text-white rounded-2xl font-black shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+            >
+              + Add New School
+            </button>
+            <div className="space-y-4">
+              {schools.map(school => (
+                <div key={school.id} className="bg-white p-6 rounded-[2rem] shadow-lg border border-gray-50 flex justify-between items-center">
+                  <div>
+                    <h5 className="font-bold text-gray-900">{school.name}</h5>
+                    <p className="text-xs text-gray-500 font-bold">{school.location} • {school.price || 'Contact for price'}</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      if (window.confirm("Delete this school?")) {
+                        deleteDoc(doc(db, 'schools', school.id));
+                      }
+                    }}
+                    className="p-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100"
+                  >🗑️</button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'settings' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-[2rem] shadow-lg border border-gray-50">
+              <h5 className="font-black text-gray-900 text-lg mb-2">Database Tools</h5>
+              <p className="text-gray-500 text-sm mb-6">Seed the database with sample data for initial launch. Only run this once to populate an empty app.</p>
+              
+              <button
+                onClick={async () => {
+                  if (!window.confirm("Are you sure you want to seed the database with sample data?")) return;
+                  
+                  try {
+                    // Seed School
+                    await addDoc(collection(db, 'schools'), {
+                      name: "Vilnius University",
+                      location: "Vilnius, Lithuania",
+                      website: "https://vu.lt",
+                      price: "€3,200",
+                      rating: 4.8,
+                      createdAt: serverTimestamp()
+                    });
+
+                    // Seed Housing
+                    await addDoc(collection(db, 'housing'), {
+                      title: "Modern Student Studio",
+                      location: "Vilnius City Center",
+                      price: "€350/mo",
+                      description: "A lovely studio perfect for a student, 15 mins to campus.",
+                      userId: user.uid,
+                      status: "approved",
+                      isReported: false,
+                      createdAt: serverTimestamp()
+                    });
+
+                    // Seed Service
+                    await addDoc(collection(db, 'services'), {
+                      name: "Premium Visa Support",
+                      category: "visa",
+                      description: "We help you get your TRC fast and easy.",
+                      whatsapp: "+37063423845",
+                      userId: user.uid,
+                      status: "approved",
+                      createdAt: serverTimestamp()
+                    });
+
+                    // Seed Community Post
+                    await addDoc(collection(db, 'discussions'), {
+                      text: "Hello everyone! I just arrived in Vilnius. Where is the best place to get a student bus pass?",
+                      user: "NewStudent",
+                      userId: user.uid,
+                      category: "General",
+                      createdAt: serverTimestamp(),
+                      likes: [],
+                      commentCount: 0
+                    });
+
+                    alert("Database successfully seeded with sample data!");
+                  } catch (e) {
+                    console.error(e);
+                    alert("Error seeding database.");
+                  }
+                }}
+                className="py-3 px-6 bg-emerald-50 text-emerald-600 font-bold uppercase tracking-widest text-xs rounded-xl hover:bg-emerald-100 transition-colors"
+              >
+                🌱 Seed Database
+              </button>
+            </div>
           </div>
         )}
       </main>
