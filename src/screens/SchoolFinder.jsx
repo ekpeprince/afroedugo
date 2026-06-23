@@ -574,13 +574,19 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                         {school.location}
                       </p>
 
-                      {school.courses && (
-                        <div className="flex flex-wrap gap-1.5 mb-4">
-                          {school.courses.map(course => (
-                            <span key={course} className="bg-gray-50 text-gray-500 px-2.5 py-1 rounded-lg text-[10px] font-bold border border-gray-100">
-                              {course}
-                            </span>
-                          ))}
+                      {school.courses && school.courses.length > 0 && (
+                        <div className="mb-4">
+                          <select 
+                            className="w-full bg-gray-50 border border-gray-100 text-gray-600 text-xs rounded-lg px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary font-medium"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <option value="">View {school.courses.length} Available Programs</option>
+                            {school.courses.map(course => (
+                              <option key={course} value={course}>
+                                {course}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       )}
                     </div>
