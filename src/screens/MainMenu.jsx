@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications } from '../hooks/useNotifications'
 import WelcomeModal from '../components/WelcomeModal'
+import { getWhatsAppLink } from '../utils/whatsapp'
 
 const MainMenu = ({ onNavigate }) => {
   const { user } = useAuth();
@@ -162,12 +163,14 @@ const MainMenu = ({ onNavigate }) => {
         <div className="relative z-10">
           <h4 className="text-white text-xl font-black mb-2 leading-none">Need Visa Help?</h4>
           <p className="text-gray-400 text-xs font-bold leading-relaxed mb-6">Our experts are waiting to help you.</p>
-          <button
-            onClick={() => onNavigate('services')}
-            className="bg-primary text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform"
+          <a
+            href={getWhatsAppLink('', 'Hi, I need expert help with Visa and Student Services.')}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform"
           >
             Talk to Expert
-          </button>
+          </a>
         </div>
         <div className="absolute -right-4 -bottom-4 text-[120px] opacity-10 group-hover:scale-110 transition-transform duration-700">🌍</div>
       </div>
