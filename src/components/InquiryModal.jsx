@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { db } from '../firebase/config';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
+import { getWhatsAppLink } from '../utils/whatsapp';
 
 const InquiryModal = ({ isOpen, onClose, item, type }) => {
   const { user } = useAuth();
@@ -33,7 +34,12 @@ const InquiryModal = ({ isOpen, onClose, item, type }) => {
         createdAt: serverTimestamp(),
       });
 
-      alert("Inquiry sent successfully! The AfroEduGo team or the agent will contact you soon.");
+      const waText = `*New Inquiry via AfroEduGo*\n\n*Item:* ${item.name || item.title}\n*Type:* ${type}\n*Message:* ${message}\n*Student Phone:* ${phone}\n*Student Email:* ${user.email}`;
+      const waUrl = getWhatsAppLink('', waText);
+      
+      // Attempt to open in a new tab; if blocked, redirect in the same tab
+      window.open(waUrl, '_blank') || window.location.assign(waUrl);
+      
       onClose();
     } catch (error) {
       console.error("Error sending inquiry:", error);
