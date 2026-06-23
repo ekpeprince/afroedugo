@@ -37,7 +37,18 @@ service cloud.firestore {
     match /housing/{housingId} {
       allow read: if true; // Publicly readable
       allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid);
+      // Allow the owner to fully update their post
+      // Allow an Admin to update the post (e.g. to change status to 'approved' or 'rejected')
+      // Allow ANY authenticated user to flag a post as reported
+      allow update: if isAuthenticated() && (
+        (resource.data.userId == request.auth.uid) || 
+        isAdmin() || 
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isReported']))
+      );
+      // Allow the owner or an admin to delete the post
+      allow delete: if isAuthenticated() && (
+        (resource.data.userId == request.auth.uid) || isAdmin()
+      );
     }
  
     // --- Favorites Collection ---
