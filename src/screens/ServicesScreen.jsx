@@ -1,9 +1,39 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
 import { getWhatsAppLink } from '../utils/whatsapp'
+import { useAuth } from '../hooks/useAuth'
+import { db } from '../firebase/config'
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore'
 
-const ServicesScreen = ({ onBack }) => {
+const ServicesScreen = ({ onBack, onLogin }) => {
+  const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'visa',
+    description: '',
+    whatsapp: ''
+  });
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists() && userDoc.data().role === 'admin') {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    checkAdminStatus();
+  }, [user]);
+
   const { data: services, loading, error } = useFirestore('services');
 
   const categories = [
@@ -14,8 +44,39 @@ const ServicesScreen = ({ onBack }) => {
   ];
 
   const filteredServices = useMemo(() => {
-    return services.filter(s => selectedCategory === 'all' || s.category === selectedCategory);
+    return services.filter(s => 
+      s.status === 'approved' && 
+      (selectedCategory === 'all' || s.category === selectedCategory)
+    );
   }, [services, selectedCategory]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      alert("Please login to offer a service.");
+      if (onLogin) onLogin();
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await addDoc(collection(db, 'services'), {
+        ...formData,
+        userId: user.uid,
+        status: 'pending',
+        isVerified: false,
+        createdAt: serverTimestamp()
+      });
+      alert("Service submitted! An admin will review it shortly.");
+      setShowAddModal(false);
+      setFormData({ name: '', category: 'visa', description: '', whatsapp: '' });
+    } catch (err) {
+      console.error("Error adding service:", err);
+      alert("Failed to submit. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -27,9 +88,22 @@ const ServicesScreen = ({ onBack }) => {
 
   return (
     <div className="min-h-screen bg-white pb-20">
-      <header className="p-6 bg-white shadow-sm sticky top-0 z-20 flex items-center gap-4">
-        <button onClick={onBack} className="text-2xl hover:text-primary transition-colors">←</button>
-        <h2 className="text-2xl font-black tracking-tight">Services Marketplace</h2>
+      <header className="p-6 bg-white shadow-sm sticky top-0 z-20 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="text-2xl hover:text-primary transition-colors">←</button>
+          <h2 className="text-2xl font-black tracking-tight">Services Marketplace</h2>
+        </div>
+        {isAdmin && (
+          <button 
+            onClick={() => {
+              if (!user && onLogin) return onLogin();
+              setShowAddModal(true);
+            }}
+            className="bg-primary text-white px-4 py-2 rounded-xl text-sm font-bold shadow-lg shadow-primary/20 active:scale-95 transition-all whitespace-nowrap"
+          >
+            + Offer Service
+          </button>
+        )}
       </header>
 
       {/* Category Tabs */}
@@ -97,6 +171,86 @@ const ServicesScreen = ({ onBack }) => {
           })
         )}
       </div>
+
+      {/* Add Service Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-black text-gray-900">Offer a Service</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-900">✕</button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-2">Service Name</label>
+                <input 
+                  required
+                  type="text"
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1"
+                  placeholder="e.g., Fast Document Translation"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-2">Category</label>
+                <select 
+                  value={formData.category}
+                  onChange={e => setFormData({...formData, category: e.target.value})}
+                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1 appearance-none"
+                >
+                  {categories.filter(c => c.id !== 'all').map(c => (
+                    <option key={c.id} value={c.id}>{c.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-2">WhatsApp Number</label>
+                <input 
+                  required
+                  type="text"
+                  value={formData.whatsapp}
+                  onChange={e => setFormData({...formData, whatsapp: e.target.value})}
+                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1"
+                  placeholder="e.g., +37063423845"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-black uppercase tracking-widest text-gray-400 ml-2">Description</label>
+                <textarea 
+                  required
+                  rows="3"
+                  value={formData.description}
+                  onChange={e => setFormData({...formData, description: e.target.value})}
+                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-medium mt-1 resize-none"
+                  placeholder="Describe your service in detail..."
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  type="button" 
+                  onClick={() => setShowAddModal(false)}
+                  className="flex-1 py-4 font-black uppercase tracking-widest text-xs text-gray-400 hover:text-gray-900 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="flex-1 bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/30 active:scale-95 transition-all disabled:opacity-50"
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit to Review'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
