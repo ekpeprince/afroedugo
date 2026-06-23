@@ -163,84 +163,77 @@ const AddListing = ({ onBack }) => {
       </header>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Image Picker */}
-        <div 
-          onClick={() => fileInputRef.current.click()}
-          className="aspect-video bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl flex flex-col items-center justify-center overflow-hidden cursor-pointer relative group"
-        >
-          {preview ? (
-            <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-          ) : (
-            <>
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-3 group-hover:scale-110 transition-transform">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* Image Picker - Marketplace Style */}
+        <div className="flex gap-4 items-center">
+          <div 
+            onClick={() => fileInputRef.current.click()}
+            className="w-24 h-24 bg-gray-100 border border-gray-300 rounded-xl flex flex-col items-center justify-center overflow-hidden cursor-pointer flex-shrink-0"
+          >
+            {preview ? (
+              <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+            ) : (
+              <>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-500 mb-1">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
                 </svg>
-              </div>
-              <p className="text-sm font-bold text-gray-500 text-center px-4">Tap to upload property photo<br/><span className="text-[10px] text-gray-400 font-normal">Max width 1200px (auto-optimized)</span></p>
-            </>
+                <span className="text-[10px] font-bold text-gray-500">Add Photo</span>
+              </>
+            )}
+            <input type="file" ref={fileInputRef} onChange={handleImageChange} className="hidden" accept="image/*" />
+          </div>
+          {!preview && (
+            <p className="text-sm text-gray-400 font-medium">Add a photo to attract more tenants.</p>
           )}
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleImageChange} 
-            className="hidden" 
-            accept="image/*"
-          />
         </div>
 
-        <div className="space-y-4">
-          <div className="bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+        {/* Form Fields - Clean List Style */}
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="border-b border-gray-200">
             <input
               type="text"
               name="title"
               placeholder="Title (e.g., Single Room near SMK)"
-              className="w-full p-4 outline-none font-medium"
+              className="w-full p-4 outline-none font-medium text-gray-900"
               required
               onChange={handleInputChange}
             />
           </div>
-
-          <div className="bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+          <div className="border-b border-gray-200">
+            <input
+              type="text"
+              name="price"
+              placeholder="Price (€/mo)"
+              className="w-full p-4 outline-none font-medium text-gray-900"
+              required
+              onChange={handleInputChange}
+            />
+          </div>
+          <div className="border-b border-gray-200">
             <input
               type="text"
               name="location"
-              placeholder="Location"
-              className="w-full p-4 outline-none font-medium"
+              placeholder="Location (e.g., Vilnius, Lithuania)"
+              className="w-full p-4 outline-none font-medium text-gray-900"
               required
               onChange={handleInputChange}
             />
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
-              <input
-                type="text"
-                name="price"
-                placeholder="Price (€/mo)"
-                className="w-full p-4 outline-none font-medium text-primary"
-                required
-                onChange={handleInputChange}
-              />
-            </div>
-            <div className="bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
-              <input
-                type="text"
-                name="whatsapp"
-                placeholder="WhatsApp Number"
-                className="w-full p-4 outline-none font-medium"
-                required
-                onChange={handleInputChange}
-              />
-            </div>
+          <div className="border-b border-gray-200">
+            <input
+              type="text"
+              name="whatsapp"
+              placeholder="WhatsApp Number"
+              className="w-full p-4 outline-none font-medium text-gray-900"
+              required
+              onChange={handleInputChange}
+            />
           </div>
-
-          <div className="bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+          <div>
             <textarea
               name="description"
-              placeholder="Detailed Description"
-              rows="4"
-              className="w-full p-4 outline-none font-medium resize-none"
+              placeholder="Description"
+              rows="5"
+              className="w-full p-4 outline-none font-medium text-gray-900 resize-none"
               required
               onChange={handleInputChange}
             ></textarea>
@@ -250,20 +243,15 @@ const AddListing = ({ onBack }) => {
         <button
           type="submit"
           disabled={loading}
-          className={`w-full bg-gray-900 text-white py-5 rounded-3xl font-bold shadow-xl active:scale-[0.98] transition-all flex items-center justify-center gap-3 ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-black'}`}
+          className={`w-full bg-[#1877F2] text-white py-4 rounded-xl font-bold active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-700'}`}
         >
           {loading ? (
             <>
               <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-              <span>Uploading & Optimizing...</span>
+              <span>Publishing...</span>
             </>
           ) : (
-            <>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14m-7-7v14"/>
-              </svg>
-              <span>Publish Listing</span>
-            </>
+            <span>Publish Listing</span>
           )}
         </button>
       </form>
