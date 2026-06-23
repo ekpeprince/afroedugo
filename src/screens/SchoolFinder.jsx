@@ -313,7 +313,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
       {/* studyin.lt Inspired Sticky Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-100 py-4 px-6 flex justify-between items-center">
+      <header className="relative bg-white border-b border-gray-100 flex justify-between items-center py-4 px-6">
         <div className="flex items-center gap-3">
             <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full text-xl font-bold transition-colors">
                 ←
@@ -403,7 +403,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
         </div>
 
         {/* Sticky Filters Wrapper */}
-        <div className="sticky top-[72px] z-40 space-y-4 bg-gray-50/95 backdrop-blur-md py-3 -mx-2 px-2">
+        <div className="sticky top-0 z-40 space-y-4 bg-gray-50/95 backdrop-blur-md py-3 -mx-2 px-2">
           {/* Explore Opportunities (Pill Filters) */}
           <div className="bg-white p-4 rounded-[2rem] border border-gray-100 shadow-sm text-center">
             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Let's explore the opportunities</h3>
