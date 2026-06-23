@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
 import { useFirestore } from '../hooks/useFirestore'
 import { useProfile } from '../hooks/useProfile'
-import { db } from '../firebase/config'
+import { db, storage } from '../firebase/config'
 import { doc, deleteDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 
 const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
   const { user, logout } = useAuth();
   const { profile, updateProfile, loading: profileLoading } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({ country: '', major: '', bio: '', role: 'incoming' });
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const fileInputRef = React.useRef(null);
 
     const { data: housing, loading: housingLoading } = useFirestore('housing');
     const userListings = housing.filter(h => h.userId === user?.uid);
@@ -86,6 +89,24 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
     setIsEditing(false);
   };
 
+  const handlePhotoUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file || !user) return;
+
+    try {
+      setIsUploadingPhoto(true);
+      const imageRef = ref(storage, `profiles/${user.uid}_${Date.now()}`);
+      const snapshot = await uploadBytes(imageRef, file);
+      const url = await getDownloadURL(snapshot.ref);
+      await updateProfile({ photoURL: url });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      alert("Failed to upload photo. Please try again.");
+    } finally {
+      setIsUploadingPhoto(false);
+    }
+  };
+
 
 
   return (
@@ -94,13 +115,31 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
         <button onClick={onBack} className="text-2xl mb-8 opacity-60 hover:opacity-100 transition-opacity">←</button>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 bg-primary/20 rounded-[2rem] overflow-hidden flex items-center justify-center text-3xl font-black text-primary border-4 border-white/10 shadow-inner">
-              {profile?.photoURL ? (
-                <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+            <div 
+              className="relative w-20 h-20 bg-primary/20 rounded-[2rem] overflow-hidden flex items-center justify-center text-3xl font-black text-primary border-4 border-white/10 shadow-inner group cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {isUploadingPhoto ? (
+                <div className="animate-spin w-6 h-6 border-4 border-primary/30 border-t-primary rounded-full"></div>
+              ) : profile?.photoURL ? (
+                <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover group-hover:brightness-75 transition-all" />
               ) : (
-                <span>{profile?.displayName?.[0] || user?.email?.[0]?.toUpperCase()}</span>
+                <span className="group-hover:opacity-50 transition-all">{profile?.displayName?.[0] || user?.email?.[0]?.toUpperCase()}</span>
+              )}
+              
+              {!isUploadingPhoto && (
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-white text-xs font-bold uppercase tracking-widest">Edit</span>
+                </div>
               )}
             </div>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handlePhotoUpload} 
+              className="hidden" 
+              accept="image/*" 
+            />
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <h2 className="text-2xl font-black tracking-tight leading-none">{profile?.displayName || user?.email?.split('@')[0]}</h2>

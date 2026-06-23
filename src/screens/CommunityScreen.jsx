@@ -103,6 +103,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
         userCountry: profile?.country || '',
         userMajor: profile?.major || '',
         userRole: profile?.role || 'incoming',
+        userPhotoURL: profile?.photoURL || null,
         likes: [],
         commentCount: 0,
         imageUrl: imageUrl
@@ -135,8 +136,14 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
             <p className="text-[10px] font-black uppercase tracking-widest text-primary">Student Forum</p>
           </div>
         </div>
-        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-black text-xs shadow-inner">
-          {user ? user.email[0].toUpperCase() : '👤'}
+        <div className="w-10 h-10 bg-primary/10 rounded-full overflow-hidden flex items-center justify-center text-primary font-black text-xs shadow-inner">
+          {profile?.photoURL ? (
+            <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+          ) : user ? (
+            user.email[0].toUpperCase()
+          ) : (
+            '👤'
+          )}
         </div>
       </header>
 
@@ -145,9 +152,15 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
         <div className="bg-white p-6 rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
           <form onSubmit={handleSendMessage} className="flex flex-col gap-4">
             <div className="flex gap-4 items-start">
-              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 font-black text-sm shrink-0 border border-gray-200">
-                {user ? user.email[0].toUpperCase() : '👤'}
-              </div>
+            <div className="w-12 h-12 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-gray-500 font-black text-sm shrink-0 border border-gray-200">
+              {profile?.photoURL ? (
+                <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+              ) : user ? (
+                user.email[0].toUpperCase()
+              ) : (
+                '👤'
+              )}
+            </div>
               <textarea 
                 placeholder="What's on your mind? Ask a question or share a tip..."
                 className="flex-grow bg-transparent pt-3 pb-2 outline-none font-medium text-gray-900 placeholder:text-gray-400 resize-none min-h-[60px]"
@@ -250,7 +263,13 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                     {/* Post Header */}
                     <div className="flex justify-between items-start mb-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-xl border border-gray-100 shadow-sm">👤</div>
+                        <div className="w-12 h-12 bg-gray-50 rounded-full overflow-hidden flex items-center justify-center text-xl border border-gray-100 shadow-sm">
+                          {msg.userPhotoURL ? (
+                            <img src={msg.userPhotoURL} alt="Avatar" className="w-full h-full object-cover" />
+                          ) : (
+                            '👤'
+                          )}
+                        </div>
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-black text-gray-900 text-base">{msg.user}</span>

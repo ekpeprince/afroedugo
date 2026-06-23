@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
+import { useProfile } from '../hooks/useProfile';
 
 const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
@@ -34,6 +36,7 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
         postId,
         userId: user.uid,
         userName: user.email.split('@')[0],
+        userPhotoURL: profile?.photoURL || null,
         text: newComment,
         createdAt: serverTimestamp(),
       });
@@ -75,7 +78,13 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
         ) : (
           comments.map((comment) => (
             <div key={comment.id} className="flex gap-3">
-              <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-xs border border-gray-200 shadow-sm shrink-0">👤</div>
+              <div className="w-8 h-8 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-xs border border-gray-200 shadow-sm shrink-0">
+                {comment.userPhotoURL ? (
+                  <img src={comment.userPhotoURL} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (
+                  '👤'
+                )}
+              </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="font-black text-gray-900 text-xs">{comment.userName}</span>
@@ -95,8 +104,12 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
       {/* Comment Input */}
       {user ? (
         <form onSubmit={handleSendComment} className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-200 focus-within:border-primary/40 focus-within:ring-4 ring-primary/10 transition-all shadow-sm">
-          <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-xs border border-gray-200 shrink-0 ml-1">
-            {user.email[0].toUpperCase()}
+          <div className="w-8 h-8 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-xs border border-gray-200 shrink-0 ml-1">
+            {profile?.photoURL ? (
+              <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              user.email[0].toUpperCase()
+            )}
           </div>
           <input 
             type="text"
