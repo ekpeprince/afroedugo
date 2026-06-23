@@ -37,8 +37,8 @@ const InquiryModal = ({ isOpen, onClose, item, type }) => {
       const waText = `*New Inquiry via AfroEduGo*\n\n*Item:* ${item.name || item.title}\n*Type:* ${type}\n*Message:* ${message}\n*Student Phone:* ${phone}\n*Student Email:* ${user.email}`;
       const waUrl = getWhatsAppLink('', waText);
       
-      // Attempt to open in a new tab; if blocked, redirect in the same tab
-      window.open(waUrl, '_blank') || window.location.assign(waUrl);
+      // Redirect directly to WhatsApp without opening a new window to bypass popup blockers
+      window.location.href = waUrl;
       
       onClose();
     } catch (error) {
