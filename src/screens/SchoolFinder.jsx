@@ -313,7 +313,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
       {/* studyin.lt Inspired Sticky Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-gray-100 flex justify-between items-center py-4 px-6">
+      <header className="relative bg-white border-b border-gray-100 flex justify-between items-center py-4 px-6">
         <div className="flex items-center gap-3">
             <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full text-xl font-bold transition-colors">
                 ←
