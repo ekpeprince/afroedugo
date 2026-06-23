@@ -136,11 +136,12 @@ const AddListing = ({ onBack }) => {
         imageUrl,
         userId: user.uid,
         userEmail: user.email,
+        status: 'pending', // Requires admin approval
         createdAt: serverTimestamp(),
         ...(coords || {})
       });
 
-      alert('Listing published successfully!');
+      alert('Listing submitted successfully! It will appear on the feed once approved by an admin.');
       onBack();
     } catch (error) {
       console.error('Error adding listing:', error);

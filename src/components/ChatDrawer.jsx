@@ -43,6 +43,14 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
         </div>
       </header>
 
+      {/* Safety Warning Banner */}
+      <div className="bg-amber-50 border-b border-amber-200 p-3 flex items-start gap-3 shadow-sm z-10">
+        <span className="text-amber-500 text-lg">⚠️</span>
+        <p className="text-xs font-medium text-amber-800 leading-tight">
+          <strong>Safety Warning:</strong> Never transfer money or pay a deposit before viewing a property in person and verifying the landlord's identity.
+        </p>
+      </div>
+
       {/* Messages Area */}
       <div className="flex-grow overflow-y-auto p-6 space-y-4 bg-gray-50/50">
         {messages.length === 0 ? (

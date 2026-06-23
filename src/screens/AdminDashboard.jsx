@@ -8,6 +8,7 @@ const AdminDashboard = ({ onBack }) => {
   const { user } = useAuth();
   const [leads, setLeads] = useState([]);
   const [discussions, setDiscussions] = useState([]);
+  const [housing, setHousing] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('leads'); // 'leads' or 'moderation'
 
@@ -22,12 +23,19 @@ const AdminDashboard = ({ onBack }) => {
     const qPosts = query(collection(db, 'discussions'), orderBy('createdAt', 'desc'));
     const unsubscribePosts = onSnapshot(qPosts, (snapshot) => {
       setDiscussions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    // 3. Fetch Housing for Moderation
+    const qHousing = query(collection(db, 'housing'), orderBy('createdAt', 'desc'));
+    const unsubscribeHousing = onSnapshot(qHousing, (snapshot) => {
+      setHousing(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     });
 
     return () => {
       unsubscribeLeads();
       unsubscribePosts();
+      unsubscribeHousing();
     };
   }, []);
 
@@ -60,6 +68,22 @@ const AdminDashboard = ({ onBack }) => {
       } catch (err) {
         console.error("Error deleting post:", err);
       }
+    }
+  };
+
+  const handleHousingAction = async (housingId, action) => {
+    try {
+      if (action === 'approve') {
+        await updateDoc(doc(db, 'housing', housingId), { status: 'approved', isReported: false });
+      } else if (action === 'reject') {
+        await updateDoc(doc(db, 'housing', housingId), { status: 'rejected' });
+      } else if (action === 'delete') {
+        if (window.confirm("Are you sure you want to permanently delete this listing?")) {
+          await deleteDoc(doc(db, 'housing', housingId));
+        }
+      }
+    } catch (err) {
+      console.error("Error updating housing:", err);
     }
   };
 
@@ -111,9 +135,15 @@ const AdminDashboard = ({ onBack }) => {
           >
             Moderation
           </button>
+          <button 
+            onClick={() => setActiveTab('housing')}
+            className={`flex-1 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'housing' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
+          >
+            Housing
+          </button>
         </div>
 
-        {activeTab === 'leads' ? (
+        {activeTab === 'leads' && (
           <div className="space-y-4">
             {leads.length === 0 ? (
                <div className="text-center py-20 text-gray-400 font-bold">No leads yet.</div>
@@ -163,7 +193,9 @@ const AdminDashboard = ({ onBack }) => {
               </div>
             ))}
           </div>
-        ) : (
+        )}
+
+        {activeTab === 'moderation' && (
           <div className="space-y-4">
             {discussions.map(post => (
               <div key={post.id} className="bg-white p-6 rounded-[2rem] shadow-lg border border-gray-50 flex items-start justify-between gap-4">
@@ -179,6 +211,56 @@ const AdminDashboard = ({ onBack }) => {
                    onClick={() => handleDeletePost(post.id)}
                    className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors"
                 >🗑️</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'housing' && (
+          <div className="space-y-4">
+            {housing.filter(h => h.status === 'pending' || h.isReported).length === 0 ? (
+               <div className="text-center py-20 text-gray-400 font-bold">No pending or reported housing listings.</div>
+            ) : housing.filter(h => h.status === 'pending' || h.isReported).map(item => (
+              <div key={item.id} className={`bg-white p-6 rounded-[2rem] shadow-lg border transition-all flex flex-col gap-4 ${item.isReported ? 'border-red-200 bg-red-50/10' : 'border-gray-50 hover:border-primary/20'}`}>
+                <div className="flex justify-between items-start">
+                  <div>
+                    {item.isReported ? (
+                      <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-red-100 text-red-600 mb-2 inline-block">
+                        ⚠️ Reported
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full bg-amber-100 text-amber-600 mb-2 inline-block">
+                        ⏳ Pending Approval
+                      </span>
+                    )}
+                    <h5 className="text-lg font-bold text-gray-900">{item.title}</h5>
+                    <p className="text-xs text-gray-500 font-bold mb-1">{item.price} • {item.location}</p>
+                    <p className="text-[10px] text-gray-400 font-bold">Posted by: {item.userEmail}</p>
+                  </div>
+                  {item.imageUrl && (
+                    <img src={item.imageUrl} alt={item.title} className="w-20 h-20 object-cover rounded-xl shadow-sm border border-gray-100" />
+                  )}
+                </div>
+                <div className="flex gap-2 mt-2">
+                  <button 
+                    onClick={() => handleHousingAction(item.id, 'approve')}
+                    className="flex-1 py-3 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xs uppercase hover:bg-emerald-100"
+                  >
+                    ✅ Approve
+                  </button>
+                  <button 
+                    onClick={() => handleHousingAction(item.id, 'reject')}
+                    className="flex-1 py-3 bg-amber-50 text-amber-600 rounded-xl font-bold text-xs uppercase hover:bg-amber-100"
+                  >
+                    🚫 Hide
+                  </button>
+                  <button 
+                    onClick={() => handleHousingAction(item.id, 'delete')}
+                    className="flex-1 py-3 bg-red-50 text-red-600 rounded-xl font-bold text-xs uppercase hover:bg-red-100"
+                  >
+                    🗑️ Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>

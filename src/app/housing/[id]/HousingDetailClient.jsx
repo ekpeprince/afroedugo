@@ -8,6 +8,8 @@ import { getWhatsAppLink } from '../../../utils/whatsapp';
 import { useAuth } from '../../../hooks/useAuth';
 import { useChat } from '../../../hooks/useChat';
 import { useGlobalState } from '../../../context/GlobalStateContext';
+import { db } from '../../../firebase/config';
+import { doc, updateDoc } from 'firebase/firestore';
 
 export default function HousingDetailClient({ item }) {
   const router = useRouter();
@@ -35,6 +37,25 @@ export default function HousingDetailClient({ item }) {
       return;
     }
     setIsInquiryOpen(true);
+  };
+
+  const handleReportListing = async () => {
+    if (!user) {
+      alert("Please login to report a listing!");
+      router.push('/auth');
+      return;
+    }
+    
+    const confirmReport = window.confirm("Are you sure you want to report this listing as suspicious?");
+    if (confirmReport) {
+      try {
+        await updateDoc(doc(db, 'housing', item.id), { isReported: true });
+        alert("Thank you. This listing has been flagged for manual review by our security team.");
+      } catch (err) {
+        console.error("Error reporting listing:", err);
+        alert("Failed to report listing. Please try again.");
+      }
+    }
   };
 
   return (
@@ -121,6 +142,15 @@ export default function HousingDetailClient({ item }) {
               >
                 Standard Inquiry Form
               </button>
+
+              <div className="pt-4 border-t border-gray-100 mt-4">
+                <button
+                  onClick={handleReportListing}
+                  className="w-full flex items-center justify-center gap-2 text-red-500 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 transition-colors"
+                >
+                  ⚠️ Report Suspicious Listing
+                </button>
+              </div>
             </div>
           </div>
 

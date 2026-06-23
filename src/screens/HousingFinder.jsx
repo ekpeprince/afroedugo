@@ -140,13 +140,21 @@ const HousingFinder = ({ onBack, onNavigate, onOpenChat, initialHousing }) => {
       </header>
 
       <div className="p-4 pt-24 pb-32">
+        {/* Safety Warning Banner */}
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex items-start gap-3 shadow-sm">
+          <span className="text-amber-500 text-lg">⚠️</span>
+          <p className="text-xs font-medium text-amber-800 leading-tight">
+            <strong>Safety Warning:</strong> Never transfer money or pay a deposit before viewing a property in person and verifying the landlord's identity.
+          </p>
+        </div>
+
         {viewMode === 'map' ? (
           <div className="h-[65vh] w-full rounded-[2.5rem] overflow-hidden shadow-xl border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
-            <MapContainer items={housingWithCoords} type="housing" />
+            <MapContainer items={housingWithCoords.filter(item => item.status !== 'pending' && item.status !== 'rejected')} type="housing" />
           </div>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-            {housingWithCoords.map((item) => (
+            {housingWithCoords.filter(item => item.status !== 'pending' && item.status !== 'rejected').map((item) => (
               <Link 
                 href={`/housing/${item.id}`} 
                 key={item.id} 
