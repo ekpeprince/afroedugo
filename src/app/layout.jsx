@@ -2,8 +2,30 @@ import '../index.css';
 import ClientWrapper from '../components/ClientWrapper';
 
 export const metadata = {
-  title: 'AfroEduGo - African Students Guide to Europe',
-  description: 'Guidance for African students moving to Europe: Schools, Housing, Community, and Services.',
+  title: 'AfroEduGo | The Ultimate Hub for African Students Studying Abroad',
+  description: 'Join the AfroEduGo community. Find affordable housing, discover schools, get visa assistance, and connect with other African students studying globally.',
+  openGraph: {
+    title: 'AfroEduGo | African Students Guide',
+    description: 'Find affordable housing, discover schools, and connect with other African students studying globally.',
+    url: 'https://afroedugo.com',
+    siteName: 'AfroEduGo',
+    images: [
+      {
+        url: '/icon-512.png',
+        width: 512,
+        height: 512,
+        alt: 'AfroEduGo Logo',
+      },
+    ],
+    locale: 'en_US',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'AfroEduGo | The Ultimate Hub for African Students',
+    description: 'Find affordable housing, discover schools, get visa assistance, and connect with other African students studying globally.',
+    images: ['/icon-512.png'],
+  },
 };
 
 export default function RootLayout({ children }) {
