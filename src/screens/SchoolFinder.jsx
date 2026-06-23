@@ -329,7 +329,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
       </header>
 
       {/* Main Content Area */}
-      <div className="p-4 md:p-6 space-y-6 pt-16 max-w-7xl mx-auto w-full">
+      <div className="p-4 md:p-6 space-y-6 pt-24 md:pt-28 max-w-7xl mx-auto w-full">
         {/* studyin.lt Style Hero Section */}
         <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 rounded-[2rem] p-6 md:p-10 text-center text-white relative overflow-hidden shadow-xl">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_50%)]"></div>
