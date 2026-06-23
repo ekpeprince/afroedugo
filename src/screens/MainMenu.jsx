@@ -118,10 +118,14 @@ const MainMenu = ({ onNavigate }) => {
           )}
           <button
             onClick={() => onNavigate(user ? 'profile' : 'auth')}
-            className="w-12 h-12 bg-white rounded-2xl shadow-xl shadow-gray-200 border border-gray-50 flex items-center justify-center text-primary group hover:scale-110 active:scale-95 transition-all"
+            className="w-12 h-12 bg-white rounded-2xl shadow-xl shadow-gray-200 border border-gray-50 flex items-center justify-center text-primary group hover:scale-110 active:scale-95 transition-all overflow-hidden"
           >
             {user ? (
-              <span className="font-black text-lg">{user.email[0].toUpperCase()}</span>
+              user.photoURL ? (
+                <img src={user.photoURL} className="w-full h-full object-cover" alt="Profile" />
+              ) : (
+                <span className="font-black text-lg">{user.email[0].toUpperCase()}</span>
+              )
             ) : (
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />

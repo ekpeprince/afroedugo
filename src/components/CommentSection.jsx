@@ -105,8 +105,8 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
       {user ? (
         <form onSubmit={handleSendComment} className="flex items-center gap-3 bg-white p-2 rounded-2xl border border-gray-200 focus-within:border-primary/40 focus-within:ring-4 ring-primary/10 transition-all shadow-sm">
           <div className="w-8 h-8 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-xs border border-gray-200 shrink-0 ml-1">
-            {profile?.photoURL ? (
-              <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+            {profile?.photoURL || user?.photoURL ? (
+              <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
               user.email[0].toUpperCase()
             )}

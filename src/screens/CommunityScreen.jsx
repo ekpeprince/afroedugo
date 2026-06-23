@@ -137,8 +137,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
           </div>
         </div>
         <div className="w-10 h-10 bg-primary/10 rounded-full overflow-hidden flex items-center justify-center text-primary font-black text-xs shadow-inner">
-          {profile?.photoURL ? (
-            <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+          {profile?.photoURL || user?.photoURL ? (
+            <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
           ) : user ? (
             user.email[0].toUpperCase()
           ) : (
@@ -153,8 +153,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
           <form onSubmit={handleSendMessage} className="flex flex-col gap-4">
             <div className="flex gap-4 items-start">
             <div className="w-12 h-12 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-gray-500 font-black text-sm shrink-0 border border-gray-200">
-              {profile?.photoURL ? (
-                <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+              {profile?.photoURL || user?.photoURL ? (
+                <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
               ) : user ? (
                 user.email[0].toUpperCase()
               ) : (
