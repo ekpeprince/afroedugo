@@ -66,6 +66,26 @@ export default function SchoolDetailClient({ school }) {
           </div>
 
           <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-200/50 border border-gray-100">
+            <h3 className="text-xl font-black text-gray-900 mb-6 uppercase tracking-wider text-xs text-primary">Admission Requirements</h3>
+            {school.admissionReqs && school.admissionReqs.length > 0 ? (
+              <ul className="space-y-3">
+                {school.admissionReqs.map((req, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <span className="bg-primary/10 text-primary p-1.5 rounded-lg text-[10px] mt-0.5">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <path d="M20 6 9 17l-5-5"/>
+                      </svg>
+                    </span>
+                    <span className="text-gray-700 font-bold text-sm leading-tight pt-1">{req}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-400 font-medium text-sm">Please contact the admissions team for specific requirements.</p>
+            )}
+          </div>
+
+          <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-200/50 border border-gray-100">
             <h3 className="text-xl font-black text-gray-900 mb-6 uppercase tracking-wider text-xs text-primary">Offered Degree Programs</h3>
             {school.courses && school.courses.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -80,6 +100,19 @@ export default function SchoolDetailClient({ school }) {
               <p className="text-gray-400 font-medium text-sm">Please contact the admissions team for active degree paths.</p>
             )}
           </div>
+
+          {school.galleryImages && school.galleryImages.length > 0 && (
+            <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-200/50 border border-gray-100">
+              <h3 className="text-xl font-black text-gray-900 mb-6 uppercase tracking-wider text-xs text-primary">Campus Gallery</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {school.galleryImages.map((img, idx) => (
+                  <div key={idx} className="h-48 rounded-xl overflow-hidden">
+                    <SmartImage src={img} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar Fee / Action column */}
@@ -108,18 +141,32 @@ export default function SchoolDetailClient({ school }) {
           </div>
 
           <div className="bg-white rounded-[2rem] p-6 shadow-xl shadow-gray-200/50 border border-gray-100 space-y-4">
-            <div className="flex items-center gap-3 text-gray-500 font-bold text-sm">
+            <div className="flex items-center gap-3 text-gray-500 font-bold text-sm pb-3 border-b border-gray-50">
               <span className="text-lg">📍</span>
               <div>
                 <p className="text-xs text-gray-400 leading-none mb-0.5">Location</p>
                 <p className="text-gray-800 leading-none">{school.location}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 text-gray-500 font-bold text-sm">
+            <div className="flex items-center gap-3 text-gray-500 font-bold text-sm pb-3 border-b border-gray-50">
               <span className="text-lg">🌍</span>
               <div>
                 <p className="text-xs text-gray-400 leading-none mb-0.5">Country</p>
                 <p className="text-gray-800 leading-none">{school.country}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 text-gray-500 font-bold text-sm pb-3 border-b border-gray-50">
+              <span className="text-lg">📅</span>
+              <div>
+                <p className="text-xs text-gray-400 leading-none mb-0.5">Fall Deadline</p>
+                <p className="text-gray-800 leading-none">{school.deadlines?.fall || 'June 1st'}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 text-gray-500 font-bold text-sm">
+              <span className="text-lg">🌱</span>
+              <div>
+                <p className="text-xs text-gray-400 leading-none mb-0.5">Spring Deadline</p>
+                <p className="text-gray-800 leading-none">{school.deadlines?.spring || 'November 1st'}</p>
               </div>
             </div>
           </div>

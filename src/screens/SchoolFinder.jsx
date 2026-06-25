@@ -3,6 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { getWhatsAppLink } from '../utils/whatsapp'
 import SmartImage from '../components/SmartImage'
 import InquiryModal from '../components/InquiryModal'
+import ComparisonModal from '../components/ComparisonModal'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import usePlacesAutocomplete, {
@@ -104,6 +105,8 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
   const [isSearching, setIsSearching] = useState(false);
   const [localSearch, setLocalSearch] = useState("");
   const [viewMode, setViewMode] = useState('list');
+  const [compareList, setCompareList] = useState([]);
+  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
 
   const schoolsWithCoords = useMemo(() => {
     return verifiedSchools.map(school => {
@@ -154,6 +157,18 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
         createdAt: new Date()
       });
       setFavorites(prev => [...prev, school.id]);
+    }
+  };
+
+  const handleToggleCompare = (school) => {
+    if (compareList.find(s => s.id === school.id)) {
+      setCompareList(prev => prev.filter(s => s.id !== school.id));
+    } else {
+      if (compareList.length >= 3) {
+        alert("You can compare up to 3 schools at a time.");
+        return;
+      }
+      setCompareList(prev => [...prev, school]);
     }
   };
 
@@ -533,23 +548,41 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                       className="h-44 w-full group-hover:scale-103 transition-transform duration-500 object-cover"
                       type="school"
                     />
-                    {/* Heart Button Overlay */}
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleFavorite(school);
-                      }}
-                      className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all z-10 ${
-                        favorites.includes(school.id) 
-                          ? 'bg-red-500 text-white shadow-md' 
-                          : 'bg-white/80 backdrop-blur-md text-gray-400 hover:text-red-500'
-                      }`}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill={favorites.includes(school.id) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5">
-                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                      </svg>
-                    </button>
-                  </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleFavorite(school);
+                        }}
+                        className={`absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center transition-all z-10 ${
+                          favorites.includes(school.id) 
+                            ? 'bg-red-500 text-white shadow-md' 
+                            : 'bg-white/80 backdrop-blur-md text-gray-400 hover:text-red-500'
+                        }`}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill={favorites.includes(school.id) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5">
+                          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                        </svg>
+                      </button>
+                      
+                      {/* Compare Checkbox */}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleCompare(school);
+                        }}
+                        className={`absolute top-3 right-14 w-9 h-9 rounded-full flex items-center justify-center transition-all z-10 ${
+                          compareList.find(s => s.id === school.id) 
+                            ? 'bg-primary text-white shadow-md' 
+                            : 'bg-white/80 backdrop-blur-md text-gray-400 hover:text-primary'
+                        }`}
+                        title="Compare School"
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                          <line x1="9" y1="3" x2="9" y2="21"/>
+                        </svg>
+                      </button>
+                    </div>
                   
                   <div className="p-6 flex flex-col justify-between flex-grow">
                     <div>
@@ -701,6 +734,40 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
         onClose={() => setIsInquiryOpen(false)} 
         item={inquiryItem} 
         type="school" 
+      />
+
+      {compareList.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-[2rem] shadow-2xl flex items-center gap-6 z-50 animate-in slide-in-from-bottom-10">
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black uppercase tracking-widest text-primary-300">Comparing</span>
+            <span className="font-bold text-sm">{compareList.length} {compareList.length === 1 ? 'School' : 'Schools'}</span>
+          </div>
+          <div className="flex gap-2">
+            <button 
+              onClick={() => setIsCompareModalOpen(true)}
+              disabled={compareList.length < 2}
+              className={`px-4 py-2 rounded-xl font-bold text-xs transition-all ${
+                compareList.length >= 2 
+                  ? 'bg-primary hover:bg-primary-600 text-white shadow-md shadow-primary/20 hover:scale-105 active:scale-95' 
+                  : 'bg-white/10 text-white/50 cursor-not-allowed'
+              }`}
+            >
+              Compare Now
+            </button>
+            <button 
+              onClick={() => setCompareList([])}
+              className="px-4 py-2 rounded-xl bg-white/10 text-white/70 font-bold text-xs hover:bg-white/20 transition-all"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
+      <ComparisonModal 
+        isOpen={isCompareModalOpen}
+        onClose={() => setIsCompareModalOpen(false)}
+        schools={compareList}
       />
     </div>
   )

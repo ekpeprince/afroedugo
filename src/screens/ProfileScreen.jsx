@@ -327,12 +327,12 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
           )}
         </section>
 
-        {/* Favorites Section */}
+        {/* Saved Schools Section */}
         <section>
           <div className="flex justify-between items-end mb-6">
-            <h3 className="text-2xl font-black text-gray-900">My Favorites</h3>
+            <h3 className="text-2xl font-black text-gray-900">Saved Schools</h3>
             <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3 py-1 rounded-lg">
-              {userFavorites.length} Items
+              {userFavorites.filter(f => f.itemType === 'school').length} Schools
             </span>
           </div>
 
@@ -340,22 +340,67 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
             <div className="py-10 text-center">
               <div className="animate-spin inline-block w-6 h-6 border-4 border-primary/20 border-t-primary rounded-full"></div>
             </div>
-          ) : userFavorites.length === 0 ? (
+          ) : userFavorites.filter(f => f.itemType === 'school').length === 0 ? (
             <div className="bg-white rounded-[2.5rem] p-10 text-center border border-gray-100 shadow-sm">
-              <div className="text-3xl mb-3">❤️</div>
-              <p className="text-gray-400 font-bold text-sm leading-tight">Your favorite list is empty</p>
+              <div className="text-3xl mb-3">🎓</div>
+              <p className="text-gray-400 font-bold text-sm leading-tight">No schools saved yet</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {userFavorites.map((fav) => (
+              {userFavorites.filter(f => f.itemType === 'school').map((fav) => (
                 <div key={fav.id} className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-gray-50 flex items-center justify-between group">
                   <div className="flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg ${fav.itemType === 'school' ? 'bg-blue-50 text-blue-500' : 'bg-purple-50 text-purple-500'}`}>
-                      {fav.itemType === 'school' ? '🎓' : '🏠'}
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-blue-50 text-blue-500">
+                      🎓
                     </div>
                     <div>
                       <h4 className="font-black text-gray-900 leading-none mb-1">{fav.itemTitle}</h4>
-                      <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{fav.itemType}</p>
+                      <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">School</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => handleDeleteFavorite(fav.id)}
+                    className="p-2 text-gray-300 hover:text-red-500 transition-colors"
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Saved Properties Section */}
+        <section>
+          <div className="flex justify-between items-end mb-6">
+            <h3 className="text-2xl font-black text-gray-900">Saved Properties</h3>
+            <span className="text-[10px] font-black uppercase tracking-widest text-purple-500 bg-purple-50 px-3 py-1 rounded-lg">
+              {userFavorites.filter(f => f.itemType !== 'school').length} Properties
+            </span>
+          </div>
+
+          {favLoading ? (
+            <div className="py-10 text-center">
+              <div className="animate-spin inline-block w-6 h-6 border-4 border-purple-200 border-t-purple-500 rounded-full"></div>
+            </div>
+          ) : userFavorites.filter(f => f.itemType !== 'school').length === 0 ? (
+            <div className="bg-white rounded-[2.5rem] p-10 text-center border border-gray-100 shadow-sm">
+              <div className="text-3xl mb-3">🏠</div>
+              <p className="text-gray-400 font-bold text-sm leading-tight">No properties saved yet</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {userFavorites.filter(f => f.itemType !== 'school').map((fav) => (
+                <div key={fav.id} className="bg-white p-5 rounded-[1.5rem] shadow-sm border border-gray-50 flex items-center justify-between group">
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-lg bg-purple-50 text-purple-500">
+                      🏠
+                    </div>
+                    <div>
+                      <h4 className="font-black text-gray-900 leading-none mb-1">{fav.itemTitle}</h4>
+                      <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Property</p>
                     </div>
                   </div>
                   <button 
