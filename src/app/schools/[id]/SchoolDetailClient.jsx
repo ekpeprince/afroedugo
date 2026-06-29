@@ -61,7 +61,7 @@ export default function SchoolDetailClient({ school }) {
           <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-200/50 border border-gray-100">
             <h3 className="text-xl font-black text-gray-900 mb-4 uppercase tracking-wider text-xs text-primary">About the University</h3>
             <p className="text-gray-500 font-medium leading-relaxed">
-              {school.name} is a premier educational institution located in {school.location}, {school.country}. Offering internationally recognized degrees and programs, it serves as a gateway for African students to access high-quality European education, career opportunities, and direct integration paths.
+              {school.description || `${school.name} is a premier educational institution located in ${school.location}, ${school.country}. Offering internationally recognized degrees and programs, it serves as a gateway for African students to access high-quality European education, career opportunities, and direct integration paths.`}
             </p>
           </div>
 
@@ -155,6 +155,24 @@ export default function SchoolDetailClient({ school }) {
                 <p className="text-gray-800 leading-none">{school.country}</p>
               </div>
             </div>
+            {school.studentBody && (
+              <div className="flex items-center gap-3 text-gray-500 font-bold text-sm pb-3 border-b border-gray-50">
+                <span className="text-lg">👥</span>
+                <div>
+                  <p className="text-xs text-gray-400 leading-none mb-0.5">Student Body</p>
+                  <p className="text-gray-800 leading-none">{school.studentBody}</p>
+                </div>
+              </div>
+            )}
+            {school.language && (
+              <div className="flex items-center gap-3 text-gray-500 font-bold text-sm pb-3 border-b border-gray-50">
+                <span className="text-lg">🗣️</span>
+                <div>
+                  <p className="text-xs text-gray-400 leading-none mb-0.5">Language of Instruction</p>
+                  <p className="text-gray-800 leading-none">{school.language}</p>
+                </div>
+              </div>
+            )}
             <div className="flex items-center gap-3 text-gray-500 font-bold text-sm pb-3 border-b border-gray-50">
               <span className="text-lg">📅</span>
               <div>
@@ -162,13 +180,24 @@ export default function SchoolDetailClient({ school }) {
                 <p className="text-gray-800 leading-none">{school.deadlines?.fall || 'June 1st'}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 text-gray-500 font-bold text-sm">
+            <div className="flex items-center gap-3 text-gray-500 font-bold text-sm pb-3 border-b border-gray-50">
               <span className="text-lg">🌱</span>
               <div>
                 <p className="text-xs text-gray-400 leading-none mb-0.5">Spring Deadline</p>
                 <p className="text-gray-800 leading-none">{school.deadlines?.spring || 'November 1st'}</p>
               </div>
             </div>
+            {school.website && (
+              <div className="flex items-center gap-3 text-gray-500 font-bold text-sm pt-1">
+                <span className="text-lg">🌐</span>
+                <div>
+                  <p className="text-xs text-gray-400 leading-none mb-0.5">Official Website</p>
+                  <a href={school.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline leading-none">
+                    Visit Website
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

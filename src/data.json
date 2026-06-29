@@ -7,7 +7,13 @@
       "tuitionFee": 2800,
       "tuition": "€2,800 / year",
       "courses": ["International Business", "Tourism & Hotels", "Digital Design"],
-      "whatsapp": "+37060123456"
+      "whatsapp": "+37060123456",
+      "description": "SMK University of Applied Sciences is the largest non-state higher education institution in Lithuania, offering modern, practical study programs. Known for its dynamic and innovative approach, it provides an excellent environment for international students to develop practical skills aligned with the global labor market.",
+      "admissionReqs": ["High School Diploma / Equivalent", "English Proficiency (IELTS 5.5+ or B2 level)", "Motivation Letter", "Valid Passport"],
+      "deadlines": { "fall": "July 15", "spring": "December 1" },
+      "website": "https://www.smk.lt/en/",
+      "studentBody": "4,500+ Students (20% International)",
+      "language": "English"
     },
     {
       "name": "Vilnius University",
@@ -16,7 +22,13 @@
       "tuitionFee": 3500,
       "tuition": "€3,500 / year",
       "courses": ["Medicine", "Physics", "Economics"],
-      "whatsapp": "+37060987654"
+      "whatsapp": "+37060987654",
+      "description": "Established in 1579, Vilnius University is the oldest and largest university in Lithuania and one of the oldest in Central Europe. Consistently ranked among the top 400 universities globally, it offers world-class research facilities and a diverse community, making it a prestigious choice for international scholars.",
+      "admissionReqs": ["High School Diploma / Bachelor's Degree", "English Proficiency (IELTS 5.5+ or TOEFL iBT 65+)", "Application Fee Payment", "Video Interview"],
+      "deadlines": { "fall": "June 1", "spring": "Not Available" },
+      "website": "https://www.vu.lt/en/",
+      "studentBody": "23,000+ Students (10% International)",
+      "language": "English, Lithuanian"
     },
     {
       "name": "Kaunas University of Technology (KTU)",
@@ -25,7 +37,13 @@
       "tuitionFee": 2500,
       "tuition": "€2,500 / year",
       "courses": ["Mechanical Engineering", "IT", "Architecture"],
-      "whatsapp": "+37061111111"
+      "whatsapp": "+37061111111",
+      "description": "Kaunas University of Technology (KTU) is one of the largest technological universities in the Baltics. Known for its strong links with business and industry, KTU offers extensive research opportunities, start-up incubators, and state-of-the-art laboratories, providing a hands-on learning experience.",
+      "admissionReqs": ["High School Diploma / Transcripts", "English Proficiency (IELTS 5.5+ or equivalent)", "Motivation Letter", "Portfolio (for Architecture/Design)"],
+      "deadlines": { "fall": "June 30", "spring": "November 30" },
+      "website": "https://en.ktu.edu/",
+      "studentBody": "9,000+ Students (12% International)",
+      "language": "English"
     },
     {
       "name": "University of Warsaw",
@@ -34,7 +52,13 @@
       "tuitionFee": 3000,
       "tuition": "€3,000 / year",
       "courses": ["International Relations", "Computer Science", "Business"],
-      "whatsapp": "+48500123456"
+      "whatsapp": "+48500123456",
+      "description": "The University of Warsaw is the largest university in Poland and consistently ranked as the best in the country. It offers a vibrant campus life in the heart of Warsaw, exceptional academic standards, and strong international partnerships, attracting top students from around the world.",
+      "admissionReqs": ["High School Certificate / Degree Diploma", "English Proficiency (IELTS 6.0+)", "Passport Copy", "Digital Photo"],
+      "deadlines": { "fall": "July 14", "spring": "January 15" },
+      "website": "https://en.uw.edu.pl/",
+      "studentBody": "40,000+ Students (15% International)",
+      "language": "English, Polish"
     },
     {
       "name": "Vistula University",
@@ -43,7 +67,13 @@
       "tuitionFee": 1900,
       "tuition": "€1,900 / year",
       "courses": ["Management", "Finance", "Graphics"],
-      "whatsapp": "+48500999888"
+      "whatsapp": "+48500999888",
+      "description": "Vistula University is a highly internationalized private university in Warsaw. It stands out for its practical approach to education, close cooperation with global corporations, and double degree programs. It is highly recommended for students seeking a business-oriented and modern learning environment.",
+      "admissionReqs": ["High School Diploma", "English Proficiency (IELTS 5.5+ or Internal Test)", "Health Insurance", "Motivation Letter"],
+      "deadlines": { "fall": "August 15", "spring": "January 31" },
+      "website": "https://vistula.edu.pl/en/",
+      "studentBody": "6,000+ Students (40% International)",
+      "language": "English, Polish"
     },
     {
       "name": "Jagiellonian University",
@@ -52,7 +82,13 @@
       "tuitionFee": 4000,
       "tuition": "€4,000 / year",
       "courses": ["Law", "Philosophy", "European Studies"],
-      "whatsapp": "+48600111222"
+      "whatsapp": "+48600111222",
+      "description": "Founded in 1364, Jagiellonian University is Poland's oldest university and one of the most prestigious in Europe. Located in the historic city of Krakow, it offers a rich cultural experience and world-renowned academic programs, particularly in humanities, law, and medicine.",
+      "admissionReqs": ["Secondary School Leaving Certificate", "English Proficiency (IELTS 6.5+)", "Statement of Purpose", "Letters of Recommendation"],
+      "deadlines": { "fall": "June 15", "spring": "Not Available" },
+      "website": "https://en.uj.edu.pl/",
+      "studentBody": "35,000+ Students (10% International)",
+      "language": "English, Polish"
     },
     {
       "name": "RWTH Aachen University",
@@ -61,7 +97,13 @@
       "tuitionFee": 500,
       "tuition": "€500 / sem (Admin only)",
       "courses": ["Automotive Engineering", "Physics", "Computer Science"],
-      "whatsapp": "+49151234567"
+      "whatsapp": "+49151234567",
+      "description": "RWTH Aachen University is one of Germany's Elite Universities and a member of the IDEA League. It is globally recognized for its outstanding engineering and science programs. With no direct tuition fees (only an administrative semester fee), it offers highly affordable, world-class education.",
+      "admissionReqs": ["University Entrance Qualification (Abitur equivalent)", "English (IELTS 6.5+) or German (TestDaF/DSH)", "GRE (for some Master's)", "CV & Motivation Letter"],
+      "deadlines": { "fall": "July 15", "spring": "January 15" },
+      "website": "https://www.rwth-aachen.de/go/id/a/?lidx=1",
+      "studentBody": "47,000+ Students (25% International)",
+      "language": "English, German"
     },
     {
       "name": "Technical University of Munich (TUM)",
@@ -70,7 +112,13 @@
       "tuitionFee": 1500,
       "tuition": "€1,500 / sem (Intl)",
       "courses": ["Aerospace", "Informatics", "Data Science"],
-      "whatsapp": "+49151999888"
+      "whatsapp": "+49151999888",
+      "description": "The Technical University of Munich (TUM) is consistently ranked as the best university in Germany. Known as the 'Entrepreneurial University', it has produced numerous Nobel laureates and successful start-ups. It offers cutting-edge research facilities and strong industry connections in Bavaria.",
+      "admissionReqs": ["High School Diploma / Bachelor's Degree", "VPD via uni-assist", "English/German Proficiency", "Aptitude Assessment Interview"],
+      "deadlines": { "fall": "May 31", "spring": "November 30" },
+      "website": "https://www.tum.de/en/",
+      "studentBody": "50,000+ Students (38% International)",
+      "language": "English, German"
     },
     {
       "name": "University of Tartu",
@@ -79,7 +127,13 @@
       "tuitionFee": 3800,
       "tuition": "€3,800 / year",
       "courses": ["Software Engineering", "Bioengineering", "Semiotics"],
-      "whatsapp": "+3725000111"
+      "whatsapp": "+3725000111",
+      "description": "The University of Tartu is the national university of Estonia and the biggest and most prestigious university in the country. It ranks in the top 1% of the world's most-cited universities. Tartu is a vibrant student town, offering a unique academic atmosphere and strong IT and science programs.",
+      "admissionReqs": ["High School Certificate", "English Proficiency (IELTS 6.0+)", "Motivation Letter", "Entrance Test / Interview (Program specific)"],
+      "deadlines": { "fall": "April 15", "spring": "Not Available" },
+      "website": "https://ut.ee/en",
+      "studentBody": "14,000+ Students (12% International)",
+      "language": "English, Estonian"
     },
     {
       "name": "Tallinn University of Technology",
@@ -88,7 +142,13 @@
       "tuitionFee": 3000,
       "tuition": "€3,000 / year",
       "courses": ["Cyber Security", "E-Governance", "Law"],
-      "whatsapp": "+3726000222"
+      "whatsapp": "+3726000222",
+      "description": "Tallinn University of Technology (TalTech) is the only technological university in Estonia. Known as the flagship of Estonian engineering and technology education, TalTech is a leader in digital solutions and cyber security. Its modern campus includes an innovation and business center.",
+      "admissionReqs": ["Secondary Education Certificate", "English Proficiency (IELTS 6.0+)", "Online Interview", "Motivation Letter"],
+      "deadlines": { "fall": "May 1", "spring": "Not Available" },
+      "website": "https://taltech.ee/en",
+      "studentBody": "10,000+ Students (15% International)",
+      "language": "English"
     },
     {
       "name": "University of Latvia",
@@ -97,7 +157,13 @@
       "tuitionFee": 2200,
       "tuition": "€2,200 / year",
       "courses": ["International Business", "Medicine", "Humanities"],
-      "whatsapp": "+3712000333"
+      "whatsapp": "+3712000333",
+      "description": "The University of Latvia is one of the largest and most comprehensive research universities in the Baltic States. Located in the beautiful capital city of Riga, it offers a wide range of study programs, excellent research opportunities, and an active international student community.",
+      "admissionReqs": ["High School Diploma", "English Proficiency (IELTS 5.5+ or Skype Interview)", "Passport Copy", "Application Fee"],
+      "deadlines": { "fall": "July 1", "spring": "December 1" },
+      "website": "https://www.lu.lv/en/",
+      "studentBody": "15,000+ Students (10% International)",
+      "language": "English"
     },
     {
       "name": "Riga Technical University",
@@ -106,7 +172,13 @@
       "tuitionFee": 2500,
       "tuition": "€2,500 / year",
       "courses": ["Civil Engineering", "Aviation", "Telecommunications"],
-      "whatsapp": "+3712000444"
+      "whatsapp": "+3712000444",
+      "description": "Riga Technical University (RTU) is the oldest technical university in the Baltics. It is renowned for its strong focus on engineering, technology, and applied sciences. RTU provides a highly practical education, closely aligned with industry needs and modern technological advancements.",
+      "admissionReqs": ["Secondary Education Certificate", "English Proficiency (IELTS 5.5+)", "Math/Physics Grades Review", "Motivation Letter"],
+      "deadlines": { "fall": "July 1", "spring": "December 1" },
+      "website": "https://www.rtu.lv/en",
+      "studentBody": "14,000+ Students (18% International)",
+      "language": "English"
     }
   ],
   "housing": [
