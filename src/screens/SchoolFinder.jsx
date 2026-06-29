@@ -44,7 +44,7 @@ const courseMatchesCategory = (courses, category) => {
   if (category === 'All') return true;
   if (!courses || courses.length === 0) return false;
   
-  const cLower = courses.map(c => c.toLowerCase());
+  const cLower = courses.map(c => (c.name || c).toLowerCase());
   
   if (category === 'Bachelor') {
     return cLower.some(c => !c.includes('master') && !c.includes('msc') && !c.includes('phd') && !c.includes('doctor') && !c.includes('society'));
@@ -308,7 +308,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
         const searchMatch = !searchTerm || 
           school.name.toLowerCase().includes(searchTerm) ||
           school.location.toLowerCase().includes(searchTerm) ||
-          (school.courses && school.courses.some(c => c.toLowerCase().includes(searchTerm)));
+          (school.courses && school.courses.some(c => (c.name || c).toLowerCase().includes(searchTerm)));
 
         return countryMatch && budgetMatch && searchMatch;
       });
@@ -616,8 +616,8 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                           >
                             <option value="">View {school.courses.length} Available Programs</option>
                             {school.courses.map(course => (
-                              <option key={course} value={course}>
-                                {course}
+                              <option key={course.name || course} value={course.name || course}>
+                                {course.name || course}
                               </option>
                             ))}
                           </select>

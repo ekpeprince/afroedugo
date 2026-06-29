@@ -77,7 +77,7 @@ const ComparisonModal = ({ isOpen, onClose, schools }) => {
                 <div className="md:hidden font-bold text-[10px] text-gray-400 uppercase tracking-widest -mb-2">Top Courses</div>
                 <div className="py-3 border-b border-gray-50 text-xs font-medium text-gray-600">
                   <ul className="list-disc pl-4 space-y-1">
-                    {school.courses?.slice(0, 4).map((c, i) => <li key={i}>{c}</li>) || 'Various degree programs'}
+                    {school.courses?.slice(0, 4).map((c, i) => <li key={i}>{c.name || c}</li>) || 'Various degree programs'}
                   </ul>
                 </div>
               </div>

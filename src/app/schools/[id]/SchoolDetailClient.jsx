@@ -11,6 +11,7 @@ export default function SchoolDetailClient({ school }) {
   const router = useRouter();
   const { user } = useAuth();
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+  const [expandedCourse, setExpandedCourse] = useState(null);
 
   const handleEnrollClick = () => {
     if (!user) {
@@ -88,13 +89,55 @@ export default function SchoolDetailClient({ school }) {
           <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-200/50 border border-gray-100">
             <h3 className="text-xl font-black text-gray-900 mb-6 uppercase tracking-wider text-xs text-primary">Offered Degree Programs</h3>
             {school.courses && school.courses.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {school.courses.map((course) => (
-                  <div key={course} className="flex items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <span className="text-primary font-bold">✓</span>
-                    <span className="text-gray-700 font-bold text-sm">{course}</span>
-                  </div>
-                ))}
+              <div className="flex flex-col gap-3">
+                {school.courses.map((course, idx) => {
+                  const courseName = course.name || course;
+                  const isExpanded = expandedCourse === idx;
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`border rounded-xl transition-all duration-300 overflow-hidden ${isExpanded ? 'border-primary shadow-md bg-white' : 'border-gray-100 bg-gray-50 hover:border-gray-200 cursor-pointer'}`}
+                    >
+                      <div 
+                        className="p-4 flex items-center justify-between select-none"
+                        onClick={() => setExpandedCourse(isExpanded ? null : idx)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`font-bold transition-colors ${isExpanded ? 'text-primary' : 'text-gray-400'}`}>✓</span>
+                          <span className={`font-bold text-sm ${isExpanded ? 'text-primary' : 'text-gray-700'}`}>{courseName}</span>
+                        </div>
+                        <span className={`text-gray-400 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                          </svg>
+                        </span>
+                      </div>
+                      
+                      <div className={`transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                        {course.duration && course.requirements ? (
+                          <div className="p-4 pt-0 border-t border-gray-50 bg-white grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Duration</p>
+                              <p className="text-xs text-gray-800 font-medium">{course.duration}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Tuition</p>
+                              <p className="text-xs text-gray-800 font-medium">{course.tuition}</p>
+                            </div>
+                            <div className="sm:col-span-2">
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Requirements</p>
+                              <p className="text-xs text-gray-800 font-medium">{course.requirements}</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="p-4 pt-0 border-t border-gray-50 bg-white">
+                            <p className="text-xs text-gray-400 italic">Detailed information not available. Please contact the admissions team.</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-gray-400 font-medium text-sm">Please contact the admissions team for active degree paths.</p>
