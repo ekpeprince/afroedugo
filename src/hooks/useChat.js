@@ -8,12 +8,14 @@ import {
   onSnapshot, 
   addDoc, 
   setDoc,
-  doc, 
+  doc,
+  getDoc,
   serverTimestamp, 
   getDocs,
   limit
 } from 'firebase/firestore';
 import { useAuth } from './useAuth';
+import { notifyUser } from '../utils/notifyUser';
 
 export const useChat = (conversationId = null) => {
   const { user } = useAuth();
@@ -95,8 +97,22 @@ export const useChat = (conversationId = null) => {
         updatedAt: serverTimestamp()
       }, { merge: true });
 
+      // Push notification to the other participant
+      try {
+        const convSnap = await getDoc(convRef);
+        const participants = convSnap.data()?.participants || [];
+        const recipientId = participants.find(id => id !== user.uid);
+        if (recipientId) {
+          // Get sender's display name
+          const senderSnap = await getDoc(doc(db, 'users', user.uid));
+          const senderName = senderSnap.data()?.displayName || user.displayName || user.email?.split('@')[0] || 'Someone';
+          const preview = imageUrl ? '📷 Sent a photo' : text.slice(0, 60);
+          notifyUser(recipientId, `💬 ${senderName}`, preview);
+        }
+      } catch (_) { /* non-critical */ }
+
     } catch (err) {
-      console.error("Error sending message:", err);
+      console.error('Error sending message:', err);
     }
   };
 

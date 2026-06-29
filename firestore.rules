@@ -93,6 +93,13 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid);
     }
  
+    // --- Stories Collection (24h ephemeral community stories) ---
+    match /stories/{storyId} {
+      allow read: if true; // Publicly readable
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+    }
+ 
     // --- Notifications Collection ---
     match /notifications/{notificationId} {
       allow create: if isAuthenticated();

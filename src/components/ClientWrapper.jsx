@@ -7,15 +7,19 @@ import ChatDrawer from './ChatDrawer';
 import ViralJoinModal from './ViralJoinModal';
 import { useAuth } from '../hooks/useAuth';
 import NotificationManager from './NotificationManager';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 function GlobalModalsContainer({ children }) {
   const { user } = useAuth();
-  const { 
-    activeConversationId, 
-    setActiveConversationId, 
-    showViralModal, 
-    setShowViralModal 
+  const {
+    activeConversationId,
+    setActiveConversationId,
+    showViralModal,
+    setShowViralModal
   } = useGlobalState();
+
+  // Register device for FCM push notifications (background alerts)
+  usePushNotifications();
 
   return (
     <>

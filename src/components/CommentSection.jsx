@@ -3,6 +3,7 @@ import { db } from '../firebase/config';
 import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
+import { notifyUser } from '../utils/notifyUser';
 
 const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
   const { user } = useAuth();
@@ -35,8 +36,8 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
       await addDoc(collection(db, 'comments'), {
         postId,
         userId: user.uid,
-        userName: user.email.split('@')[0],
-        userPhotoURL: profile?.photoURL || null,
+        userName: profile?.displayName || user.displayName || user.email.split('@')[0],
+        userPhotoURL: profile?.photoURL || user?.photoURL || null,
         text: newComment,
         createdAt: serverTimestamp(),
       });
@@ -48,15 +49,18 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
 
       // 2. Notify the author (if it's not the same person)
       if (postAuthorId && postAuthorId !== user.uid) {
+        const senderName = profile?.displayName || user.displayName || user.email.split('@')[0];
         await addDoc(collection(db, 'notifications'), {
           userId: postAuthorId,
           title: '💬 New Reply!',
-          message: `${user.email.split('@')[0]} replied to your post: "${postTitle}"`,
+          message: `${senderName} replied to your post: "${postTitle}"`,
           type: 'reply',
           link: 'community',
           read: false,
           createdAt: serverTimestamp()
         });
+        // Push notification (fires even when app is closed)
+        notifyUser(postAuthorId, '💬 New Reply!', `${senderName} replied: "${postTitle}"`);
       }
 
       setNewComment('');
