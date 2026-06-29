@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
 import { useNotifications } from '../hooks/useNotifications'
 import { useTheme } from '../context/ThemeContext'
 import WelcomeModal from '../components/WelcomeModal'
@@ -7,6 +8,7 @@ import { getWhatsAppLink } from '../utils/whatsapp'
 
 const MainMenu = ({ onNavigate }) => {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const { isDarkMode, toggleTheme } = useTheme();
   const [isTrayOpen, setIsTrayOpen] = useState(false);
@@ -203,7 +205,7 @@ const MainMenu = ({ onNavigate }) => {
       {/* Hero Greeting */}
       <div className="mb-10 mt-6 mx-6">
         <h2 className="text-4xl font-black text-gray-900 dark:text-white leading-[1.1] mb-2 transition-colors duration-300">
-          {user ? `Hello, ${user.email.split('@')[0]}!` : "Your Future Starts Here."}
+          {user ? `Hello, ${profile?.displayName || user.email.split('@')[0]}!` : "Your Future Starts Here."}
         </h2>
         <p className="text-gray-400 font-bold text-sm">
           {user ? "Ready to continue your global search?" : "The easiest way to study and live abroad."}
