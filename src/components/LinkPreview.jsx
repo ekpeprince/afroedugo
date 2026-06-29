@@ -35,11 +35,11 @@ export default function LinkPreview({ url }) {
 
   if (loading) {
     return (
-      <div className="mt-3 border border-gray-200 rounded-xl bg-gray-50 flex items-center p-4 animate-pulse">
-        <div className="w-16 h-16 bg-gray-200 rounded-lg mr-4 shrink-0"></div>
+      <div className="mt-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center p-4 animate-pulse transition-colors duration-300">
+        <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-lg mr-4 shrink-0"></div>
         <div className="flex-1 space-y-2">
-          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+          <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
         </div>
       </div>
     );
@@ -55,10 +55,10 @@ export default function LinkPreview({ url }) {
       href={url} 
       target="_blank" 
       rel="noopener noreferrer"
-      className="mt-3 block border border-gray-200 rounded-xl bg-white overflow-hidden hover:bg-gray-50 transition-colors shadow-sm group"
+      className="mt-3 block border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors shadow-sm group"
     >
       {previewData.image?.url && (
-        <div className="w-full h-48 bg-gray-100 border-b border-gray-200 overflow-hidden">
+        <div className="w-full h-48 bg-gray-100 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 overflow-hidden">
           <img 
             src={previewData.image.url} 
             alt={previewData.title || "Link preview"} 
@@ -68,15 +68,15 @@ export default function LinkPreview({ url }) {
         </div>
       )}
       <div className="p-4">
-        <h4 className="font-bold text-gray-900 text-sm line-clamp-1 mb-1">{previewData.title || url}</h4>
+        <h4 className="font-bold text-gray-900 dark:text-white text-sm line-clamp-1 mb-1">{previewData.title || url}</h4>
         {previewData.description && (
-          <p className="text-xs text-gray-500 line-clamp-2 mb-2 leading-relaxed">{previewData.description}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 mb-2 leading-relaxed">{previewData.description}</p>
         )}
         <div className="flex items-center gap-2">
           {previewData.logo?.url && (
             <img src={previewData.logo.url} alt="Favicon" className="w-4 h-4 rounded" />
           )}
-          <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">{previewData.publisher || new URL(url).hostname}</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">{previewData.publisher || new URL(url).hostname}</span>
         </div>
       </div>
     </a>

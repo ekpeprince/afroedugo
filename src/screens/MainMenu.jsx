@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications } from '../hooks/useNotifications'
+import { useTheme } from '../context/ThemeContext'
 import WelcomeModal from '../components/WelcomeModal'
 import { getWhatsAppLink } from '../utils/whatsapp'
 
 const MainMenu = ({ onNavigate }) => {
   const { user } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const { isDarkMode, toggleTheme } = useTheme();
   const [isTrayOpen, setIsTrayOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -98,19 +100,25 @@ const MainMenu = ({ onNavigate }) => {
   ]
 
   return (
-    <div className="min-h-screen bg-transparent p-6 pb-32 flex flex-col">
+    <div className="min-h-screen bg-transparent dark:bg-gray-900 transition-colors duration-300 p-6 pb-32 flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between py-6 mb-4">
         <div>
-          <h1 className="text-3xl font-black tracking-tighter text-gray-900 leading-none">AfroEduGo</h1>
+          <h1 className="text-3xl font-black tracking-tighter text-gray-900 dark:text-white leading-none transition-colors duration-300">AfroEduGo</h1>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary mt-1">Global Student Hub</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={toggleTheme}
+            className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200 dark:shadow-none border border-gray-50 dark:border-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-200 hover:text-secondary transition-all"
+          >
+            {isDarkMode ? '☀️' : '🌙'}
+          </button>
           {user && (
             <div className="relative">
               <button
                 onClick={() => setIsTrayOpen(!isTrayOpen)}
-                className="w-12 h-12 bg-white rounded-2xl shadow-xl shadow-gray-200 border border-gray-50 flex items-center justify-center text-gray-400 hover:text-secondary transition-all"
+                className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200 dark:shadow-none border border-gray-50 dark:border-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-200 hover:text-secondary transition-all"
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -123,9 +131,9 @@ const MainMenu = ({ onNavigate }) => {
               </button>
 
               {isTrayOpen && (
-                <div className="absolute top-14 right-0 w-80 bg-white rounded-[2rem] shadow-2xl border border-gray-100 z-50 p-6 animate-in slide-in-from-top-4 duration-300">
+                <div className="absolute top-14 right-0 w-80 bg-white dark:bg-gray-800 rounded-[2rem] shadow-2xl border border-gray-100 dark:border-gray-700 z-50 p-6 animate-in slide-in-from-top-4 duration-300">
                   <div className="flex justify-between items-center mb-6">
-                    <h4 className="text-sm font-black uppercase tracking-widest text-gray-900">Alerts</h4>
+                    <h4 className="text-sm font-black uppercase tracking-widest text-gray-900 dark:text-white">Alerts</h4>
                     <button onClick={markAllAsRead} className="text-[10px] font-black uppercase tracking-widest text-primary hover:underline">Mark all read</button>
                   </div>
                   <div className="space-y-4 max-h-96 overflow-y-auto no-scrollbar">
@@ -135,10 +143,10 @@ const MainMenu = ({ onNavigate }) => {
                       <button
                         key={n.id}
                         onClick={() => { markAsRead(n.id); if (n.link) onNavigate(n.link); setIsTrayOpen(false); }}
-                        className={`w-full text-left p-4 rounded-2xl border transition-all ${n.read ? 'bg-gray-50 border-transparent opacity-60' : 'bg-white border-primary/10 shadow-md ring-1 ring-primary/5'}`}
+                        className={`w-full text-left p-4 rounded-2xl border transition-all ${n.read ? 'bg-gray-50 dark:bg-gray-900 border-transparent opacity-60' : 'bg-white dark:bg-gray-800 border-primary/10 shadow-md ring-1 ring-primary/5'}`}
                       >
-                        <h5 className="font-bold text-gray-900 text-sm mb-1">{n.title}</h5>
-                        <p className="text-gray-500 text-[11px] leading-relaxed font-medium">{n.message}</p>
+                        <h5 className="font-bold text-gray-900 dark:text-white text-sm mb-1">{n.title}</h5>
+                        <p className="text-gray-500 dark:text-gray-400 text-[11px] leading-relaxed font-medium">{n.message}</p>
                       </button>
                     ))}
                   </div>
@@ -148,7 +156,7 @@ const MainMenu = ({ onNavigate }) => {
           )}
           <button
             onClick={() => onNavigate(user ? 'profile' : 'auth')}
-            className="w-12 h-12 bg-white rounded-2xl shadow-xl shadow-gray-200 border border-gray-50 flex items-center justify-center text-primary group hover:scale-110 active:scale-95 transition-all overflow-hidden"
+            className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200 dark:shadow-none border border-gray-50 dark:border-gray-700 flex items-center justify-center text-primary group hover:scale-110 active:scale-95 transition-all overflow-hidden"
           >
             {user ? (
               user.photoURL ? (
@@ -194,7 +202,7 @@ const MainMenu = ({ onNavigate }) => {
 
       {/* Hero Greeting */}
       <div className="mb-10 mt-6 mx-6">
-        <h2 className="text-4xl font-black text-gray-900 leading-[1.1] mb-2">
+        <h2 className="text-4xl font-black text-gray-900 dark:text-white leading-[1.1] mb-2 transition-colors duration-300">
           {user ? `Hello, ${user.email.split('@')[0]}!` : "Your Future Starts Here."}
         </h2>
         <p className="text-gray-400 font-bold text-sm">
@@ -208,12 +216,12 @@ const MainMenu = ({ onNavigate }) => {
           <button
             key={item.id}
             onClick={() => onNavigate(item.id)}
-            className="flex flex-col items-start bg-white p-6 rounded-[2.5rem] shadow-xl shadow-gray-100 border border-gray-50 hover:shadow-2xl hover:scale-[1.02] transition-all active:scale-[0.98] group"
+            className="flex flex-col items-start bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] shadow-xl shadow-gray-100 dark:shadow-none border border-gray-50 dark:border-gray-700 hover:shadow-2xl hover:scale-[1.02] transition-all active:scale-[0.98] group"
           >
-            <div className={`w-16 h-16 ${item.color} rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-gray-200 group-hover:rotate-12 transition-transform`}>
+            <div className={`w-16 h-16 ${item.color} rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-gray-200 dark:shadow-none group-hover:rotate-12 transition-transform`}>
               {item.icon}
             </div>
-            <h3 className="text-lg font-black text-gray-900 mb-1 leading-tight">{item.label}</h3>
+            <h3 className="text-lg font-black text-gray-900 dark:text-white mb-1 leading-tight">{item.label}</h3>
             <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{item.sub}</p>
           </button>
         ))}

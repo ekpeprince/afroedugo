@@ -59,26 +59,39 @@ export const useChat = (conversationId = null) => {
         ...doc.data()
       }));
       setMessages(msgs);
+      
+      // Auto-mark as read if they are from the other person and unread
+      msgs.forEach(async (m) => {
+        if (m.senderId !== user.uid && !m.read) {
+          try {
+            await setDoc(doc(db, 'conversations', conversationId, 'messages', m.id), {
+              read: true
+            }, { merge: true });
+          } catch(e) {}
+        }
+      });
     });
 
     return unsub;
   }, [conversationId]);
 
-  const sendMessage = async (convId, text) => {
-    if (!user || !text.trim()) return;
+  const sendMessage = async (convId, text, imageUrl = null) => {
+    if (!user || (!text.trim() && !imageUrl)) return;
 
     try {
       const messagesRef = collection(db, 'conversations', convId, 'messages');
       await addDoc(messagesRef, {
         text,
+        imageUrl,
         senderId: user.uid,
+        read: false,
         createdAt: serverTimestamp()
       });
 
       // Update parent conversation's last message and timestamp
       const convRef = doc(db, 'conversations', convId);
       await setDoc(convRef, {
-        lastMessage: text,
+        lastMessage: imageUrl ? '📷 Image' : text,
         updatedAt: serverTimestamp()
       }, { merge: true });
 

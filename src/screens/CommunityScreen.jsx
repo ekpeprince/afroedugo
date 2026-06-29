@@ -205,17 +205,16 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
   }, [discussions]);
 
   return (
-    <div className="min-h-screen bg-[#F3F4F6] flex flex-col font-sans">
-      {/* Top Navbar */}
-      <header className="fixed top-0 left-0 right-0 bg-white z-30 h-16 flex items-center justify-between px-4 sm:px-8 border-b border-gray-200 shadow-sm">
+    <div className="min-h-screen bg-[#F3F4F6] dark:bg-gray-900 transition-colors duration-300 flex flex-col font-sans">
+      <header className="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 z-30 h-16 flex items-center justify-between px-4 sm:px-8 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-700">
+          <button onClick={onBack} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-700 dark:text-gray-300">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </button>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-none">AfroEdugo <span className="text-primary font-black">Social</span></h1>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight leading-none">AfroEdugo <span className="text-primary font-black">Social</span></h1>
           </div>
         </div>
 
@@ -224,7 +223,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
             <input 
               type="text"
               placeholder="Search community..." 
-              className="w-full bg-gray-100 py-2.5 pl-12 pr-4 rounded-full border-none focus:ring-2 ring-primary/30 outline-none transition-all font-medium text-gray-900 placeholder:text-gray-500 text-sm"
+              className="w-full bg-gray-100 dark:bg-gray-700 py-2.5 pl-12 pr-4 rounded-full border-none focus:ring-2 ring-primary/30 outline-none transition-all font-medium text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -239,11 +238,11 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
             <div className="relative">
               <button 
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors relative"
+                className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative"
               >
                 <span className="text-xl">🔔</span>
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-800"></span>
                 )}
               </button>
               <NotificationsDropdown 
@@ -252,7 +251,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
               />
             </div>
           )}
-          <div className="w-10 h-10 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-gray-500 font-bold border border-gray-200 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
+          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center text-gray-500 dark:text-gray-300 font-bold border border-gray-200 dark:border-gray-600 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
             {profile?.photoURL || user?.photoURL ? (
               <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
             ) : user ? (
@@ -264,25 +263,20 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
         </div>
       </header>
 
-      {/* Main Layout Container */}
       <div className="flex-grow pt-20 px-4 pb-24 max-w-7xl mx-auto w-full flex flex-col lg:flex-row gap-6">
-        
-        {/* LEFT SIDEBAR (Sticky Navigation) */}
         <div className="hidden lg:block w-72 shrink-0">
           <div className="sticky top-24 space-y-6">
-            
-            {/* User Profile Mini Card */}
             {user ? (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex flex-col items-center text-center">
-                <div className="w-20 h-20 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-2xl font-bold border-4 border-white shadow-md mb-3">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center text-center transition-colors duration-300">
+                <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center text-2xl font-bold border-4 border-white dark:border-gray-800 shadow-md mb-3">
                   {profile?.photoURL || user?.photoURL ? (
                     <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
                   ) : (
                     user.email[0].toUpperCase()
                   )}
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg leading-tight">{profile?.displayName || user.email.split('@')[0]}</h3>
-                <p className="text-gray-500 text-sm mb-2">{profile?.major || 'Undecided Major'}</p>
+                <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">{profile?.displayName || user.email.split('@')[0]}</h3>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">{profile?.major || 'Undecided Major'}</p>
                 <div className="flex items-center gap-2 mt-1 mb-4">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${profile?.role === 'current' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
                     {profile?.role === 'current' ? '🎓 Current Student' : '✈️ Incoming'}
@@ -290,37 +284,35 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                 </div>
                 <button 
                   onClick={() => setIsProfileModalOpen(true)}
-                  className="w-full bg-gray-100 text-gray-900 py-2 rounded-full font-bold text-sm shadow-sm hover:bg-gray-200 transition-colors"
+                  className="w-full bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white py-2 rounded-full font-bold text-sm shadow-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   Edit Profile
                 </button>
               </div>
             ) : (
-              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex flex-col items-center text-center">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-2xl mb-3">👋</div>
-                <h3 className="font-bold text-gray-900 mb-2">Join the Community</h3>
-                <p className="text-sm text-gray-500 mb-4">Connect with students and share experiences.</p>
+              <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 flex flex-col items-center text-center transition-colors duration-300">
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl mb-3">👋</div>
+                <h3 className="font-bold text-gray-900 dark:text-white mb-2">Join the Community</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Connect with students and share experiences.</p>
                 <button onClick={onLogin} className="w-full bg-primary text-white py-2.5 rounded-full font-bold shadow-md hover:bg-primary/90 transition-colors">
                   Log In or Sign Up
                 </button>
               </div>
             )}
-
-            {/* Navigation Menu */}
-            <nav className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <nav className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
               <ul className="flex flex-col py-2">
                 <li>
-                  <button className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 transition-colors text-primary font-bold bg-primary/5 border-l-4 border-primary">
+                  <button className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-primary font-bold bg-primary/5 border-l-4 border-primary">
                     <span className="text-xl">🏠</span> Home Feed
                   </button>
                 </li>
                 <li>
-                  <button className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 transition-colors text-gray-700 font-semibold border-l-4 border-transparent">
+                  <button className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300 font-semibold border-l-4 border-transparent">
                     <span className="text-xl">🔖</span> Saved Posts
                   </button>
                 </li>
                 <li>
-                  <button className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 transition-colors text-gray-700 font-semibold border-l-4 border-transparent">
+                  <button className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300 font-semibold border-l-4 border-transparent">
                     <span className="text-xl">✉️</span> Messages
                   </button>
                 </li>
@@ -329,21 +321,17 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
           </div>
         </div>
 
-        {/* MIDDLE COLUMN (Main Feed) */}
         <div className="flex-grow max-w-2xl w-full mx-auto">
-          
-          {/* Mobile Search & Categories */}
           <div className="md:hidden mb-4">
              <input 
                 type="text"
                 placeholder="Search community..." 
-                className="w-full bg-white py-3 px-4 rounded-xl border border-gray-200 focus:border-primary outline-none transition-all font-medium text-gray-900 text-sm shadow-sm mb-3"
+                className="w-full bg-white dark:bg-gray-800 py-3 px-4 rounded-xl border border-gray-200 dark:border-gray-700 focus:border-primary outline-none transition-all font-medium text-gray-900 dark:text-white text-sm shadow-sm mb-3"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
           </div>
           
-          {/* Categories Tab (Stories style or Pills) */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6 pb-1">
             {categories.map((cat) => (
               <button 
@@ -351,8 +339,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`flex items-center gap-2 px-5 py-2.5 rounded-full whitespace-nowrap transition-all font-bold text-sm ${
                   selectedCategory === cat.id 
-                    ? 'bg-gray-900 text-white shadow-md' 
-                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-md' 
+                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
                 <span>{cat.icon}</span>
@@ -361,11 +349,10 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
             ))}
           </div>
 
-          {/* Create Post Section */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 mb-6">
+          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6 transition-colors duration-300">
             <form onSubmit={handleSendMessage} className="flex flex-col">
               <div className="flex gap-3 items-start">
-                <div className="w-10 h-10 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-gray-500 font-bold text-sm shrink-0">
+                <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center text-gray-500 dark:text-gray-300 font-bold text-sm shrink-0">
                   {profile?.photoURL || user?.photoURL ? (
                     <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
                   ) : user ? (
@@ -377,7 +364,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                 <div className="flex-grow flex flex-col">
                   <textarea 
                     placeholder="Share something with the community..."
-                    className="w-full bg-transparent pt-2 pb-2 outline-none font-medium text-gray-900 text-lg placeholder:text-gray-400 resize-none min-h-[50px]"
+                    className="w-full bg-transparent pt-2 pb-2 outline-none font-medium text-gray-900 dark:text-white text-lg placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none min-h-[50px]"
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     disabled={isSending}
@@ -400,7 +387,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                 </div>
               )}
               
-              <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-100">
+              <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-100 dark:border-gray-700">
                 <button 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
@@ -433,39 +420,36 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
             </form>
           </div>
 
-          {/* Posts Feed */}
           <div className="space-y-4">
             {loading ? (
               [1, 2, 3].map(i => (
-                <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 animate-pulse">
+                <div key={i} className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 animate-pulse">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                    <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                     <div className="space-y-2">
-                      <div className="h-4 w-32 bg-gray-200 rounded"></div>
-                      <div className="h-3 w-20 bg-gray-200 rounded"></div>
+                      <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      <div className="h-3 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="h-4 w-full bg-gray-200 rounded"></div>
-                    <div className="h-4 w-5/6 bg-gray-200 rounded"></div>
+                    <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-4 w-5/6 bg-gray-200 dark:bg-gray-700 rounded"></div>
                   </div>
                 </div>
               ))
             ) : filteredDiscussions.length === 0 ? (
-              <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
+              <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-300">
                 <div className="text-4xl mb-3 opacity-50">📫</div>
-                <p className="text-gray-900 font-bold text-lg">No posts yet</p>
-                <p className="text-gray-500 text-sm mt-1">Be the first to share something!</p>
+                <p className="text-gray-900 dark:text-white font-bold text-lg">No posts yet</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Be the first to share something!</p>
               </div>
             ) : (
               filteredDiscussions.map((msg) => {
-                const catInfo = categories.find(c => c.id === msg.category) || categories[1];
                 return (
-                  <article key={msg.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                    {/* Post Header */}
+                  <article key={msg.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
                     <div className="p-4 sm:p-5 flex justify-between items-start">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-lg shrink-0 cursor-pointer border border-gray-200">
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center text-lg shrink-0 cursor-pointer border border-gray-200 dark:border-gray-600">
                           {msg.userPhotoURL ? (
                             <img src={msg.userPhotoURL} alt="Avatar" className="w-full h-full object-cover" />
                           ) : (
@@ -474,9 +458,9 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                         </div>
                         <div>
                           <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 leading-tight">
-                            <span className="font-bold text-gray-900 cursor-pointer hover:underline">{msg.user}</span>
-                            <span className="text-gray-500 text-sm">·</span>
-                            <span className="text-gray-500 text-sm hover:underline cursor-pointer">
+                            <span className="font-bold text-gray-900 dark:text-white cursor-pointer hover:underline">{msg.user}</span>
+                            <span className="text-gray-500 dark:text-gray-400 text-sm">·</span>
+                            <span className="text-gray-500 dark:text-gray-400 text-sm hover:underline cursor-pointer">
                               {msg.createdAt?.toDate ? (() => {
                                 const date = msg.createdAt.toDate();
                                 const now = new Date();
@@ -488,21 +472,19 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                               })() : 'Just now'}
                             </span>
                           </div>
-                          <div className="text-gray-500 text-sm mt-0.5 line-clamp-1">
+                          <div className="text-gray-500 dark:text-gray-400 text-sm mt-0.5 line-clamp-1">
                             {msg.userRole === 'current' ? '🎓 Current Student' : '✈️ Incoming'} 
                             {msg.userCountry ? ` from ${msg.userCountry}` : ''}
                           </div>
                         </div>
                       </div>
-                      
-                      <button className="text-gray-400 hover:text-gray-600 hover:bg-gray-50 p-1.5 rounded-full transition-colors">
+                      <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
                         </svg>
                       </button>
                     </div>
 
-                    {/* Post Content */}
                     <div className="px-4 sm:px-5 pb-3">
                       <PostText 
                         text={msg.text} 
@@ -513,23 +495,21 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                       />
                     </div>
                     
-                    {/* Media Grid */}
                     {(msg.imageUrls && msg.imageUrls.length > 0) ? (
-                      <div className={`mt-2 mb-2 border-y border-gray-100 bg-gray-50 grid gap-0.5 ${msg.imageUrls.length === 1 ? 'grid-cols-1' : msg.imageUrls.length === 2 ? 'grid-cols-2' : msg.imageUrls.length === 3 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                      <div className={`mt-2 mb-2 border-y border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 grid gap-0.5 ${msg.imageUrls.length === 1 ? 'grid-cols-1' : msg.imageUrls.length === 2 ? 'grid-cols-2' : msg.imageUrls.length === 3 ? 'grid-cols-2' : 'grid-cols-2'}`}>
                         {msg.imageUrls.map((url, i) => (
                            <div key={i} className={`${msg.imageUrls.length === 3 && i === 0 ? 'col-span-2' : ''}`}>
-                             <SmartImage src={url} className={`w-full object-cover border border-gray-100 ${msg.imageUrls.length === 1 ? 'max-h-[500px] h-auto' : 'h-64'}`} />
+                             <SmartImage src={url} className={`w-full object-cover border border-gray-100 dark:border-gray-700 ${msg.imageUrls.length === 1 ? 'max-h-[500px] h-auto' : 'h-64'}`} />
                            </div>
                         ))}
                       </div>
                     ) : msg.imageUrl ? (
-                      <div className="mt-2 mb-2 border-y border-gray-100 bg-gray-50 flex justify-center">
+                      <div className="mt-2 mb-2 border-y border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-center">
                         <SmartImage src={msg.imageUrl} className="w-full h-auto max-h-[500px] object-cover" />
                       </div>
                     ) : null}
 
-                    {/* Engagement Actions */}
-                    <div className="px-4 sm:px-5 py-3 border-t border-gray-100 flex items-center justify-between text-gray-500">
+                    <div className="px-4 sm:px-5 py-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between text-gray-500 dark:text-gray-400">
                       <div className="flex items-center gap-6">
                         <button 
                           onClick={() => setExpandedPost(expandedPost === msg.id ? null : msg.id)}
@@ -547,7 +527,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                           onClick={() => handleToggleLike(msg.id, msg.likes, msg.userId, msg.text)}
                           className={`flex items-center gap-2 transition-colors group ${user && msg.likes?.includes(user.uid) ? 'text-red-500' : 'hover:text-red-500'}`}
                         >
-                          <div className="p-2 rounded-full group-hover:bg-red-50 transition-colors">
+                          <div className="p-2 rounded-full group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill={user && msg.likes?.includes(user.uid) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
                               <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                             </svg>
@@ -606,17 +586,17 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
           <div className="sticky top-24 space-y-6">
             
             {/* Trending Topics Widget */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-              <h3 className="font-bold text-gray-900 text-lg mb-4">Trending Topics</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 transition-colors duration-300">
+              <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-4">Trending Topics</h3>
               {trendingTopics.length === 0 ? (
-                <p className="text-gray-500 text-sm">Not enough data yet.</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">Not enough data yet.</p>
               ) : (
                 <ul className="space-y-4">
                   {trendingTopics.map((topic, i) => (
-                    <li key={i} onClick={() => setSelectedCategory(topic.id)} className="cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-xl transition-colors">
-                      <p className="text-xs text-gray-500 font-semibold mb-0.5">{topic.label}</p>
-                      <p className="font-bold text-gray-900 leading-tight">{topic.title}</p>
-                      <p className="text-xs text-gray-500 mt-1">{topic.count} posts</p>
+                    <li key={i} onClick={() => setSelectedCategory(topic.id)} className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 -mx-2 rounded-xl transition-colors">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-0.5">{topic.label}</p>
+                      <p className="font-bold text-gray-900 dark:text-white leading-tight">{topic.title}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{topic.count} posts</p>
                     </li>
                   ))}
                 </ul>
@@ -625,16 +605,16 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
             </div>
 
             {/* Who to follow / Connect */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-              <h3 className="font-bold text-gray-900 text-lg mb-4">Active Members</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 transition-colors duration-300">
+              <h3 className="font-bold text-gray-900 dark:text-white text-lg mb-4">Active Members</h3>
               {activeMembers.length === 0 ? (
-                <p className="text-gray-500 text-sm">No active members yet.</p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm">No active members yet.</p>
               ) : (
                 <ul className="space-y-4">
                   {activeMembers.map((member, i) => (
                     <li key={i} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500 overflow-hidden shrink-0 border border-gray-200">
+                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center font-bold text-gray-500 dark:text-gray-300 overflow-hidden shrink-0 border border-gray-200 dark:border-gray-600">
                           {member.photoURL ? (
                             <img src={member.photoURL} className="w-full h-full object-cover" />
                           ) : (
@@ -642,11 +622,11 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                           )}
                         </div>
                         <div className="flex flex-col">
-                          <span className="font-bold text-gray-900 text-sm line-clamp-1">{member.name}</span>
-                          <span className="text-xs text-gray-500">{member.role === 'current' ? '🎓 Current' : '✈️ Incoming'}</span>
+                          <span className="font-bold text-gray-900 dark:text-white text-sm line-clamp-1">{member.name}</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">{member.role === 'current' ? '🎓 Current' : '✈️ Incoming'}</span>
                         </div>
                       </div>
-                      <button className="text-sm font-bold text-gray-900 bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-full transition-colors shrink-0">
+                      <button className="text-sm font-bold text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-1.5 rounded-full transition-colors shrink-0">
                         Connect
                       </button>
                     </li>

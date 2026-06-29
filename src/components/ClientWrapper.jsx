@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { GlobalStateProvider, useGlobalState } from '../context/GlobalStateContext';
+import { ThemeProvider } from '../context/ThemeContext';
 import ChatDrawer from './ChatDrawer';
 import ViralJoinModal from './ViralJoinModal';
 import { useAuth } from '../hooks/useAuth';
@@ -42,10 +43,12 @@ function GlobalModalsContainer({ children }) {
 
 export default function ClientWrapper({ children }) {
   return (
-    <GlobalStateProvider>
-      <GlobalModalsContainer>
-        {children}
-      </GlobalModalsContainer>
-    </GlobalStateProvider>
+    <ThemeProvider>
+      <GlobalStateProvider>
+        <GlobalModalsContainer>
+          {children}
+        </GlobalModalsContainer>
+      </GlobalStateProvider>
+    </ThemeProvider>
   );
 }
