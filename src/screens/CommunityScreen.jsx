@@ -10,6 +10,7 @@ import CommentSection from '../components/CommentSection'
 import SmartImage from '../components/SmartImage'
 import ProfileModal from '../components/ProfileModal'
 import NotificationsDropdown from '../components/NotificationsDropdown'
+import PostText from '../components/PostText'
 import { useNotifications } from '../hooks/useNotifications'
 
 const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
@@ -503,7 +504,13 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
 
                     {/* Post Content */}
                     <div className="px-4 sm:px-5 pb-3">
-                      <p className="text-gray-900 text-[15px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                      <PostText 
+                        text={msg.text} 
+                        onHashtagClick={(tag) => {
+                          setSearchTerm(tag);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }} 
+                      />
                     </div>
                     
                     {/* Media Grid */}
