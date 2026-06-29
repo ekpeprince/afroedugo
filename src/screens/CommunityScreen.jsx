@@ -8,6 +8,7 @@ import { useProfile } from '../hooks/useProfile'
 import { useChat } from '../hooks/useChat'
 import CommentSection from '../components/CommentSection'
 import SmartImage from '../components/SmartImage'
+import ProfileModal from '../components/ProfileModal'
 
 const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
   const { user } = useAuth();
@@ -52,8 +53,9 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
 
   const [isSending, setIsSending] = useState(false)
   const [expandedPost, setExpandedPost] = useState(null)
-  const [attachedImage, setAttachedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [attachedImages, setAttachedImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const fileInputRef = useRef(null);
   
   const { data: discussions, loading, error } = useFirestore('discussions', 'createdAt');
@@ -66,18 +68,26 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
   ]
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setAttachedImage(file);
-      const reader = new FileReader();
-      reader.onloadend = () => setImagePreview(reader.result);
-      reader.readAsDataURL(file);
-    }
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    
+    const newFiles = [...attachedImages, ...files].slice(0, 4); // Limit to 4
+    setAttachedImages(newFiles);
+    
+    const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+    setImagePreviews(newPreviews);
+  };
+
+  const removeImage = (index) => {
+    const newFiles = attachedImages.filter((_, i) => i !== index);
+    const newPreviews = imagePreviews.filter((_, i) => i !== index);
+    setAttachedImages(newFiles);
+    setImagePreviews(newPreviews);
   };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() && !attachedImage) return;
+    if (!newMessage.trim() && attachedImages.length === 0) return;
     if (!user) {
       alert("Please login to post!");
       return;
@@ -85,11 +95,14 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
 
     setIsSending(true);
     try {
-      let imageUrl = '';
-      if (attachedImage) {
-        const imageRef = ref(storage, `community/${Date.now()}_${attachedImage.name}`);
-        const snapshot = await uploadBytes(imageRef, attachedImage);
-        imageUrl = await getDownloadURL(snapshot.ref);
+      let imageUrls = [];
+      if (attachedImages.length > 0) {
+        for (const file of attachedImages) {
+          const imageRef = ref(storage, `community/${Date.now()}_${file.name}`);
+          const snapshot = await uploadBytes(imageRef, file);
+          const url = await getDownloadURL(snapshot.ref);
+          imageUrls.push(url);
+        }
       }
 
       const postCategory = selectedCategory === 'all' ? 'general' : selectedCategory;
@@ -106,12 +119,13 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
         userPhotoURL: profile?.photoURL || null,
         likes: [],
         commentCount: 0,
-        imageUrl: imageUrl
+        imageUrls: imageUrls,
+        imageUrl: imageUrls.length > 0 ? imageUrls[0] : ''
       });
 
       setNewMessage('');
-      setAttachedImage(null);
-      setImagePreview(null);
+      setAttachedImages([]);
+      setImagePreviews([]);
     } catch (err) {
       console.error("Error sending message:", err);
     } finally {
@@ -188,11 +202,17 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                 </div>
                 <h3 className="font-bold text-gray-900 text-lg leading-tight">{profile?.displayName || user.email.split('@')[0]}</h3>
                 <p className="text-gray-500 text-sm mb-2">{profile?.major || 'Undecided Major'}</p>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1 mb-4">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${profile?.role === 'current' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
                     {profile?.role === 'current' ? '🎓 Current Student' : '✈️ Incoming'}
                   </span>
                 </div>
+                <button 
+                  onClick={() => setIsProfileModalOpen(true)}
+                  className="w-full bg-gray-100 text-gray-900 py-2 rounded-full font-bold text-sm shadow-sm hover:bg-gray-200 transition-colors"
+                >
+                  Edit Profile
+                </button>
               </div>
             ) : (
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex flex-col items-center text-center">
@@ -284,14 +304,18 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                 </div>
               </div>
               
-              {imagePreview && (
-                <div className="mt-3 mb-2 relative inline-block ml-13">
-                  <img src={imagePreview} className="max-w-full h-auto max-h-[300px] object-cover rounded-xl border border-gray-200" />
-                  <button 
-                    type="button"
-                    onClick={() => {setAttachedImage(null); setImagePreview(null);}}
-                    className="absolute top-2 right-2 bg-gray-900/70 backdrop-blur-sm text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-900 transition-colors"
-                  >✕</button>
+              {imagePreviews.length > 0 && (
+                <div className="mt-3 mb-2 flex gap-2 overflow-x-auto ml-13 pb-2 no-scrollbar">
+                  {imagePreviews.map((preview, index) => (
+                    <div key={index} className="relative inline-block shrink-0">
+                      <img src={preview} className="w-24 h-24 object-cover rounded-xl border border-gray-200 shadow-sm" />
+                      <button 
+                        type="button"
+                        onClick={() => removeImage(index)}
+                        className="absolute top-1 right-1 bg-gray-900/70 backdrop-blur-sm text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-gray-900 transition-colors text-xs"
+                      >✕</button>
+                    </div>
+                  ))}
                 </div>
               )}
               
@@ -310,10 +334,11 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                   onChange={handleFileChange} 
                   className="hidden" 
                   accept="image/*" 
+                  multiple
                 />
                 <button 
                   type="submit"
-                  disabled={isSending || (!newMessage.trim() && !attachedImage) || !user}
+                  disabled={isSending || (!newMessage.trim() && attachedImages.length === 0) || !user}
                   className="bg-primary text-white px-6 py-2 rounded-full font-bold text-sm shadow-sm hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50"
                 >
                   {isSending ? 'Posting...' : 'Post'}
@@ -401,11 +426,20 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                       <p className="text-gray-900 text-[15px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                     </div>
                     
-                    {msg.imageUrl && (
+                    {/* Media Grid */}
+                    {(msg.imageUrls && msg.imageUrls.length > 0) ? (
+                      <div className={`mt-2 mb-2 border-y border-gray-100 bg-gray-50 grid gap-0.5 ${msg.imageUrls.length === 1 ? 'grid-cols-1' : msg.imageUrls.length === 2 ? 'grid-cols-2' : msg.imageUrls.length === 3 ? 'grid-cols-2' : 'grid-cols-2'}`}>
+                        {msg.imageUrls.map((url, i) => (
+                           <div key={i} className={`${msg.imageUrls.length === 3 && i === 0 ? 'col-span-2' : ''}`}>
+                             <SmartImage src={url} className={`w-full object-cover border border-gray-100 ${msg.imageUrls.length === 1 ? 'max-h-[500px] h-auto' : 'h-64'}`} />
+                           </div>
+                        ))}
+                      </div>
+                    ) : msg.imageUrl ? (
                       <div className="mt-2 mb-2 border-y border-gray-100 bg-gray-50 flex justify-center">
                         <SmartImage src={msg.imageUrl} className="w-full h-auto max-h-[500px] object-cover" />
                       </div>
-                    )}
+                    ) : null}
 
                     {/* Engagement Actions */}
                     <div className="px-4 sm:px-5 py-3 border-t border-gray-100 flex items-center justify-between text-gray-500">
@@ -546,6 +580,11 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
         </div>
 
       </div>
+
+      <ProfileModal 
+        isOpen={isProfileModalOpen} 
+        onClose={() => setIsProfileModalOpen(false)} 
+      />
     </div>
   )
 }
