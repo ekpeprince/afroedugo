@@ -20,7 +20,16 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
       }
       onAuthSuccess?.();
     } catch (err) {
-      setLocalError(err.message);
+      console.error(err);
+      if (err.code === 'auth/invalid-credential') {
+        setLocalError('Invalid email or password. If you signed up with Google, please click "Continue with Google" below.');
+      } else if (err.code === 'auth/email-already-in-use') {
+        setLocalError('An account already exists with this email.');
+      } else if (err.code === 'auth/weak-password') {
+        setLocalError('Password should be at least 6 characters.');
+      } else {
+        setLocalError(err.message.replace('Firebase: ', ''));
+      }
     }
   };
 
