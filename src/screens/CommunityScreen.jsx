@@ -9,11 +9,15 @@ import { useChat } from '../hooks/useChat'
 import CommentSection from '../components/CommentSection'
 import SmartImage from '../components/SmartImage'
 import ProfileModal from '../components/ProfileModal'
+import NotificationsDropdown from '../components/NotificationsDropdown'
+import { useNotifications } from '../hooks/useNotifications'
 
 const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
   const { user } = useAuth();
   const { getOrCreateConversation } = useChat();
   const { profile } = useProfile();
+  const { unreadCount } = useNotifications();
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const handleStartPrivateChat = async (userId, userName) => {
     if (!user) {
@@ -34,7 +38,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [newMessage, setNewMessage] = useState('')
 
-  const handleToggleLike = async (postId, likes = []) => {
+  const handleToggleLike = async (postId, likes = [], postAuthorId, postText) => {
     if (!user) {
       alert("Please login to react to posts!");
       return;
@@ -46,6 +50,18 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
       await updateDoc(postRef, {
         likes: isLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
       });
+      
+      if (!isLiked && postAuthorId && postAuthorId !== user.uid) {
+        await addDoc(collection(db, 'notifications'), {
+          userId: postAuthorId,
+          title: '❤️ New Like!',
+          message: `${profile?.displayName || user.email.split('@')[0]} liked your post: "${postText.slice(0, 30)}..."`,
+          type: 'like',
+          link: 'community',
+          read: false,
+          createdAt: serverTimestamp()
+        });
+      }
     } catch (err) {
       console.error("Error toggling like:", err);
     }
@@ -140,6 +156,53 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
     );
   }, [discussions, selectedCategory, searchTerm]);
 
+  const trendingTopics = useMemo(() => {
+    if (!discussions) return [];
+    
+    const counts = {};
+    discussions.forEach(d => {
+      counts[d.category] = (counts[d.category] || 0) + 1;
+    });
+    
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    
+    return sorted.map(([catId, count]) => {
+      const catInfo = categories.find(c => c.id === catId) || categories[1];
+      let title = "";
+      if (catId === 'general') title = "General discussions across the board";
+      if (catId === 'visa') title = "Latest questions and updates on visas";
+      if (catId === 'housing') title = "Tips and questions on accommodation";
+      return {
+        id: catId,
+        label: catInfo.label,
+        title: title,
+        count: count
+      };
+    });
+  }, [discussions]); // Removed 'categories' since it's defined outside
+
+  const activeMembers = useMemo(() => {
+    if (!discussions) return [];
+    
+    const userMap = {};
+    discussions.forEach(d => {
+      if (!userMap[d.userId]) {
+        userMap[d.userId] = {
+          name: d.user,
+          role: d.userRole,
+          country: d.userCountry,
+          photoURL: d.userPhotoURL,
+          count: 0
+        };
+      }
+      userMap[d.userId].count += 1;
+    });
+    
+    return Object.values(userMap)
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 3);
+  }, [discussions]);
+
   return (
     <div className="min-h-screen bg-[#F3F4F6] flex flex-col font-sans">
       {/* Top Navbar */}
@@ -170,7 +233,24 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 relative z-50">
+          {user && (
+            <div className="relative">
+              <button 
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors relative"
+              >
+                <span className="text-xl">🔔</span>
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                )}
+              </button>
+              <NotificationsDropdown 
+                isOpen={isNotificationsOpen} 
+                onClose={() => setIsNotificationsOpen(false)} 
+              />
+            </div>
+          )}
           <div className="w-10 h-10 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-gray-500 font-bold border border-gray-200 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
             {profile?.photoURL || user?.photoURL ? (
               <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
@@ -457,7 +537,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                         </button>
 
                         <button 
-                          onClick={() => handleToggleLike(msg.id, msg.likes)}
+                          onClick={() => handleToggleLike(msg.id, msg.likes, msg.userId, msg.text)}
                           className={`flex items-center gap-2 transition-colors group ${user && msg.likes?.includes(user.uid) ? 'text-red-500' : 'hover:text-red-500'}`}
                         >
                           <div className="p-2 rounded-full group-hover:bg-red-50 transition-colors">
@@ -521,51 +601,51 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
             {/* Trending Topics Widget */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
               <h3 className="font-bold text-gray-900 text-lg mb-4">Trending Topics</h3>
-              <ul className="space-y-4">
-                <li className="cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-xl transition-colors">
-                  <p className="text-xs text-gray-500 font-semibold mb-0.5">Housing in Poland</p>
-                  <p className="font-bold text-gray-900 leading-tight">Best areas to live in Warsaw?</p>
-                  <p className="text-xs text-gray-500 mt-1">42 posts</p>
-                </li>
-                <li className="cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-xl transition-colors">
-                  <p className="text-xs text-gray-500 font-semibold mb-0.5">Visa Help</p>
-                  <p className="font-bold text-gray-900 leading-tight">German blocked account update</p>
-                  <p className="text-xs text-gray-500 mt-1">18 posts</p>
-                </li>
-                <li className="cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-xl transition-colors">
-                  <p className="text-xs text-gray-500 font-semibold mb-0.5">Admissions</p>
-                  <p className="font-bold text-gray-900 leading-tight">Kaunas Uni acceptance letters out!</p>
-                  <p className="text-xs text-gray-500 mt-1">105 posts</p>
-                </li>
-              </ul>
-              <button className="w-full mt-4 text-primary font-bold text-sm hover:underline text-left">Show more</button>
+              {trendingTopics.length === 0 ? (
+                <p className="text-gray-500 text-sm">Not enough data yet.</p>
+              ) : (
+                <ul className="space-y-4">
+                  {trendingTopics.map((topic, i) => (
+                    <li key={i} onClick={() => setSelectedCategory(topic.id)} className="cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-xl transition-colors">
+                      <p className="text-xs text-gray-500 font-semibold mb-0.5">{topic.label}</p>
+                      <p className="font-bold text-gray-900 leading-tight">{topic.title}</p>
+                      <p className="text-xs text-gray-500 mt-1">{topic.count} posts</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <button onClick={() => setSelectedCategory('all')} className="w-full mt-4 text-primary font-bold text-sm hover:underline text-left">Show all categories</button>
             </div>
 
             {/* Who to follow / Connect */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-              <h3 className="font-bold text-gray-900 text-lg mb-4">Suggested Connections</h3>
-              <ul className="space-y-4">
-                {[
-                  { name: 'David M.', role: 'Current Student', country: 'Germany' },
-                  { name: 'Sarah K.', role: 'Incoming Student', country: 'Poland' },
-                  { name: 'Emmanuel T.', role: 'Alumni', country: 'Lithuania' }
-                ].map((s, i) => (
-                  <li key={i} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500">
-                        {s.name[0]}
+              <h3 className="font-bold text-gray-900 text-lg mb-4">Active Members</h3>
+              {activeMembers.length === 0 ? (
+                <p className="text-gray-500 text-sm">No active members yet.</p>
+              ) : (
+                <ul className="space-y-4">
+                  {activeMembers.map((member, i) => (
+                    <li key={i} className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500 overflow-hidden shrink-0 border border-gray-200">
+                          {member.photoURL ? (
+                            <img src={member.photoURL} className="w-full h-full object-cover" />
+                          ) : (
+                            member.name[0]?.toUpperCase() || '👤'
+                          )}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="font-bold text-gray-900 text-sm line-clamp-1">{member.name}</span>
+                          <span className="text-xs text-gray-500">{member.role === 'current' ? '🎓 Current' : '✈️ Incoming'}</span>
+                        </div>
                       </div>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-gray-900 text-sm">{s.name}</span>
-                        <span className="text-xs text-gray-500">{s.role}</span>
-                      </div>
-                    </div>
-                    <button className="text-sm font-bold text-gray-900 bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-full transition-colors">
-                      Connect
-                    </button>
-                  </li>
-                ))}
-              </ul>
+                      <button className="text-sm font-bold text-gray-900 bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-full transition-colors shrink-0">
+                        Connect
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
             <div className="text-xs text-gray-400 font-medium px-2">
