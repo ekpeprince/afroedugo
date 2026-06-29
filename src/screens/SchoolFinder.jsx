@@ -48,15 +48,13 @@ const getMatchingCourses = (courses, category) => {
     const c = (courseObj.name || courseObj).toLowerCase();
     
     if (category === 'Bachelor') {
-      return !c.includes('master') && !c.includes('msc') && !c.includes('phd') && !c.includes('doctor') && !c.includes('society');
+      return c.includes('bachelor') || c.includes('bsc') || c.includes('ba ') || (!c.includes('master') && !c.includes('msc') && !c.includes('phd') && !c.includes('doctor'));
     }
     if (category === 'Masters') {
-      const keywords = ['master', 'msc', 'software', 'cyber', 'data', 'learning', 'e-governance', 'alternative energy', 'aerospace', 'hci', 'interaction'];
-      return keywords.some(k => c.includes(k));
+      return c.includes('master') || c.includes('msc') || c.includes('mba') || c.includes('ma ');
     }
     if (category === 'PhD') {
-      const keywords = ['phd', 'doctor', 'philosophy', 'semiotics', 'bioengineering', 'physics', 'mind', 'brain'];
-      return keywords.some(k => c.includes(k));
+      return c.includes('phd') || c.includes('doctor');
     }
     if (category === 'IT') {
       const keywords = ['it', 'computer', 'software', 'artificial', 'mechatronics', 'aviation', 'telecommunication', 'cyber', 'data', 'automotive', 'engineering', 'informatics', 'interaction', 'design', 'learning'];
@@ -67,7 +65,7 @@ const getMatchingCourses = (courses, category) => {
       return keywords.some(k => c.includes(k));
     }
     if (category === 'Science') {
-      const keywords = ['medicine', 'physics', 'architecture', 'philosophy', 'aerospace', 'bioengineering', 'semiotics', 'cyber', 'data', 'biotechnology', 'history', 'mind', 'brain', 'psychology'];
+      const keywords = ['medicine', 'physics', 'architecture', 'philosophy', 'aerospace', 'bioengineering', 'semiotics', 'cyber', 'data', 'biotechnology', 'history', 'mind', 'brain', 'psychology', 'health'];
       return keywords.some(k => c.includes(k));
     }
     return true;
