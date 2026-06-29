@@ -625,7 +625,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                             <option value="">View {school.courses.length} Available Programs</option>
                             {school.courses.map(course => (
                               <option key={course.name || course} value={course.name || course}>
-                                {course.name || course}
+                                {course.name || course} {course.tuition ? `- ${course.tuition}` : ''}
                               </option>
                             ))}
                           </select>
@@ -636,7 +636,11 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                     <div className="flex items-center justify-between gap-4 mt-4 pt-3 border-t border-gray-50">
                       <div className="flex flex-col">
                         <span className="text-[9px] text-gray-400 font-bold uppercase">Estimated Fee</span>
-                        <span className="text-lg font-black text-gray-900">{school.tuition}</span>
+                        <span className="text-lg font-black text-gray-900">
+                          {school.courses && school.courses.length > 0 && school.courses[0].tuition 
+                            ? school.courses[0].tuition.replace(' (~Estimated)', '')
+                            : school.tuition}
+                        </span>
                       </div>
                       <button
                         onClick={(e) => {
