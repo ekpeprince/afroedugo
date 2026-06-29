@@ -40,36 +40,38 @@ const getCoordsForLocation = (location) => {
   return { lat: 54.6872, lng: 25.2797 }; // Fallback
 };
 
-const courseMatchesCategory = (courses, category) => {
-  if (category === 'All') return true;
-  if (!courses || courses.length === 0) return false;
+const getMatchingCourses = (courses, category) => {
+  if (category === 'All') return courses;
+  if (!courses || courses.length === 0) return [];
   
-  const cLower = courses.map(c => (c.name || c).toLowerCase());
-  
-  if (category === 'Bachelor') {
-    return cLower.some(c => !c.includes('master') && !c.includes('msc') && !c.includes('phd') && !c.includes('doctor') && !c.includes('society'));
-  }
-  if (category === 'Masters') {
-    const keywords = ['master', 'msc', 'software', 'cyber', 'data', 'learning', 'e-governance', 'alternative energy', 'aerospace', 'hci', 'interaction'];
-    return cLower.some(c => keywords.some(k => c.includes(k)));
-  }
-  if (category === 'PhD') {
-    const keywords = ['phd', 'doctor', 'philosophy', 'semiotics', 'bioengineering', 'physics', 'mind', 'brain'];
-    return cLower.some(c => keywords.some(k => c.includes(k)));
-  }
-  if (category === 'IT') {
-    const keywords = ['it', 'computer', 'software', 'artificial', 'mechatronics', 'aviation', 'telecommunication', 'cyber', 'data', 'automotive', 'engineering', 'informatics', 'interaction', 'design', 'learning'];
-    return cLower.some(c => keywords.some(k => c.includes(k)));
-  }
-  if (category === 'Business') {
-    const keywords = ['business', 'marketing', 'management', 'tourism', 'hotel', 'economics', 'finance', 'relation', 'european', 'law', 'e-governance', 'administration'];
-    return cLower.some(c => keywords.some(k => c.includes(k)));
-  }
-  if (category === 'Science') {
-    const keywords = ['medicine', 'physics', 'architecture', 'philosophy', 'aerospace', 'bioengineering', 'semiotics', 'cyber', 'data', 'biotechnology', 'history', 'mind', 'brain', 'psychology'];
-    return cLower.some(c => keywords.some(k => c.includes(k)));
-  }
-  return true;
+  return courses.filter(courseObj => {
+    const c = (courseObj.name || courseObj).toLowerCase();
+    
+    if (category === 'Bachelor') {
+      return !c.includes('master') && !c.includes('msc') && !c.includes('phd') && !c.includes('doctor') && !c.includes('society');
+    }
+    if (category === 'Masters') {
+      const keywords = ['master', 'msc', 'software', 'cyber', 'data', 'learning', 'e-governance', 'alternative energy', 'aerospace', 'hci', 'interaction'];
+      return keywords.some(k => c.includes(k));
+    }
+    if (category === 'PhD') {
+      const keywords = ['phd', 'doctor', 'philosophy', 'semiotics', 'bioengineering', 'physics', 'mind', 'brain'];
+      return keywords.some(k => c.includes(k));
+    }
+    if (category === 'IT') {
+      const keywords = ['it', 'computer', 'software', 'artificial', 'mechatronics', 'aviation', 'telecommunication', 'cyber', 'data', 'automotive', 'engineering', 'informatics', 'interaction', 'design', 'learning'];
+      return keywords.some(k => c.includes(k));
+    }
+    if (category === 'Business') {
+      const keywords = ['business', 'marketing', 'management', 'tourism', 'hotel', 'economics', 'finance', 'relation', 'european', 'law', 'e-governance', 'administration'];
+      return keywords.some(k => c.includes(k));
+    }
+    if (category === 'Science') {
+      const keywords = ['medicine', 'physics', 'architecture', 'philosophy', 'aerospace', 'bioengineering', 'semiotics', 'cyber', 'data', 'biotechnology', 'history', 'mind', 'brain', 'psychology'];
+      return keywords.some(k => c.includes(k));
+    }
+    return true;
+  });
 };
 
 const SchoolFinder = ({ onBack, initialSchools }) => {
@@ -314,7 +316,13 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
       });
     }
 
-    return list.filter(school => courseMatchesCategory(school.courses, selectedCategory));
+    return list.map(school => {
+      const matchedCourses = getMatchingCourses(school.courses, selectedCategory);
+      if (matchedCourses && matchedCourses.length > 0) {
+        return { ...school, courses: matchedCourses };
+      }
+      return null;
+    }).filter(Boolean);
   }, [schoolsWithCoords, selectedCountry, selectedBudget, localSearch, searchResults, selectedCategory]);
 
   if (dbLoading && verifiedSchools.length === 0) {
