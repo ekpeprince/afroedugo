@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '../firebase/config';
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export const useAuth = () => {
@@ -106,5 +106,18 @@ export const useAuth = () => {
       console.error("Logout error:", error);
     }
   };
-  return { user, loading, error, login, signup, logout, loginWithGoogle, loginWithTikTok };
+  const resetPassword = async (email) => {
+    setLoading(true);
+    setError(null);
+    try {
+      await sendPasswordResetEmail(auth, email);
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { user, loading, error, login, signup, logout, loginWithGoogle, loginWithTikTok, resetPassword };
 };
