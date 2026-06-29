@@ -14,8 +14,6 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
   const { getOrCreateConversation } = useChat();
   const { profile } = useProfile();
 
-  // ... existing state ...
-
   const handleStartPrivateChat = async (userId, userName) => {
     if (!user) {
       alert("Please login to message students!");
@@ -30,6 +28,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
       onOpenChat(convId);
     }
   };
+
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [newMessage, setNewMessage] = useState('')
@@ -50,6 +49,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
       console.error("Error toggling like:", err);
     }
   };
+
   const [isSending, setIsSending] = useState(false)
   const [expandedPost, setExpandedPost] = useState(null)
   const [attachedImage, setAttachedImage] = useState(null);
@@ -118,7 +118,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
       setIsSending(false);
     }
   };
-  // ... filteredDiscussions ...
+
   const filteredDiscussions = useMemo(() => {
     return discussions.filter(d => 
       (selectedCategory === 'all' || d.category === selectedCategory) &&
@@ -127,143 +127,239 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
   }, [discussions, selectedCategory, searchTerm]);
 
   return (
-    <div className="min-h-screen bg-[#FDFCFB] flex flex-col">
-      <header className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-2xl z-20 px-6 py-4 flex items-center justify-between border-b border-gray-100">
+    <div className="min-h-screen bg-[#F3F4F6] flex flex-col font-sans">
+      {/* Top Navbar */}
+      <header className="fixed top-0 left-0 right-0 bg-white z-30 h-16 flex items-center justify-between px-4 sm:px-8 border-b border-gray-200 shadow-sm">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="text-2xl hover:text-primary transition-colors text-gray-900">←</button>
-          <div className="flex flex-col">
-            <h1 className="text-xl font-black tracking-tight leading-none text-gray-900 mb-1">Community Hub</h1>
-            <p className="text-[10px] font-black uppercase tracking-widest text-primary">Student Forum</p>
+          <button onClick={onBack} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-100 transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-gray-700">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight leading-none">AfroEdugo <span className="text-primary font-black">Social</span></h1>
           </div>
         </div>
-        <div className="w-10 h-10 bg-primary/10 rounded-full overflow-hidden flex items-center justify-center text-primary font-black text-xs shadow-inner">
-          {profile?.photoURL || user?.photoURL ? (
-            <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
-          ) : user ? (
-            user.email[0].toUpperCase()
-          ) : (
-            '👤'
-          )}
+
+        <div className="flex-grow max-w-md mx-8 hidden md:block">
+          <div className="relative">
+            <input 
+              type="text"
+              placeholder="Search community..." 
+              className="w-full bg-gray-100 py-2.5 pl-12 pr-4 rounded-full border-none focus:ring-2 ring-primary/30 outline-none transition-all font-medium text-gray-900 placeholder:text-gray-500 text-sm"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+            </svg>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-gray-500 font-bold border border-gray-200 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all">
+            {profile?.photoURL || user?.photoURL ? (
+              <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+            ) : user ? (
+              user.email[0].toUpperCase()
+            ) : (
+              '👤'
+            )}
+          </div>
         </div>
       </header>
 
-      <div className="flex-grow pt-24 px-4 sm:px-6 pb-24 max-w-3xl mx-auto w-full">
-        {/* Create Post Section */}
-        <div className="bg-white p-6 rounded-[2rem] shadow-xl shadow-gray-200/50 border border-gray-100 mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
-          <form onSubmit={handleSendMessage} className="flex flex-col gap-4">
-            <div className="flex gap-4 items-start">
-            <div className="w-12 h-12 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-gray-500 font-black text-sm shrink-0 border border-gray-200">
-              {profile?.photoURL || user?.photoURL ? (
-                <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
-              ) : user ? (
-                user.email[0].toUpperCase()
-              ) : (
-                '👤'
-              )}
-            </div>
-              <textarea 
-                placeholder="What's on your mind? Ask a question or share a tip..."
-                className="flex-grow bg-transparent pt-3 pb-2 outline-none font-medium text-gray-900 placeholder:text-gray-400 resize-none min-h-[60px]"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                disabled={isSending}
-              />
-            </div>
+      {/* Main Layout Container */}
+      <div className="flex-grow pt-20 px-4 pb-24 max-w-7xl mx-auto w-full flex flex-col lg:flex-row gap-6">
+        
+        {/* LEFT SIDEBAR (Sticky Navigation) */}
+        <div className="hidden lg:block w-72 shrink-0">
+          <div className="sticky top-24 space-y-6">
             
-            {imagePreview && (
-              <div className="mb-2 relative inline-block ml-16">
-                <img src={imagePreview} className="w-32 h-32 object-cover rounded-2xl shadow-md border border-gray-100" />
-                <button 
-                  type="button"
-                  onClick={() => {setAttachedImage(null); setImagePreview(null);}}
-                  className="absolute -top-3 -right-3 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg hover:bg-red-600 transition-colors"
-                >✕</button>
+            {/* User Profile Mini Card */}
+            {user ? (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex flex-col items-center text-center">
+                <div className="w-20 h-20 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-2xl font-bold border-4 border-white shadow-md mb-3">
+                  {profile?.photoURL || user?.photoURL ? (
+                    <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    user.email[0].toUpperCase()
+                  )}
+                </div>
+                <h3 className="font-bold text-gray-900 text-lg leading-tight">{profile?.displayName || user.email.split('@')[0]}</h3>
+                <p className="text-gray-500 text-sm mb-2">{profile?.major || 'Undecided Major'}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${profile?.role === 'current' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
+                    {profile?.role === 'current' ? '🎓 Current Student' : '✈️ Incoming'}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-2xl mb-3">👋</div>
+                <h3 className="font-bold text-gray-900 mb-2">Join the Community</h3>
+                <p className="text-sm text-gray-500 mb-4">Connect with students and share experiences.</p>
+                <button onClick={onLogin} className="w-full bg-primary text-white py-2.5 rounded-full font-bold shadow-md hover:bg-primary/90 transition-colors">
+                  Log In or Sign Up
+                </button>
               </div>
             )}
-            
-            <div className="flex items-center justify-between pt-4 border-t border-gray-50 ml-16">
-              <button 
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 text-gray-500 hover:text-primary transition-colors font-bold text-xs"
-              >
-                <span className="text-xl">📷</span> Photo
-              </button>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileChange} 
-                className="hidden" 
-                accept="image/*" 
+
+            {/* Navigation Menu */}
+            <nav className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+              <ul className="flex flex-col py-2">
+                <li>
+                  <button className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 transition-colors text-primary font-bold bg-primary/5 border-l-4 border-primary">
+                    <span className="text-xl">🏠</span> Home Feed
+                  </button>
+                </li>
+                <li>
+                  <button className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 transition-colors text-gray-700 font-semibold border-l-4 border-transparent">
+                    <span className="text-xl">🔖</span> Saved Posts
+                  </button>
+                </li>
+                <li>
+                  <button className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 transition-colors text-gray-700 font-semibold border-l-4 border-transparent">
+                    <span className="text-xl">✉️</span> Messages
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+
+        {/* MIDDLE COLUMN (Main Feed) */}
+        <div className="flex-grow max-w-2xl w-full mx-auto">
+          
+          {/* Mobile Search & Categories */}
+          <div className="md:hidden mb-4">
+             <input 
+                type="text"
+                placeholder="Search community..." 
+                className="w-full bg-white py-3 px-4 rounded-xl border border-gray-200 focus:border-primary outline-none transition-all font-medium text-gray-900 text-sm shadow-sm mb-3"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
+          </div>
+          
+          {/* Categories Tab (Stories style or Pills) */}
+          <div className="flex gap-2 overflow-x-auto no-scrollbar mb-6 pb-1">
+            {categories.map((cat) => (
               <button 
-                type="submit"
-                disabled={isSending || (!newMessage.trim() && !attachedImage) || !user}
-                className="bg-primary text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
+                key={cat.id}
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full whitespace-nowrap transition-all font-bold text-sm ${
+                  selectedCategory === cat.id 
+                    ? 'bg-gray-900 text-white shadow-md' 
+                    : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                }`}
               >
-                {isSending ? 'Posting...' : 'Post'}
+                <span>{cat.icon}</span>
+                {cat.label}
               </button>
-            </div>
-            {!user && (
-               <div className="text-center mt-2">
-                 <button type="button" onClick={onLogin} className="text-primary font-bold text-xs hover:underline">Log in to join the conversation</button>
-               </div>
-            )}
-          </form>
-        </div>
+            ))}
+          </div>
 
-        <div className="flex gap-3 overflow-x-auto no-scrollbar mb-6 pb-2">
-          {categories.map((cat) => (
-            <button 
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`flex items-center gap-2 px-6 py-3 rounded-2xl whitespace-nowrap transition-all font-black text-xs uppercase tracking-widest ${
-                selectedCategory === cat.id 
-                  ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' 
-                  : 'bg-white text-gray-500 border border-gray-100 hover:bg-gray-50'
-              }`}
-            >
-              <span>{cat.icon}</span>
-              {cat.label}
-            </button>
-          ))}
-        </div>
+          {/* Create Post Section */}
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 mb-6">
+            <form onSubmit={handleSendMessage} className="flex flex-col">
+              <div className="flex gap-3 items-start">
+                <div className="w-10 h-10 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-gray-500 font-bold text-sm shrink-0">
+                  {profile?.photoURL || user?.photoURL ? (
+                    <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : user ? (
+                    user.email[0].toUpperCase()
+                  ) : (
+                    '👤'
+                  )}
+                </div>
+                <div className="flex-grow flex flex-col">
+                  <textarea 
+                    placeholder="Share something with the community..."
+                    className="w-full bg-transparent pt-2 pb-2 outline-none font-medium text-gray-900 text-lg placeholder:text-gray-400 resize-none min-h-[50px]"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    disabled={isSending}
+                  />
+                </div>
+              </div>
+              
+              {imagePreview && (
+                <div className="mt-3 mb-2 relative inline-block ml-13">
+                  <img src={imagePreview} className="max-w-full h-auto max-h-[300px] object-cover rounded-xl border border-gray-200" />
+                  <button 
+                    type="button"
+                    onClick={() => {setAttachedImage(null); setImagePreview(null);}}
+                    className="absolute top-2 right-2 bg-gray-900/70 backdrop-blur-sm text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-900 transition-colors"
+                  >✕</button>
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-100">
+                <button 
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 text-primary hover:bg-primary/5 px-3 py-1.5 rounded-full transition-colors font-bold text-sm"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  Media
+                </button>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  className="hidden" 
+                  accept="image/*" 
+                />
+                <button 
+                  type="submit"
+                  disabled={isSending || (!newMessage.trim() && !attachedImage) || !user}
+                  className="bg-primary text-white px-6 py-2 rounded-full font-bold text-sm shadow-sm hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50"
+                >
+                  {isSending ? 'Posting...' : 'Post'}
+                </button>
+              </div>
+              {!user && (
+                 <div className="text-center mt-3 text-sm">
+                   <button type="button" onClick={onLogin} className="text-primary font-bold hover:underline">Log in to interact</button>
+                 </div>
+              )}
+            </form>
+          </div>
 
-        <div className="relative mb-8">
-          <input 
-            type="text"
-            placeholder="Search discussions..." 
-            className="w-full bg-white py-4 pl-12 pr-6 rounded-2xl border border-gray-100 focus:border-primary/40 focus:ring-4 ring-primary/10 outline-none transition-all font-bold text-gray-900 placeholder:text-gray-400 shadow-sm"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <svg className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
-          </svg>
-        </div>
-
-        <div className="space-y-6">
-          {loading ? (
-            <div className="flex flex-col items-center py-20 animate-pulse">
-              <div className="w-12 h-12 bg-gray-200 rounded-full mb-4"></div>
-              <div className="h-4 w-32 bg-gray-200 rounded"></div>
-            </div>
-          ) : filteredDiscussions.length === 0 ? (
-            <div className="text-center py-20 bg-white rounded-[3rem] p-10 border border-gray-100 shadow-sm">
-              <div className="text-4xl mb-4 opacity-50">📫</div>
-              <p className="text-gray-900 font-bold">No discussions yet</p>
-              <p className="text-gray-400 text-xs font-bold uppercase mt-1 tracking-widest">Be the first to start a conversation!</p>
-            </div>
-          ) : (
-            filteredDiscussions.map((msg) => {
-              const catInfo = categories.find(c => c.id === msg.category) || categories[1];
-              return (
-                <div key={msg.id} className="group animate-in fade-in duration-500">
-                  <div className="bg-white p-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-200/40 group-hover:border-primary/20 transition-all">
+          {/* Posts Feed */}
+          <div className="space-y-4">
+            {loading ? (
+              [1, 2, 3].map(i => (
+                <div key={i} className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 animate-pulse">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-gray-200 rounded"></div>
+                      <div className="h-3 w-20 bg-gray-200 rounded"></div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="h-4 w-full bg-gray-200 rounded"></div>
+                    <div className="h-4 w-5/6 bg-gray-200 rounded"></div>
+                  </div>
+                </div>
+              ))
+            ) : filteredDiscussions.length === 0 ? (
+              <div className="text-center py-16 bg-white rounded-2xl border border-gray-200 shadow-sm">
+                <div className="text-4xl mb-3 opacity-50">📫</div>
+                <p className="text-gray-900 font-bold text-lg">No posts yet</p>
+                <p className="text-gray-500 text-sm mt-1">Be the first to share something!</p>
+              </div>
+            ) : (
+              filteredDiscussions.map((msg) => {
+                const catInfo = categories.find(c => c.id === msg.category) || categories[1];
+                return (
+                  <article key={msg.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
                     {/* Post Header */}
-                    <div className="flex justify-between items-start mb-4">
+                    <div className="p-4 sm:p-5 flex justify-between items-start">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-gray-50 rounded-full overflow-hidden flex items-center justify-center text-xl border border-gray-100 shadow-sm">
+                        <div className="w-10 h-10 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-lg shrink-0 cursor-pointer border border-gray-200">
                           {msg.userPhotoURL ? (
                             <img src={msg.userPhotoURL} alt="Avatar" className="w-full h-full object-cover" />
                           ) : (
@@ -271,88 +367,104 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                           )}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-black text-gray-900 text-base">{msg.user}</span>
-                            <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wide ${msg.userRole === 'current' ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}`}>
-                              {msg.userRole === 'current' ? '🎓 Current' : '✈️ Incoming'}
+                          <div className="flex items-center flex-wrap gap-x-2 gap-y-0.5 leading-tight">
+                            <span className="font-bold text-gray-900 cursor-pointer hover:underline">{msg.user}</span>
+                            <span className="text-gray-500 text-sm">·</span>
+                            <span className="text-gray-500 text-sm hover:underline cursor-pointer">
+                              {msg.createdAt?.toDate ? (() => {
+                                const date = msg.createdAt.toDate();
+                                const now = new Date();
+                                const diffMs = now - date;
+                                const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                                if (diffHrs < 1) return 'Just now';
+                                if (diffHrs < 24) return `${diffHrs}h`;
+                                return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                              })() : 'Just now'}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold">
-                            <span>{msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleDateString() : 'Just now'}</span>
-                            <span>•</span>
-                            <span className="text-primary">{catInfo.label}</span>
+                          <div className="text-gray-500 text-sm mt-0.5 line-clamp-1">
+                            {msg.userRole === 'current' ? '🎓 Current Student' : '✈️ Incoming'} 
+                            {msg.userCountry ? ` from ${msg.userCountry}` : ''}
                           </div>
                         </div>
                       </div>
-                      {user && msg.userId !== user.uid && (
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStartPrivateChat(msg.userId, msg.user);
-                          }}
-                          className="p-2.5 bg-gray-50 rounded-xl text-primary hover:bg-primary hover:text-white transition-all active:scale-90 shadow-sm"
-                          title="Message Student"
-                        >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 1 1-7.6-11.7 8.38 8.38 0 0 1 3.8.9L21 3z"/>
-                          </svg>
-                        </button>
-                      )}
+                      
+                      <button className="text-gray-400 hover:text-gray-600 hover:bg-gray-50 p-1.5 rounded-full transition-colors">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/>
+                        </svg>
+                      </button>
                     </div>
 
-                    {/* Post Body */}
-                    <p className="text-gray-800 text-[15px] leading-relaxed font-medium mb-4 whitespace-pre-wrap">{msg.text}</p>
+                    {/* Post Content */}
+                    <div className="px-4 sm:px-5 pb-3">
+                      <p className="text-gray-900 text-[15px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                    </div>
                     
                     {msg.imageUrl && (
-                      <div className="mb-4 rounded-[1.5rem] overflow-hidden border border-gray-100 shadow-sm">
-                        <SmartImage src={msg.imageUrl} className="w-full h-auto max-h-96 object-cover hover:scale-105 transition-transform duration-700" />
+                      <div className="mt-2 mb-2 border-y border-gray-100 bg-gray-50 flex justify-center">
+                        <SmartImage src={msg.imageUrl} className="w-full h-auto max-h-[500px] object-cover" />
                       </div>
                     )}
 
-                    {/* Post Footer (Engagement) */}
-                    <div className="flex items-center justify-between border-t border-gray-50 pt-4 mt-2">
-                      <div className="flex gap-6">
+                    {/* Engagement Actions */}
+                    <div className="px-4 sm:px-5 py-3 border-t border-gray-100 flex items-center justify-between text-gray-500">
+                      <div className="flex items-center gap-6">
                         <button 
-                          onClick={() => handleToggleLike(msg.id, msg.likes)}
-                          className={`flex items-center gap-2 text-sm font-black transition-all hover:scale-105 active:scale-95 ${
-                            user && msg.likes?.includes(user.uid) 
-                              ? 'text-red-500' 
-                              : 'text-gray-500 hover:text-red-400'
-                          }`}
+                          onClick={() => setExpandedPost(expandedPost === msg.id ? null : msg.id)}
+                          className="flex items-center gap-2 hover:text-primary transition-colors group"
                         >
-                          <svg 
-                            width="20" 
-                            height="20" 
-                            viewBox="0 0 24 24" 
-                            fill={user && msg.likes?.includes(user.uid) ? "currentColor" : "none"} 
-                            stroke="currentColor" 
-                            strokeWidth="2.5"
-                          >
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                          </svg>
-                          <span>{msg.likes?.length || 0}</span>
+                          <div className="p-2 rounded-full group-hover:bg-primary/10 transition-colors">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                            </svg>
+                          </div>
+                          <span className="text-sm font-semibold">{msg.commentCount || 0}</span>
                         </button>
 
                         <button 
-                          onClick={() => setExpandedPost(expandedPost === msg.id ? null : msg.id)}
-                          className={`flex items-center gap-2 text-sm font-black transition-all hover:scale-105 active:scale-95 ${
-                            expandedPost === msg.id ? 'text-primary' : 'text-gray-500 hover:text-primary'
-                          }`}
+                          onClick={() => handleToggleLike(msg.id, msg.likes)}
+                          className={`flex items-center gap-2 transition-colors group ${user && msg.likes?.includes(user.uid) ? 'text-red-500' : 'hover:text-red-500'}`}
                         >
-                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                          </svg>
-                          <span>{msg.commentCount || 0}</span>
+                          <div className="p-2 rounded-full group-hover:bg-red-50 transition-colors">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill={user && msg.likes?.includes(user.uid) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2">
+                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                            </svg>
+                          </div>
+                          <span className="text-sm font-semibold">{msg.likes?.length || 0}</span>
                         </button>
                       </div>
-                      <div className="flex gap-2 hidden sm:flex">
-                         {msg.userCountry && <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-gray-50 text-gray-500">📍 {msg.userCountry}</span>}
-                         {msg.userMajor && <span className="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-lg bg-gray-50 text-gray-500">🎓 {msg.userMajor}</span>}
+
+                      <div className="flex items-center gap-2">
+                        {user && msg.userId !== user.uid && (
+                           <button 
+                             onClick={(e) => {
+                               e.stopPropagation();
+                               handleStartPrivateChat(msg.userId, msg.user);
+                             }}
+                             className="flex items-center gap-2 hover:text-primary transition-colors group"
+                             title="Send Private Message"
+                           >
+                             <div className="p-2 rounded-full group-hover:bg-primary/10 transition-colors">
+                               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                               </svg>
+                             </div>
+                           </button>
+                        )}
+                        <button className="flex items-center gap-2 hover:text-blue-500 transition-colors group">
+                          <div className="p-2 rounded-full group-hover:bg-blue-50 transition-colors">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+                            </svg>
+                          </div>
+                        </button>
                       </div>
                     </div>
 
+                    {/* Comments Section */}
                     {expandedPost === msg.id && (
-                      <div className="mt-4">
+                      <div className="border-t border-gray-100 bg-gray-50/50 p-4 sm:p-5">
                         <CommentSection 
                           postId={msg.id} 
                           postAuthorId={msg.userId}
@@ -361,16 +473,81 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                         />
                       </div>
                     )}
-                  </div>
-                </div>
-              );
-            })
-          )}
+                  </article>
+                );
+              })
+            )}
+          </div>
         </div>
+
+        {/* RIGHT SIDEBAR (Trending & Suggestions) */}
+        <div className="hidden xl:block w-80 shrink-0">
+          <div className="sticky top-24 space-y-6">
+            
+            {/* Trending Topics Widget */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+              <h3 className="font-bold text-gray-900 text-lg mb-4">Trending Topics</h3>
+              <ul className="space-y-4">
+                <li className="cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-xl transition-colors">
+                  <p className="text-xs text-gray-500 font-semibold mb-0.5">Housing in Poland</p>
+                  <p className="font-bold text-gray-900 leading-tight">Best areas to live in Warsaw?</p>
+                  <p className="text-xs text-gray-500 mt-1">42 posts</p>
+                </li>
+                <li className="cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-xl transition-colors">
+                  <p className="text-xs text-gray-500 font-semibold mb-0.5">Visa Help</p>
+                  <p className="font-bold text-gray-900 leading-tight">German blocked account update</p>
+                  <p className="text-xs text-gray-500 mt-1">18 posts</p>
+                </li>
+                <li className="cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-xl transition-colors">
+                  <p className="text-xs text-gray-500 font-semibold mb-0.5">Admissions</p>
+                  <p className="font-bold text-gray-900 leading-tight">Kaunas Uni acceptance letters out!</p>
+                  <p className="text-xs text-gray-500 mt-1">105 posts</p>
+                </li>
+              </ul>
+              <button className="w-full mt-4 text-primary font-bold text-sm hover:underline text-left">Show more</button>
+            </div>
+
+            {/* Who to follow / Connect */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
+              <h3 className="font-bold text-gray-900 text-lg mb-4">Suggested Connections</h3>
+              <ul className="space-y-4">
+                {[
+                  { name: 'David M.', role: 'Current Student', country: 'Germany' },
+                  { name: 'Sarah K.', role: 'Incoming Student', country: 'Poland' },
+                  { name: 'Emmanuel T.', role: 'Alumni', country: 'Lithuania' }
+                ].map((s, i) => (
+                  <li key={i} className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center font-bold text-gray-500">
+                        {s.name[0]}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 text-sm">{s.name}</span>
+                        <span className="text-xs text-gray-500">{s.role}</span>
+                      </div>
+                    </div>
+                    <button className="text-sm font-bold text-gray-900 bg-gray-100 hover:bg-gray-200 px-4 py-1.5 rounded-full transition-colors">
+                      Connect
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="text-xs text-gray-400 font-medium px-2">
+              <p>© 2026 AfroEdugo Social. All rights reserved.</p>
+              <div className="flex gap-3 mt-1">
+                <a href="#" className="hover:underline">Privacy Policy</a>
+                <a href="#" className="hover:underline">Terms of Service</a>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+
       </div>
     </div>
   )
 }
 
 export default CommunityScreen
-
