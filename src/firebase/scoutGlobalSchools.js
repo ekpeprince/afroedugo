@@ -1084,8 +1084,45 @@ const scoutGlobal = async () => {
     console.log('Clearing old records...');
 
     for (const school of globalSchools) {
+      const updatedCourses = school.courses ? school.courses.map(c => {
+        if (typeof c !== 'string') return c; // Already mapped
+
+        const cLower = c.toLowerCase();
+        let duration = '3 - 4 Years';
+        let tuitionStr = school.tuition;
+        
+        // Extract numeric base tuition
+        const baseMatch = school.tuition.match(/[\d,]+/);
+        let baseTuition = baseMatch ? parseInt(baseMatch[0].replace(/,/g, ''), 10) : 0;
+        const currency = school.tuition.includes('€') ? '€' : (school.tuition.includes('$') ? '$' : '€');
+
+        if (cLower.includes('phd') || cLower.includes('doctor')) {
+          duration = '3 - 4 Years';
+          tuitionStr = '€0 / year (State Funded)';
+        } else if (cLower.includes('medicine') || cLower.includes('dentistry') || cLower.includes('aviation')) {
+          duration = '5 - 6 Years (Integrated)';
+          const estimatedHigh = baseTuition ? Math.round(baseTuition * 2.5 / 100) * 100 : 10000;
+          tuitionStr = `${currency}${estimatedHigh.toLocaleString()} / year (~Estimated)`;
+        } else if (cLower.includes('master') || cLower.includes('msc') || cLower.includes('mba') || cLower.includes('ma')) {
+          duration = '1.5 - 2 Years';
+          const estimatedMaster = baseTuition ? Math.round(baseTuition * 1.2 / 100) * 100 : 4000;
+          tuitionStr = `${currency}${estimatedMaster.toLocaleString()} / year (~Estimated)`;
+        } else {
+          duration = '3 - 4 Years';
+          tuitionStr = school.tuition.includes('(~Estimated)') ? school.tuition : school.tuition + ' (~Estimated)';
+        }
+
+        return { 
+          name: c, 
+          duration: duration, 
+          tuition: tuitionStr, 
+          requirements: school.admissionReqs ? school.admissionReqs.join(', ') : 'Check university requirements' 
+        };
+      }) : [];
+
       await addDoc(schoolsCol, {
         ...school,
+        courses: updatedCourses,
         createdAt: serverTimestamp()
       });
       console.log(`Added: ${school.name} (${school.country})`);
