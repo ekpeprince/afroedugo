@@ -38,6 +38,8 @@ messaging.onBackgroundMessage(function (payload) {
     tag:           'afroedugo-' + Date.now(),
     renotify:      true,
     requireInteraction: false,
+    vibrate:       [100, 50, 100], // vibration pattern
+    sound:         'default',      // plays default sound
     data:          { link },
   });
 });

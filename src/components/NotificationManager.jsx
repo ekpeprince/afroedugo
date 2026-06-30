@@ -5,6 +5,41 @@ import { useNotifications } from '../hooks/useNotifications';
 import { useAuth } from '../hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
+const playChime = () => {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    
+    const playNote = (time, freq, duration) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, time);
+      
+      gain.gain.setValueAtTime(0, time);
+      // Soft curves prevent clipping click noise
+      gain.gain.linearRampToValueAtTime(0.12, time + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(time);
+      osc.stop(time + duration);
+    };
+
+    const now = ctx.currentTime;
+    // Ascending major chord chime (D5 -> A5 -> D6)
+    playNote(now, 587.33, 0.4);       // D5
+    playNote(now + 0.08, 880.00, 0.35);  // A5
+    playNote(now + 0.16, 1174.66, 0.5);  // D6
+  } catch (err) {
+    console.warn('Web Audio chime playback failed:', err);
+  }
+};
+
 export default function NotificationManager() {
   const { user } = useAuth();
   const { notifications } = useNotifications();
@@ -62,13 +97,17 @@ export default function NotificationManager() {
       });
 
       newItems.forEach(n => {
+        // Play the premium synthetic chime sound
+        playChime();
+
         if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
           try {
             const systemNotification = new Notification(n.title || '🔔 AfroEduGo Alert', {
               body: n.message || 'You received a new update.',
               icon: '/icon-192.png',
               tag: n.id,
-              renotify: true
+              renotify: true,
+              vibrate: [100, 50, 100] // Double vibration
             });
 
             systemNotification.onclick = () => {
