@@ -201,6 +201,17 @@ export default function NotificationsClient() {
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
+  const renderCleanMessage = (n) => {
+    if (!n.senderName || !n.message) return n.message;
+    let cleanMsg = n.message;
+    if (cleanMsg.startsWith(`${n.senderName}:`)) {
+      cleanMsg = cleanMsg.slice(n.senderName.length + 1).trim();
+    } else if (cleanMsg.startsWith(n.senderName)) {
+      cleanMsg = cleanMsg.slice(n.senderName.length).trim();
+    }
+    return cleanMsg;
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-[#FDFCFB] dark:bg-gray-900 flex flex-col items-center justify-center p-6 text-center">
@@ -339,11 +350,13 @@ export default function NotificationsClient() {
                                 e.stopPropagation();
                                 setViewingUser({ userId: n.senderId, displayName: n.senderName, photoURL: n.senderPhotoURL || null });
                               }}
-                              className="font-black text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary hover:underline transition-colors"
+                              className="font-black text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary hover:underline transition-colors mr-1"
                             >
                               {n.senderName}
                             </button>
-                            {n.message?.replace(n.senderName, '') || ''}
+                            <span className="text-gray-500 dark:text-gray-400 font-medium">
+                              {renderCleanMessage(n)}
+                            </span>
                           </>
                         ) : n.message}
                       </p>

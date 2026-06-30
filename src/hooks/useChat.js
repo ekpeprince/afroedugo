@@ -177,16 +177,20 @@ export const useChat = (conversationId = null) => {
         try {
           // Get sender's display name
           const senderSnap = await getDoc(doc(db, 'users', user.uid));
-          const senderName = senderSnap.data()?.displayName || user.displayName || user.email?.split('@')[0] || 'Someone';
+          const senderData = senderSnap.data();
+          const senderName = senderData?.displayName || user.displayName || user.email?.split('@')[0] || 'Someone';
+          const senderPhotoURL = senderData?.photoURL || senderData?.photoUrl || user.photoURL || null;
           const preview = imageUrl ? '📷 Sent a photo' : text.slice(0, 60);
 
           // 1. Create a Firestore notification document so it displays in the Feed!
           await addDoc(collection(db, 'notifications'), {
             userId: recipientId,
             senderId: user.uid,
+            senderName,
+            senderPhotoURL,
             conversationId: convId,
             title: `✉️ New Message!`,
-            message: `${senderName}: "${preview}"`,
+            message: `sent you a message: "${preview}"`,
             type: 'chat',
             link: 'chat',
             read: false,
