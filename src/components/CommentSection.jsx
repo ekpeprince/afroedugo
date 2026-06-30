@@ -83,6 +83,9 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
           const preview = newComment.slice(0, 45);
           await addDoc(collection(db, 'notifications'), {
             userId: replyingTo.userId,
+            senderId: user.uid,
+            postId,
+            commentId: replyingTo.commentId,
             title: '💬 New Reply to Comment!',
             message: `${senderName} replied to your comment: "${preview}..."`,
             type: 'reply',
@@ -96,6 +99,8 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
         // Top-level comment: Notify the post author
         await addDoc(collection(db, 'notifications'), {
           userId: postAuthorId,
+          senderId: user.uid,
+          postId,
           title: '💬 New Reply!',
           message: `${senderName} replied to your post: "${postTitle}"`,
           type: 'reply',

@@ -93,6 +93,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         const snippet = (postText || '').slice(0, 40);
         await addDoc(collection(db, 'notifications'), {
           userId: postAuthorId,
+          senderId: user.uid,
+          postId,
           title: '❤️ New Like!',
           message: `${senderName} liked your post: "${snippet}..."`,
           type: 'like',
