@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { db } from '../firebase/config';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useAuth } from './useAuth';
 
 /**
@@ -46,7 +46,7 @@ export function usePushNotifications() {
         const token = await getToken(messaging, { vapidKey });
 
         if (token) {
-          await updateDoc(doc(db, 'users', user.uid), { fcmToken: token });
+          await setDoc(doc(db, 'users', user.uid), { fcmToken: token }, { merge: true });
           registered.current = true;
           console.log('[usePushNotifications] FCM token registered ✓');
         }

@@ -76,7 +76,15 @@ export default function LinkPreview({ url }) {
           {previewData.logo?.url && (
             <img src={previewData.logo.url} alt="Favicon" className="w-4 h-4 rounded" />
           )}
-          <span className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">{previewData.publisher || new URL(url).hostname}</span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">
+            {previewData.publisher || (() => {
+              try {
+                return new URL(url).hostname;
+              } catch (_) {
+                return url;
+              }
+            })()}
+          </span>
         </div>
       </div>
     </a>
