@@ -9,6 +9,7 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { useChat } from '../hooks/useChat'
+import { compressImage } from '../utils/imageCompressor'
 import CommentSection from '../components/CommentSection'
 import SmartImage from '../components/SmartImage'
 import ProfileModal from '../components/ProfileModal'
@@ -142,20 +143,24 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
     setOpenMenuId(null);
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
-    // Client-side validation: Restrict file uploads to 5MB to match storage rules
-    const oversizedFile = files.find(file => file.size > 5 * 1024 * 1024);
-    if (oversizedFile) {
-      alert(`"${oversizedFile.name}" is too large! Maximum file size is 5MB. Please choose a smaller photo.`);
-      return;
+    try {
+      // Compress each image file concurrently client-side
+      const compressedFiles = await Promise.all(
+        files.map(file => compressImage(file))
+      );
+      const newFiles = [...attachedImages, ...compressedFiles].slice(0, 4);
+      setAttachedImages(newFiles);
+      setImagePreviews(newFiles.map(f => URL.createObjectURL(f)));
+    } catch (err) {
+      console.error('Image compression failed, falling back to original files:', err);
+      const newFiles = [...attachedImages, ...files].slice(0, 4);
+      setAttachedImages(newFiles);
+      setImagePreviews(newFiles.map(f => URL.createObjectURL(f)));
     }
-
-    const newFiles = [...attachedImages, ...files].slice(0, 4);
-    setAttachedImages(newFiles);
-    setImagePreviews(newFiles.map(f => URL.createObjectURL(f)));
   };
 
   const removeImage = (index) => {
