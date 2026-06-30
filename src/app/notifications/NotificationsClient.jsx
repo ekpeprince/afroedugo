@@ -331,7 +331,21 @@ export default function NotificationsClient() {
                         )}
                       </div>
                       <p className="text-gray-650 dark:text-gray-300 text-xs font-semibold leading-relaxed break-words">
-                        {n.message}
+                        {n.senderName && n.senderId ? (
+                          <>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViewingUser({ userId: n.senderId, displayName: n.senderName, photoURL: n.senderPhotoURL || null });
+                              }}
+                              className="font-black text-gray-900 dark:text-white hover:text-primary dark:hover:text-primary hover:underline transition-colors"
+                            >
+                              {n.senderName}
+                            </button>
+                            {n.message?.replace(n.senderName, '') || ''}
+                          </>
+                        ) : n.message}
                       </p>
                       <span className="text-[10px] text-gray-400 dark:text-gray-500 font-bold block mt-1">
                         {formatNotificationTime(n.createdAt)}

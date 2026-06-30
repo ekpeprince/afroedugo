@@ -191,7 +191,14 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
         <div className="flex-1 min-w-0">
           <div className="bg-gray-50 dark:bg-gray-900/50 px-4 py-3 rounded-[1.25rem] rounded-tl-md border border-gray-100 dark:border-gray-800 shadow-sm">
             <div className="flex items-center justify-between gap-2 mb-1">
-              <span className="font-black text-gray-900 dark:text-white text-xs">{comment.userName}</span>
+              <button
+                type="button"
+                onClick={() => setViewingUser({ userId: comment.userId, displayName: comment.userName, photoURL: comment.userPhotoURL })}
+                className="font-black text-gray-900 dark:text-white text-xs hover:text-primary dark:hover:text-primary hover:underline transition-colors cursor-pointer"
+                title={`View ${comment.userName}'s profile`}
+              >
+                {comment.userName}
+              </button>
               <span className="text-[9px] text-gray-400 font-bold">
                 {comment.createdAt?.toDate ? comment.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
               </span>

@@ -538,7 +538,14 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                         </button>
                         <div className="min-w-0">
                           <div className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5 leading-tight">
-                            <span className="font-bold text-gray-900 dark:text-white truncate">{msg.user}</span>
+                            <button
+                              type="button"
+                              onClick={() => setViewingUser({ userId: msg.userId, displayName: msg.user, photoURL: msg.userPhotoURL })}
+                              className="font-bold text-gray-900 dark:text-white truncate hover:text-primary dark:hover:text-primary hover:underline transition-colors cursor-pointer"
+                              title={`View ${msg.user}'s profile`}
+                            >
+                              {msg.user}
+                            </button>
                             <span className="text-gray-400 text-xs">·</span>
                             <span className="text-gray-400 text-xs whitespace-nowrap">{formatTime(msg.createdAt)}</span>
                             {msg.category && msg.category !== 'general' && (() => {
