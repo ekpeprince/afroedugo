@@ -150,6 +150,21 @@ export const useChat = (conversationId = null) => {
           const senderSnap = await getDoc(doc(db, 'users', user.uid));
           const senderName = senderSnap.data()?.displayName || user.displayName || user.email?.split('@')[0] || 'Someone';
           const preview = imageUrl ? '📷 Sent a photo' : text.slice(0, 60);
+
+          // 1. Create a Firestore notification document so it displays in the Feed!
+          await addDoc(collection(db, 'notifications'), {
+            userId: recipientId,
+            senderId: user.uid,
+            conversationId: convId,
+            title: `✉️ New Message!`,
+            message: `${senderName}: "${preview}"`,
+            type: 'chat',
+            link: 'chat',
+            read: false,
+            createdAt: serverTimestamp()
+          });
+
+          // 2. Trigger push notification
           notifyUser(recipientId, `💬 ${senderName}`, preview);
         } catch (_) { /* non-critical */ }
       }

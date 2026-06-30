@@ -7,7 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
 import { db } from '../../firebase/config';
 import { 
-  collection, addDoc, doc, updateDoc, increment, serverTimestamp 
+  collection, addDoc, doc, updateDoc, increment, serverTimestamp, setDoc, arrayUnion 
 } from 'firebase/firestore';
 import { notifyUser } from '../../utils/notifyUser';
 
@@ -55,49 +55,95 @@ export default function NotificationsClient() {
   const handleSendInlineReply = async (e, n) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!replyText.trim() || !user || !n.postId) return;
+    if (!replyText.trim() || !user) return;
 
     setSendingReplies(prev => ({ ...prev, [n.id]: true }));
     try {
-      // 1. Write comment back to firestore
-      await addDoc(collection(db, 'comments'), {
-        postId: n.postId,
-        userId: user.uid,
-        userName: profile?.displayName || user.displayName || user.email.split('@')[0],
-        userPhotoURL: profile?.photoURL || user?.photoURL || null,
-        text: replyText,
-        likes: [],
-        parentId: n.commentId || null,
-        createdAt: serverTimestamp(),
-      });
-
-      // 2. Increment commentCount on post
-      await updateDoc(doc(db, 'discussions', n.postId), {
-        commentCount: increment(1)
-      });
-
-      // 3. Mark current notification as read
-      if (!n.read) {
-        await markAsRead(n.id);
-      }
-
-      // 4. Send notification back to original action sender (if any)
-      if (n.senderId && n.senderId !== user.uid) {
-        const senderName = profile?.displayName || user.displayName || user.email.split('@')[0];
-        const preview = replyText.slice(0, 45);
-        await addDoc(collection(db, 'notifications'), {
-          userId: n.senderId,
+      if (n.type === 'chat') {
+        if (!n.conversationId) return;
+        // 1. Write message back to conversation
+        const messagesRef = collection(db, 'conversations', n.conversationId, 'messages');
+        await addDoc(messagesRef, {
+          text: replyText,
+          imageUrl: null,
           senderId: user.uid,
-          postId: n.postId,
-          commentId: n.commentId || null,
-          title: '💬 New Reply!',
-          message: `${senderName} replied back to your comment: "${preview}..."`,
-          type: 'reply',
-          link: 'community',
           read: false,
           createdAt: serverTimestamp()
         });
-        notifyUser(n.senderId, '💬 New Reply!', `${senderName} replied back: "${preview}"`);
+
+        // 2. Update parent conversation metadata
+        const convRef = doc(db, 'conversations', n.conversationId);
+        await setDoc(convRef, {
+          lastMessage: replyText,
+          updatedAt: serverTimestamp(),
+          unreadBy: n.senderId ? arrayUnion(n.senderId) : []
+        }, { merge: true });
+
+        // 3. Mark current notification as read
+        if (!n.read) {
+          await markAsRead(n.id);
+        }
+
+        // 4. Send notification and push back to original sender
+        if (n.senderId && n.senderId !== user.uid) {
+          const senderName = profile?.displayName || user.displayName || user.email.split('@')[0];
+          const preview = replyText.slice(0, 45);
+          await addDoc(collection(db, 'notifications'), {
+            userId: n.senderId,
+            senderId: user.uid,
+            conversationId: n.conversationId,
+            title: `✉️ New Message!`,
+            message: `${senderName}: "${preview}"`,
+            type: 'chat',
+            link: 'chat',
+            read: false,
+            createdAt: serverTimestamp()
+          });
+          notifyUser(n.senderId, `💬 ${senderName}`, preview);
+        }
+      } else {
+        // Standard comment/post reply
+        if (!n.postId) return;
+        // 1. Write comment back to firestore
+        await addDoc(collection(db, 'comments'), {
+          postId: n.postId,
+          userId: user.uid,
+          userName: profile?.displayName || user.displayName || user.email.split('@')[0],
+          userPhotoURL: profile?.photoURL || user?.photoURL || null,
+          text: replyText,
+          likes: [],
+          parentId: n.commentId || null,
+          createdAt: serverTimestamp(),
+        });
+
+        // 2. Increment commentCount on post
+        await updateDoc(doc(db, 'discussions', n.postId), {
+          commentCount: increment(1)
+        });
+
+        // 3. Mark current notification as read
+        if (!n.read) {
+          await markAsRead(n.id);
+        }
+
+        // 4. Send notification back to original action sender (if any)
+        if (n.senderId && n.senderId !== user.uid) {
+          const senderName = profile?.displayName || user.displayName || user.email.split('@')[0];
+          const preview = replyText.slice(0, 45);
+          await addDoc(collection(db, 'notifications'), {
+            userId: n.senderId,
+            senderId: user.uid,
+            postId: n.postId,
+            commentId: n.commentId || null,
+            title: '💬 New Reply!',
+            message: `${senderName} replied back to your comment: "${preview}..."`,
+            type: 'reply',
+            link: 'community',
+            read: false,
+            createdAt: serverTimestamp()
+          });
+          notifyUser(n.senderId, '💬 New Reply!', `${senderName} replied back: "${preview}"`);
+        }
       }
 
       setReplyText('');
@@ -238,6 +284,8 @@ export default function NotificationsClient() {
               const isReplying = replyingToId === n.id;
               const status = replyStatuses[n.id];
               const isCommentAlert = n.postId && (n.type === 'reply' || n.type === 'comment');
+              const isChatAlert = n.conversationId && n.type === 'chat';
+              const canReplyInline = isCommentAlert || isChatAlert;
               
               return (
                 <div 
@@ -291,7 +339,7 @@ export default function NotificationsClient() {
 
                   {/* Inline Footer Row (Buttons & Action Triggers) */}
                   <div className="flex items-center gap-2 pl-16">
-                    {isCommentAlert && !isReplying && !status && (
+                    {canReplyInline && !isReplying && !status && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
