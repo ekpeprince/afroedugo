@@ -11,18 +11,18 @@ service firebase.storage {
     // Profiles & Avatars: Publicly readable, writeable only if file name starts with user's UID
     match /profiles/{fileName} {
       allow read: if true;
-      allow write: if isAuthenticated() && fileName.startsWith(request.auth.uid + '_');
+      allow write: if isAuthenticated() && fileName.matches(request.auth.uid + '_.*');
     }
     match /avatars/{fileName} {
       allow read: if true;
-      allow write: if isAuthenticated() && fileName.startsWith(request.auth.uid + '_');
+      allow write: if isAuthenticated() && fileName.matches(request.auth.uid + '_.*');
     }
 
     // Community images: publicly readable, writeable/deletable by owner only
     match /community/{fileName} {
       allow read: if true;
       allow create, update, delete: if isAuthenticated() 
-                    && fileName.startsWith(request.auth.uid + '_')
+                    && fileName.matches(request.auth.uid + '_.*')
                     && request.resource.contentType.matches('image/.*')
                     && request.resource.size < 5 * 1024 * 1024;
     }
@@ -31,17 +31,17 @@ service firebase.storage {
     match /stories/{fileName} {
       allow read: if true;
       allow create: if isAuthenticated()
-                    && fileName.startsWith(request.auth.uid + '_')
+                    && fileName.matches(request.auth.uid + '_.*')
                     && request.resource.contentType.matches('image/.*')
                     && request.resource.size < 5 * 1024 * 1024;
-      allow delete: if isAuthenticated() && fileName.startsWith(request.auth.uid + '_');
+      allow delete: if isAuthenticated() && fileName.matches(request.auth.uid + '_.*');
     }
 
     // Housing Images: publicly readable, writeable/deletable only if file starts with 'housing_<uid>_'
     match /housing_images/{fileName} {
       allow read: if true;
       allow create, update, delete: if isAuthenticated()
-                    && fileName.startsWith('housing_' + request.auth.uid + '_');
+                    && fileName.matches('housing_' + request.auth.uid + '_.*');
     }
 
     // Chats: Only accessible by authenticated participants of the conversation

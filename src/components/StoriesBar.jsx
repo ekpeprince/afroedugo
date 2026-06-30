@@ -163,9 +163,15 @@ function AddStoryModal({ onClose, onSubmit }) {
   const handleSubmit = async () => {
     if (!text.trim() && !imageFile) return;
     setIsSubmitting(true);
-    await onSubmit({ text, bg: selectedBg, imageFile });
-    setIsSubmitting(false);
-    onClose();
+    try {
+      await onSubmit({ text, bg: selectedBg, imageFile });
+      onClose();
+    } catch (error) {
+      console.error("Error sharing story:", error);
+      alert("Failed to share story. Please check your connection or permissions.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
