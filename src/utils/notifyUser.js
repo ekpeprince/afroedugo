@@ -1,4 +1,4 @@
-import { db } from '../firebase/config';
+import { db, auth } from '../firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
 
 /**
@@ -13,13 +13,19 @@ import { doc, getDoc } from 'firebase/firestore';
 export async function notifyUser(targetUserId, title, body, link = '/') {
   if (!targetUserId) return;
   try {
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) return; // User must be logged in to trigger notifications
+
     const userSnap = await getDoc(doc(db, 'users', targetUserId));
     const token = userSnap.data()?.fcmToken;
     if (!token) return; // user hasn't granted push permission yet
 
     await fetch('/api/notify', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${idToken}`
+      },
       body: JSON.stringify({ token, title, body, link }),
     });
   } catch (err) {

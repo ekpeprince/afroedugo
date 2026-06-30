@@ -79,7 +79,7 @@ service cloud.firestore {
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && (
         (resource.data.userId == request.auth.uid) ||
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'commentCount']))
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes', 'commentCount', 'isReported']))
       );
       allow delete: if isAuthenticated() && (
         (resource.data.userId == request.auth.uid) || isAdmin()

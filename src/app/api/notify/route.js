@@ -10,15 +10,27 @@ import admin from '../../../firebase/adminConfig';
  */
 export async function POST(request) {
   try {
+    // 1. Authenticate caller with Firebase ID Token
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized: Missing bearer token' }, { status: 401 });
+    }
+    const idToken = authHeader.split('Bearer ')[1];
+
+    if (admin.apps.length) {
+      try {
+        await admin.auth().verifyIdToken(idToken);
+      } catch (authErr) {
+        return NextResponse.json({ error: 'Unauthorized: Invalid ID token' }, { status: 401 });
+      }
+    } else {
+      return NextResponse.json({ skipped: true, reason: 'Admin not configured' }, { status: 200 });
+    }
+
     const { token, title, body, link = '/' } = await request.json();
 
     if (!token) {
       return NextResponse.json({ error: 'FCM token required' }, { status: 400 });
-    }
-
-    // If Admin SDK is not initialised (missing credentials), skip gracefully
-    if (!admin.apps.length) {
-      return NextResponse.json({ skipped: true, reason: 'Admin not configured' }, { status: 200 });
     }
 
     const message = {

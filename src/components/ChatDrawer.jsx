@@ -48,7 +48,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
 
     try {
       setIsUploading(true);
-      const storageRef = ref(storage, `chats/${conversationId}/${Date.now()}_${file.name}`);
+      const storageRef = ref(storage, `chats/${conversationId}/${user.uid}_${Date.now()}_${file.name}`);
       const uploadTask = uploadBytesResumable(storageRef, file);
 
       uploadTask.on(

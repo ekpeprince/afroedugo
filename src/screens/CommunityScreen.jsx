@@ -156,7 +156,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
     try {
       let imageUrls = [];
       for (const file of attachedImages) {
-        const snap = await uploadBytes(ref(storage, `community/${Date.now()}_${file.name}`), file);
+        const snap = await uploadBytes(ref(storage, `community/${user.uid}_${Date.now()}_${file.name}`), file);
         imageUrls.push(await getDownloadURL(snap.ref));
       }
       const postCategory = selectedCategory === 'all' ? 'general' : selectedCategory;
