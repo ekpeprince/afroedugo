@@ -6,7 +6,14 @@ import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const { user } = useAuth();
-  const { messages, sendMessage, conversations } = useChat(conversationId);
+
+  // Keep a stable conversation ID so the Firestore subscription and
+  // messages state are NOT destroyed when the drawer closes (null conversationId).
+  // This prevents the "messages disappear on reopen" bug.
+  const stableConvId = useRef(conversationId);
+  if (conversationId) stableConvId.current = conversationId;
+
+  const { messages, sendMessage, conversations } = useChat(stableConvId.current);
   const [inputText, setInputText] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const messagesEndRef = useRef(null);
@@ -24,13 +31,14 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     scrollToBottom();
   }, [messages, isOpen]);
 
-  if (!isOpen || !conversationId) return null;
+  // Never had a conversation opened yet — nothing to render
+  if (!isOpen && !stableConvId.current) return null;
 
   const handleSend = async (e) => {
     e.preventDefault();
     if (!inputText.trim() && !isUploading) return;
     
-    await sendMessage(conversationId, inputText);
+    await sendMessage(stableConvId.current, inputText);
     setInputText('');
   };
 
@@ -52,7 +60,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
         },
         async () => {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          await sendMessage(conversationId, '', downloadURL);
+          await sendMessage(stableConvId.current, '', downloadURL);
           setIsUploading(false);
         }
       );
