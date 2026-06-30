@@ -60,7 +60,7 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
       const commentData = {
         postId,
         userId: user.uid,
-        userName: profile?.displayName || user.displayName || user.email.split('@')[0],
+        userName: profile?.displayName || user.displayName || user.email?.split('@')[0] || 'User',
         userPhotoURL: profile?.photoURL || user?.photoURL || null,
         text: newComment,
         likes: [],
@@ -77,7 +77,7 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
       });
 
       // 2. Notifications logic
-      const senderName = profile?.displayName || user.displayName || user.email.split('@')[0];
+      const senderName = profile?.displayName || user.displayName || user.email?.split('@')[0] || 'User';
       
       if (replyingTo) {
         // Notify the author of the comment we replied to
@@ -296,7 +296,7 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
             {profile?.photoURL || user?.photoURL ? (
               <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
             ) : (
-              user.email[0].toUpperCase()
+              (user.email?.[0] || '?').toUpperCase()
             )}
           </div>
           <input 
@@ -326,17 +326,17 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
           Log in to join the conversation
         </button>
       )}
-    </div>
 
-    {/* ── User Profile Viewer ───────────────────────────────────────────── */}
-    <UserProfileViewer
-      userId={viewingUser?.userId}
-      isOpen={!!viewingUser}
-      onClose={() => setViewingUser(null)}
-      initialData={viewingUser ? { displayName: viewingUser.displayName, photoURL: viewingUser.photoURL } : null}
-    />
-  </div>
+      {/* User Profile Viewer */}
+      <UserProfileViewer
+        userId={viewingUser?.userId}
+        isOpen={!!viewingUser}
+        onClose={() => setViewingUser(null)}
+        initialData={viewingUser ? { displayName: viewingUser.displayName, photoURL: viewingUser.photoURL } : null}
+      />
+    </div>
   );
 };
 
 export default CommentSection;
+

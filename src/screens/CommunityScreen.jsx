@@ -783,7 +783,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
 
       <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
 
-      {/* ── User Profile Viewer (avatar click) ─────────────────────────── */}
+      {/* User Profile Viewer (avatar click) */}
       <UserProfileViewer
         userId={viewingUser?.userId}
         isOpen={!!viewingUser}

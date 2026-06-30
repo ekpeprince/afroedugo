@@ -433,8 +433,7 @@ export default function NotificationsClient() {
           </div>
         )}
       </main>
-
-      {/* ── User Profile Viewer (sender avatar tap) ─────────────────────── */}
+      {/* User Profile Viewer (sender avatar tap) */}
       <UserProfileViewer
         userId={viewingUser?.userId}
         isOpen={!!viewingUser}
