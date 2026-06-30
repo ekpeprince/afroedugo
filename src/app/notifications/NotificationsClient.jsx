@@ -10,6 +10,7 @@ import {
   collection, addDoc, doc, updateDoc, increment, serverTimestamp, setDoc, arrayUnion 
 } from 'firebase/firestore';
 import { notifyUser } from '../../utils/notifyUser';
+import UserProfileViewer from '../../components/UserProfileViewer';
 
 export default function NotificationsClient() {
   const router = useRouter();
@@ -25,10 +26,12 @@ export default function NotificationsClient() {
   } = useNotifications();
 
   // Inline replies state management
-  const [replyingToId, setReplyingToId] = useState(null); // notification.id
+  const [replyingToId, setReplyingToId] = useState(null);
   const [replyText, setReplyText] = useState('');
-  const [sendingReplies, setSendingReplies] = useState({}); // { [notificationId]: boolean }
-  const [replyStatuses, setReplyStatuses] = useState({}); // { [notificationId]: 'success' | 'error' }
+  const [sendingReplies, setSendingReplies] = useState({});
+  const [replyStatuses, setReplyStatuses] = useState({});
+  // Profile viewer (click sender avatar)
+  const [viewingUser, setViewingUser] = useState(null);
 
   const handleNotificationClick = async (n) => {
     // If they clicked reply/input area, stop navigation
@@ -298,10 +301,24 @@ export default function NotificationsClient() {
                   }`}
                 >
                   <div className="flex gap-4 items-center w-full">
-                    {/* Category Icon */}
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0 ${iconData.bgColor}`}>
-                      {iconData.emoji}
-                    </div>
+                    {/* Sender Avatar / Category Icon */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (n.senderId) {
+                          setViewingUser({ userId: n.senderId, displayName: n.senderName || n.message?.split(':')[0] || 'User', photoURL: n.senderPhotoURL || null });
+                        }
+                      }}
+                      className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0 overflow-hidden transition-all ${n.senderId ? 'hover:scale-110 hover:ring-2 hover:ring-primary/50 cursor-pointer' : 'cursor-default'} ${iconData.bgColor}`}
+                      aria-label={n.senderId ? 'View sender profile' : 'Notification icon'}
+                      title={n.senderId ? 'View profile' : undefined}
+                    >
+                      {n.senderPhotoURL
+                        ? <img src={n.senderPhotoURL} alt="Sender" className="w-full h-full object-cover rounded-2xl" />
+                        : iconData.emoji
+                      }
+                    </button>
 
                     {/* Message Details */}
                     <div className="flex-grow min-w-0 pr-6">
@@ -402,6 +419,14 @@ export default function NotificationsClient() {
           </div>
         )}
       </main>
+
+      {/* ── User Profile Viewer (sender avatar tap) ─────────────────────── */}
+      <UserProfileViewer
+        userId={viewingUser?.userId}
+        isOpen={!!viewingUser}
+        onClose={() => setViewingUser(null)}
+        initialData={viewingUser ? { displayName: viewingUser.displayName, photoURL: viewingUser.photoURL } : null}
+      />
     </div>
   );
 }

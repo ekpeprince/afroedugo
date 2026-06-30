@@ -17,6 +17,7 @@ import PostText from '../components/PostText'
 import StoriesBar from '../components/StoriesBar'
 import { useNotifications } from '../hooks/useNotifications'
 import { notifyUser } from '../utils/notifyUser'
+import UserProfileViewer from '../components/UserProfileViewer'
 
 const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotifications, onLogin }) => {
   const { user } = useAuth();
@@ -28,6 +29,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [savedView, setSavedView] = useState(false);
   const [savedPosts, setSavedPosts] = useState([]);
+  // User profile viewer (click on any avatar)
+  const [viewingUser, setViewingUser] = useState(null); // { userId, displayName, photoURL }
   const [openMenuId, setOpenMenuId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -94,6 +97,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         await addDoc(collection(db, 'notifications'), {
           userId: postAuthorId,
           senderId: user.uid,
+          senderName,
+          senderPhotoURL: profile?.photoURL || user?.photoURL || null,
           postId,
           title: '❤️ New Like!',
           message: `${senderName} liked your post: "${snippet}..."`,
@@ -522,9 +527,15 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                     {/* Post header */}
                     <div className="p-4 sm:p-5 flex justify-between items-start gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center text-base shrink-0 border border-gray-200 dark:border-gray-600">
+                        <button
+                          type="button"
+                          onClick={() => setViewingUser({ userId: msg.userId, displayName: msg.user, photoURL: msg.userPhotoURL })}
+                          className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center text-base shrink-0 border border-gray-200 dark:border-gray-600 hover:ring-2 hover:ring-primary/50 hover:scale-105 transition-all cursor-pointer"
+                          aria-label={`View ${msg.user}'s profile`}
+                          title={`View ${msg.user}'s profile`}
+                        >
                           {msg.userPhotoURL ? <img src={msg.userPhotoURL} alt="" className="w-full h-full object-cover" /> : '👤'}
-                        </div>
+                        </button>
                         <div className="min-w-0">
                           <div className="flex items-center flex-wrap gap-x-1.5 gap-y-0.5 leading-tight">
                             <span className="font-bold text-gray-900 dark:text-white truncate">{msg.user}</span>
@@ -764,6 +775,15 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
       </div>
 
       <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
+
+      {/* ── User Profile Viewer (avatar click) ─────────────────────────── */}
+      <UserProfileViewer
+        userId={viewingUser?.userId}
+        isOpen={!!viewingUser}
+        onClose={() => setViewingUser(null)}
+        initialData={viewingUser ? { displayName: viewingUser.displayName, photoURL: viewingUser.photoURL } : null}
+        onMessage={handleStartPrivateChat}
+      />
     </div>
   );
 };

@@ -7,6 +7,7 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
 import { notifyUser } from '../utils/notifyUser';
+import UserProfileViewer from './UserProfileViewer';
 
 const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
   const { user } = useAuth();
@@ -14,7 +15,8 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
-  const [replyingTo, setReplyingTo] = useState(null); // { commentId, userName, text, userId }
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [viewingUser, setViewingUser] = useState(null); // { userId, displayName, photoURL }
   
   const inputRef = useRef(null);
 
@@ -84,6 +86,8 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
           await addDoc(collection(db, 'notifications'), {
             userId: replyingTo.userId,
             senderId: user.uid,
+            senderName,
+            senderPhotoURL: profile?.photoURL || user?.photoURL || null,
             postId,
             commentId: replyingTo.commentId,
             title: '💬 New Reply to Comment!',
@@ -100,6 +104,8 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
         await addDoc(collection(db, 'notifications'), {
           userId: postAuthorId,
           senderId: user.uid,
+          senderName,
+          senderPhotoURL: profile?.photoURL || user?.photoURL || null,
           postId,
           title: '💬 New Reply!',
           message: `${senderName} replied to your post: "${postTitle}"`,
@@ -166,14 +172,20 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
     
     return (
       <div key={comment.id} className={`flex gap-3 ${isReply ? 'mt-3 pl-8 relative before:absolute before:left-3 before:top-0 before:bottom-4 before:w-0.5 before:bg-gray-200 dark:before:bg-gray-700 before:content-[""] after:absolute after:left-3 after:top-4 after:w-4 after:h-0.5 after:bg-gray-200 dark:after:bg-gray-700 after:content-[""]' : ''}`}>
-        {/* Avatar */}
-        <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center text-xs border border-gray-200 dark:border-gray-650 shadow-sm shrink-0">
+        {/* Avatar — clickable to view profile */}
+        <button
+          type="button"
+          onClick={() => setViewingUser({ userId: comment.userId, displayName: comment.userName, photoURL: comment.userPhotoURL })}
+          className="w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center text-xs border border-gray-200 dark:border-gray-650 shadow-sm shrink-0 hover:ring-2 hover:ring-primary/50 hover:scale-105 transition-all cursor-pointer"
+          aria-label={`View ${comment.userName}'s profile`}
+          title={`View ${comment.userName}'s profile`}
+        >
           {comment.userPhotoURL ? (
             <img src={comment.userPhotoURL} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
             '👤'
           )}
-        </div>
+        </button>
 
         {/* Content Box */}
         <div className="flex-1 min-w-0">
@@ -308,6 +320,15 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
         </button>
       )}
     </div>
+
+    {/* ── User Profile Viewer ───────────────────────────────────────────── */}
+    <UserProfileViewer
+      userId={viewingUser?.userId}
+      isOpen={!!viewingUser}
+      onClose={() => setViewingUser(null)}
+      initialData={viewingUser ? { displayName: viewingUser.displayName, photoURL: viewingUser.photoURL } : null}
+    />
+  </div>
   );
 };
 
