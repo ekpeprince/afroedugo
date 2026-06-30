@@ -90,7 +90,11 @@ service cloud.firestore {
     match /comments/{commentId} {
       allow read: if true; // Publicly readable
       allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() && (resource.data.userId == request.auth.uid);
+      allow update: if isAuthenticated() && (
+        (resource.data.userId == request.auth.uid) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']))
+      );
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid);
     }
  
     // --- Stories Collection (24h ephemeral community stories) ---
