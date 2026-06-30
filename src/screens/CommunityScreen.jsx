@@ -18,9 +18,9 @@ import StoriesBar from '../components/StoriesBar'
 import { useNotifications } from '../hooks/useNotifications'
 import { notifyUser } from '../utils/notifyUser'
 
-const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onLogin }) => {
+const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotifications, onLogin }) => {
   const { user } = useAuth();
-  const { getOrCreateConversation } = useChat();
+  const { getOrCreateConversation, unreadDMsCount } = useChat();
   const { profile } = useProfile();
   const { unreadCount } = useNotifications();
 
@@ -275,18 +275,17 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onLogin }) => {
 
         <div className="flex items-center gap-2 shrink-0 relative z-50">
           {user && (
-            <div className="relative">
-              <button
-                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-                className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative"
-              >
-                <span className="text-xl">🔔</span>
-                {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-gray-800" />
-                )}
-              </button>
-              <NotificationsDropdown isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
-            </div>
+            <button
+              onClick={onOpenNotifications}
+              className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors relative"
+            >
+              <span className="text-xl">🔔</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[9px] font-black rounded-full px-1.5 py-0.5 border-2 border-white dark:border-gray-800 animate-pulse">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
           )}
           <div
             onClick={() => setIsProfileModalOpen(true)}
@@ -367,6 +366,11 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onLogin }) => {
                     className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300 font-semibold border-l-4 border-transparent"
                   >
                     <span className="text-xl">✉️</span> Messages
+                    {unreadDMsCount > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-xs font-black rounded-full px-2 py-0.5 animate-pulse shadow-sm shadow-red-500/20">
+                        {unreadDMsCount}
+                      </span>
+                    )}
                   </button>
                 </li>
               </ul>

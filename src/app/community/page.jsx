@@ -15,6 +15,7 @@ export default function CommunityPage() {
         onBack={() => router.push('/')} 
         onOpenChat={openChat}
         onOpenMessages={() => router.push('/chat')}
+        onOpenNotifications={() => router.push('/notifications')}
         onLogin={() => router.push('/auth')}
       />
     </div>
