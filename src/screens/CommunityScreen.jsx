@@ -145,6 +145,14 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
+
+    // Client-side validation: Restrict file uploads to 5MB to match storage rules
+    const oversizedFile = files.find(file => file.size > 5 * 1024 * 1024);
+    if (oversizedFile) {
+      alert(`"${oversizedFile.name}" is too large! Maximum file size is 5MB. Please choose a smaller photo.`);
+      return;
+    }
+
     const newFiles = [...attachedImages, ...files].slice(0, 4);
     setAttachedImages(newFiles);
     setImagePreviews(newFiles.map(f => URL.createObjectURL(f)));
@@ -186,7 +194,10 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
       setNewMessage('');
       setAttachedImages([]);
       setImagePreviews([]);
-    } catch (err) { console.error('Error sending post:', err); }
+    } catch (err) {
+      console.error('Error sending post:', err);
+      alert('Failed to publish post. If you attached photos, please make sure they are less than 5MB and try again.');
+    }
     finally { setIsSending(false); }
   };
 
