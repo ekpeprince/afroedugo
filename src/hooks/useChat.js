@@ -22,7 +22,8 @@ import { notifyUser } from '../utils/notifyUser';
 
 export const useChat = (conversationId = null) => {
   const { user } = useAuth();
-  const [conversations, setConversations] = useState([]);
+  const [rawConversations, setRawConversations] = useState([]);
+  const [participantProfiles, setParticipantProfiles] = useState({});
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -36,39 +37,67 @@ export const useChat = (conversationId = null) => {
       orderBy('updatedAt', 'desc')
     );
 
-    const unsub = onSnapshot(q, async (snapshot) => {
+    const unsub = onSnapshot(q, (snapshot) => {
       const convs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-
-      // Fetch other participant profile details dynamically
-      try {
-        const augmentedConvs = await Promise.all(convs.map(async (conv) => {
-          const otherUid = conv.participants?.find(uid => uid !== user.uid);
-          if (!otherUid) return conv;
-
-          const userSnap = await getDoc(doc(db, 'users', otherUid));
-          if (userSnap.exists()) {
-            const userData = userSnap.data();
-            return {
-              ...conv,
-              participantName: userData.displayName || otherUid.slice(0, 6),
-              participantAvatar: userData.photoURL || userData.photoUrl || '👤'
-            };
-          }
-          return conv;
-        }));
-        setConversations(augmentedConvs);
-      } catch (err) {
-        console.error("Error augmenting conversations:", err);
-        setConversations(convs);
-      }
+      setRawConversations(convs);
+      setLoading(false);
+    }, (err) => {
+      console.error("Error loading conversations:", err);
       setLoading(false);
     });
 
     return unsub;
   }, [user]);
+
+  // Subscribe to participant profiles in real-time
+  useEffect(() => {
+    if (!user || rawConversations.length === 0) return;
+
+    const otherUids = [
+      ...new Set(
+        rawConversations
+          .map(c => c.participants?.find(uid => uid !== user.uid))
+          .filter(Boolean)
+      )
+    ];
+
+    const unsubscribes = otherUids.map(uid => {
+      return onSnapshot(doc(db, 'users', uid), (snap) => {
+        if (snap.exists()) {
+          setParticipantProfiles(prev => ({
+            ...prev,
+            [uid]: { ...snap.data(), uid: snap.id }
+          }));
+        }
+      });
+    });
+
+    return () => {
+      unsubscribes.forEach(unsub => unsub());
+    };
+  }, [rawConversations, user?.uid]);
+
+  // Merge raw conversations with real-time participant profiles
+  const conversations = useMemo(() => {
+    return rawConversations.map(conv => {
+      const otherUid = conv.participants?.find(uid => uid !== user.uid);
+      if (!otherUid) return conv;
+
+      const profile = participantProfiles[otherUid];
+      return {
+        ...conv,
+        participantId: otherUid,
+        participantName: profile?.displayName || otherUid.slice(0, 6),
+        participantAvatar: profile?.photoURL || profile?.photoUrl || '👤',
+        participantStatus: profile?.status || 'offline',
+        participantLastOnline: profile?.lastOnline || null
+      };
+    });
+  }, [rawConversations, participantProfiles, user?.uid]);
+
 
   // Subscribe to messages in a specific conversation
   useEffect(() => {

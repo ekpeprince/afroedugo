@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useChat } from '../hooks/useChat';
-import { storage } from '../firebase/config';
+import { storage, db } from '../firebase/config';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+import { onSnapshot, doc } from 'firebase/firestore';
 
 const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const { user } = useAuth();
@@ -23,9 +24,41 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const [participantStatus, setParticipantStatus] = useState('offline');
+  const [participantLastOnline, setParticipantLastOnline] = useState(null);
+
   const currentConv = conversations?.find(c => c.id === conversationId);
   const participantName = currentConv?.participantName || 'Fellow Student';
   const participantAvatar = currentConv?.participantAvatar || '👤';
+
+  useEffect(() => {
+    const participantId = currentConv?.participantId;
+    if (!isOpen || !participantId) return;
+
+    const unsub = onSnapshot(doc(db, 'users', participantId), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setParticipantStatus(data.status || 'offline');
+        setParticipantLastOnline(data.lastOnline || null);
+      }
+    });
+
+    return () => unsub();
+  }, [isOpen, currentConv?.participantId]);
+
+  const formatLastOnline = (lastOnline) => {
+    if (!lastOnline) return '';
+    const date = lastOnline.toDate ? lastOnline.toDate() : new Date(lastOnline);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    
+    if (diffMins < 1) return 'just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -85,10 +118,17 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
           </div>
           <div>
             <h4 className="font-black text-gray-900 dark:text-white leading-none">{participantName}</h4>
-            <p className="text-[10px] font-black uppercase tracking-widest text-green-500 flex items-center gap-1 mt-1">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-              Online
-            </p>
+            {participantStatus === 'online' ? (
+              <p className="text-[10px] font-black uppercase tracking-widest text-green-500 flex items-center gap-1 mt-1">
+                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                Online
+              </p>
+            ) : (
+              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-1">
+                <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-650 rounded-full"></span>
+                Offline{participantLastOnline ? ` • Active ${formatLastOnline(participantLastOnline)}` : ''}
+              </p>
+            )}
           </div>
         </div>
       </header>

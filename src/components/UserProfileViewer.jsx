@@ -1,7 +1,21 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
+
+const formatLastOnline = (lastOnline) => {
+  if (!lastOnline) return '';
+  const date = lastOnline.toDate ? lastOnline.toDate() : new Date(lastOnline);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  
+  if (diffMins < 1) return 'just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+};
 
 /**
  * UserProfileViewer
@@ -28,12 +42,17 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
     if (initialData) setProfile(initialData);
 
     setLoading(true);
-    getDoc(doc(db, 'users', userId))
-      .then(snap => {
-        if (snap.exists()) setProfile({ ...snap.data(), uid: snap.id });
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    const unsub = onSnapshot(doc(db, 'users', userId), (snap) => {
+      if (snap.exists()) {
+        setProfile({ ...snap.data(), uid: snap.id });
+      }
+      setLoading(false);
+    }, (err) => {
+      console.error("Error loading user profile:", err);
+      setLoading(false);
+    });
+
+    return () => unsub();
   }, [isOpen, userId]);
 
   if (!isOpen) return null;
@@ -110,6 +129,21 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
                   <span className="inline-block w-36 h-6 bg-slate-200 dark:bg-slate-700 rounded-lg animate-pulse" />
                 ) : name}
               </h2>
+
+              {/* Online/Offline Status Indicator */}
+              <div className="flex items-center gap-1.5 mt-2 bg-slate-50 dark:bg-slate-800/40 px-3 py-1 rounded-full border border-slate-100 dark:border-slate-800/30 shadow-sm animate-in fade-in duration-200">
+                <span className={`w-2 h-2 rounded-full ${
+                  profile?.status === 'online' ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-slate-400'
+                }`} />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {profile?.status === 'online' ? 'Online' : 'Offline'}
+                </span>
+                {profile?.status !== 'online' && profile?.lastOnline && (
+                  <span className="text-[9px] text-slate-400 dark:text-slate-500 normal-case font-medium">
+                    • Active {formatLastOnline(profile.lastOnline)}
+                  </span>
+                )}
+              </div>
 
               <span className={`mt-2.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm border ${
                 role === 'current'

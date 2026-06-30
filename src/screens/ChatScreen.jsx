@@ -41,11 +41,16 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
               className="w-full bg-white p-6 rounded-[2rem] shadow-xl shadow-gray-200 border border-gray-100 flex items-center justify-between hover:scale-[1.02] active:scale-95 transition-all group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 font-black shadow-lg overflow-hidden border border-gray-200">
-                  {conv.participantAvatar && conv.participantAvatar.startsWith('http') ? (
-                    <img src={conv.participantAvatar} alt="avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    conv.participantAvatar || '👤'
+                <div className="relative">
+                  <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 font-black shadow-lg overflow-hidden border border-gray-200">
+                    {conv.participantAvatar && conv.participantAvatar.startsWith('http') ? (
+                      <img src={conv.participantAvatar} alt="avatar" className="w-full h-full object-cover" />
+                    ) : (
+                      conv.participantAvatar || '👤'
+                    )}
+                  </div>
+                  {conv.participantStatus === 'online' && (
+                    <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse shadow-md"></span>
                   )}
                 </div>
                 <div className="text-left">

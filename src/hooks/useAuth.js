@@ -21,6 +21,32 @@ export const useAuth = () => {
     return unsubscribe;
   }, []);
 
+  // Manage user presence status (online/offline)
+  useEffect(() => {
+    if (!user) return;
+
+    const userRef = doc(db, 'users', user.uid);
+    
+    // Set to online on mount/auth change
+    setDoc(userRef, { status: 'online', lastOnline: serverTimestamp() }, { merge: true })
+      .catch(err => console.error("Error setting presence to online:", err));
+
+    const handlePresenceOffline = () => {
+      setDoc(userRef, { status: 'offline', lastOnline: serverTimestamp() }, { merge: true })
+        .catch(err => console.error("Error setting presence to offline on unload:", err));
+    };
+
+    window.addEventListener('beforeunload', handlePresenceOffline);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handlePresenceOffline);
+      // Mark as offline when unmounting or changing user
+      setDoc(userRef, { status: 'offline', lastOnline: serverTimestamp() }, { merge: true })
+        .catch(err => console.error("Error setting presence to offline on cleanup:", err));
+    };
+  }, [user]);
+
+
   const login = async (email, password) => {
     setLoading(true);
     setError(null);
