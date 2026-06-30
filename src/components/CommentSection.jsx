@@ -145,6 +145,16 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
     }, 100);
   };
 
+  const handleReportComment = async (commentId) => {
+    if (!user) return;
+    try {
+      await updateDoc(doc(db, 'comments', commentId), { isReported: true });
+      alert('Comment reported. Thank you for keeping the community safe! 🙏');
+    } catch (err) {
+      console.error("Error reporting comment:", err);
+    }
+  };
+
   // Helper to render a comment item
   const renderComment = (comment, isReply = false) => {
     const isLiked = user && comment.likes?.includes(user.uid);
@@ -193,6 +203,22 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
               >
                 <span>💬</span> Reply
               </button>
+            )}
+
+            {/* Report Comment */}
+            {user && comment.userId !== user.uid && !comment.isReported && (
+              <button 
+                onClick={() => handleReportComment(comment.id)}
+                className="text-[10px] font-bold text-gray-400 hover:text-orange-500 transition-colors flex items-center gap-0.5"
+                title="Report Comment"
+              >
+                <span>🚩</span> Report
+              </button>
+            )}
+            {comment.isReported && (
+              <span className="text-[10px] font-bold text-orange-500 flex items-center gap-0.5">
+                🚩 Flagged
+              </span>
             )}
           </div>
 

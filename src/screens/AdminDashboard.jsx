@@ -8,6 +8,7 @@ const AdminDashboard = ({ onBack }) => {
   const { user } = useAuth();
   const [leads, setLeads] = useState([]);
   const [discussions, setDiscussions] = useState([]);
+  const [reportedComments, setReportedComments] = useState([]);
   const [housing, setHousing] = useState([]);
   const [services, setServices] = useState([]);
   const [schools, setSchools] = useState([]);
@@ -27,19 +28,25 @@ const AdminDashboard = ({ onBack }) => {
       setDiscussions(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    // 3. Fetch Housing for Moderation
+    // 3. Fetch Reported Comments
+    const qComments = query(collection(db, 'comments'), where('isReported', '==', true));
+    const unsubscribeComments = onSnapshot(qComments, (snapshot) => {
+      setReportedComments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    // 4. Fetch Housing for Moderation
     const qHousing = query(collection(db, 'housing'), orderBy('createdAt', 'desc'));
     const unsubscribeHousing = onSnapshot(qHousing, (snapshot) => {
       setHousing(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    // 4. Fetch Services for Moderation
+    // 5. Fetch Services for Moderation
     const qServices = query(collection(db, 'services'), orderBy('createdAt', 'desc'));
     const unsubscribeServices = onSnapshot(qServices, (snapshot) => {
       setServices(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
-    // 5. Fetch Schools
+    // 6. Fetch Schools
     const qSchools = query(collection(db, 'schools'));
     const unsubscribeSchools = onSnapshot(qSchools, (snapshot) => {
       setSchools(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -49,6 +56,7 @@ const AdminDashboard = ({ onBack }) => {
     return () => {
       unsubscribeLeads();
       unsubscribePosts();
+      unsubscribeComments();
       unsubscribeHousing();
       unsubscribeServices();
       unsubscribeSchools();
@@ -122,6 +130,32 @@ const AdminDashboard = ({ onBack }) => {
       } catch (err) {
         console.error("Error deleting post:", err);
       }
+    }
+  };
+
+  const handleDismissPostReport = async (postId) => {
+    try {
+      await updateDoc(doc(db, 'discussions', postId), { isReported: false });
+    } catch (err) {
+      console.error("Error dismissing post report:", err);
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (window.confirm("Are you sure you want to delete this comment?")) {
+      try {
+        await deleteDoc(doc(db, 'comments', commentId));
+      } catch (err) {
+        console.error("Error deleting comment:", err);
+      }
+    }
+  };
+
+  const handleDismissCommentReport = async (commentId) => {
+    try {
+      await updateDoc(doc(db, 'comments', commentId), { isReported: false });
+    } catch (err) {
+      console.error("Error dismissing comment report:", err);
     }
   };
 
@@ -251,26 +285,130 @@ const AdminDashboard = ({ onBack }) => {
           </div>
         )}
 
-        {activeTab === 'moderation' && (
-          <div className="space-y-4">
-            {discussions.map(post => (
-              <div key={post.id} className="bg-white p-6 rounded-[2rem] shadow-lg border border-gray-50 flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-gray-900 text-sm">{post.user}</span>
-                    <span className="text-[10px] text-gray-300">{post.createdAt?.toDate()?.toLocaleDateString()}</span>
+        {activeTab === 'moderation' && (() => {
+          const reportedPosts = discussions.filter(p => p.isReported);
+          
+          return (
+            <div className="space-y-8">
+              {/* Flagged Section */}
+              <div className="bg-red-50/10 border border-red-100 rounded-[2.5rem] p-6 sm:p-8">
+                <h3 className="text-lg font-black text-red-600 mb-6 flex items-center gap-2">
+                  ⚠️ Reported Items (Needs Action)
+                </h3>
+
+                {reportedPosts.length === 0 && reportedComments.length === 0 ? (
+                  <div className="text-center py-10 bg-white rounded-3xl border border-gray-150 p-6">
+                    <span className="text-3xl mb-2 block">✨</span>
+                    <p className="text-gray-500 font-bold text-sm">Clean slate! No flagged posts or comments to review.</p>
                   </div>
-                  <p className="text-gray-600 text-sm line-clamp-2 mb-2">{post.text}</p>
-                  {post.imageUrl && <div className="text-[10px] text-primary font-bold">🖼️ Has Image</div>}
-                </div>
-                <button 
-                   onClick={() => handleDeletePost(post.id)}
-                   className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors"
-                >🗑️</button>
+                ) : (
+                  <div className="space-y-6">
+                    {/* Reported Posts */}
+                    {reportedPosts.length > 0 && (
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-black uppercase tracking-widest text-red-500 ml-2">Flagged Posts ({reportedPosts.length})</h4>
+                        {reportedPosts.map(post => (
+                          <div key={post.id} className="bg-white p-6 rounded-3xl shadow-sm border border-red-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="font-bold text-gray-900 text-sm">{post.user}</span>
+                                <span className="text-[10px] text-gray-400 font-bold">{post.createdAt?.toDate()?.toLocaleString() || 'Recent'}</span>
+                              </div>
+                              <p className="text-gray-800 text-sm font-medium leading-relaxed break-words">{post.text}</p>
+                              {post.imageUrl && <div className="text-[10px] text-primary font-bold mt-1">🖼️ Has Image</div>}
+                            </div>
+                            <div className="flex gap-2 shrink-0 self-end sm:self-center">
+                              <button 
+                                onClick={() => handleDismissPostReport(post.id)}
+                                className="px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-bold rounded-xl transition-all"
+                                title="Dismiss Report"
+                              >
+                                ✓ Keep Post
+                              </button>
+                              <button 
+                                onClick={() => handleDeletePost(post.id)}
+                                className="p-2.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-xl transition-all"
+                                title="Delete Post"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Reported Comments */}
+                    {reportedComments.length > 0 && (
+                      <div className="space-y-4">
+                        <h4 className="text-xs font-black uppercase tracking-widest text-red-500 ml-2">Flagged Comments ({reportedComments.length})</h4>
+                        {reportedComments.map(comment => (
+                          <div key={comment.id} className="bg-white p-6 rounded-3xl shadow-sm border border-red-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-all">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="font-bold text-gray-900 text-sm">{comment.userName}</span>
+                                <span className="text-[10px] text-gray-400 font-bold">{comment.createdAt?.toDate()?.toLocaleString() || 'Recent'}</span>
+                              </div>
+                              <p className="text-gray-850 text-sm font-medium leading-relaxed break-words">{comment.text}</p>
+                            </div>
+                            <div className="flex gap-2 shrink-0 self-end sm:self-center">
+                              <button 
+                                onClick={() => handleDismissCommentReport(comment.id)}
+                                className="px-4 py-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 text-xs font-bold rounded-xl transition-all"
+                                title="Dismiss Report"
+                              >
+                                ✓ Keep Comment
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteComment(comment.id)}
+                                className="p-2.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-xl transition-all"
+                                title="Delete Comment"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+
+              {/* Browse All Section */}
+              <div className="space-y-4">
+                <h3 className="text-base font-black text-gray-900 ml-2">
+                  🌐 Browse All Posts ({discussions.length})
+                </h3>
+                <div className="grid grid-cols-1 gap-4">
+                  {discussions.map(post => (
+                    <div key={post.id} className="bg-white p-6 rounded-[2rem] shadow-sm border border-gray-150 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:border-gray-300 transition-all">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-bold text-gray-900 text-sm">{post.user}</span>
+                          <span className="text-[10px] text-gray-400 font-bold">{post.createdAt?.toDate()?.toLocaleDateString()}</span>
+                          {post.isReported && (
+                            <span className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 bg-red-100 text-red-600 rounded">
+                              ⚠️ Reported
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-gray-650 text-sm font-medium leading-relaxed break-words line-clamp-3">{post.text}</p>
+                      </div>
+                      <button 
+                        onClick={() => handleDeletePost(post.id)}
+                        className="p-3 bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors shrink-0 self-end sm:self-center"
+                        title="Delete Post"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
         {activeTab === 'housing' && (
           <div className="space-y-4">
