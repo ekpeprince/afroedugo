@@ -33,12 +33,34 @@ export const useChat = (conversationId = null) => {
       orderBy('updatedAt', 'desc')
     );
 
-    const unsub = onSnapshot(q, (snapshot) => {
+    const unsub = onSnapshot(q, async (snapshot) => {
       const convs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-      setConversations(convs);
+
+      // Fetch other participant profile details dynamically
+      try {
+        const augmentedConvs = await Promise.all(convs.map(async (conv) => {
+          const otherUid = conv.participants?.find(uid => uid !== user.uid);
+          if (!otherUid) return conv;
+
+          const userSnap = await getDoc(doc(db, 'users', otherUid));
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            return {
+              ...conv,
+              participantName: userData.displayName || otherUid.slice(0, 6),
+              participantAvatar: userData.photoURL || userData.photoUrl || '👤'
+            };
+          }
+          return conv;
+        }));
+        setConversations(augmentedConvs);
+      } catch (err) {
+        console.error("Error augmenting conversations:", err);
+        setConversations(convs);
+      }
       setLoading(false);
     });
 
@@ -119,11 +141,13 @@ export const useChat = (conversationId = null) => {
   const getOrCreateConversation = async (participantId, metadata = {}) => {
     if (!user) return null;
 
-    // Check for existing direct chat between these two
+    const chatType = metadata.type || 'direct';
+
+    // Check for existing direct chat between these two with the same type
     const q = query(
       collection(db, 'conversations'),
       where('participants', 'array-contains', user.uid),
-      where('type', '==', 'direct')
+      where('type', '==', chatType)
     );
 
     const snapshot = await getDocs(q);
@@ -136,7 +160,7 @@ export const useChat = (conversationId = null) => {
     // Create new conversation
     const newConv = await addDoc(collection(db, 'conversations'), {
       participants: [user.uid, participantId],
-      type: 'direct',
+      type: chatType,
       lastMessage: '',
       updatedAt: serverTimestamp(),
       createdAt: serverTimestamp(),

@@ -41,13 +41,16 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
               className="w-full bg-white p-6 rounded-[2rem] shadow-xl shadow-gray-200 border border-gray-100 flex items-center justify-between hover:scale-[1.02] active:scale-95 transition-all group"
             >
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gray-900 rounded-2xl flex items-center justify-center text-white font-black shadow-lg">
-                  {/* Placeholder for participant's initial */}
-                  {conv.participants.length > 1 ? '👤' : '?'}
+                <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 font-black shadow-lg overflow-hidden border border-gray-200">
+                  {conv.participantAvatar && conv.participantAvatar.startsWith('http') ? (
+                    <img src={conv.participantAvatar} alt="avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    conv.participantAvatar || '👤'
+                  )}
                 </div>
                 <div className="text-left">
                   <h4 className="font-black text-gray-900 text-lg leading-none mb-1">
-                    Direct Message
+                    {conv.participantName || 'Fellow Student'}
                   </h4>
                   <p className="text-gray-400 text-sm font-medium line-clamp-1">
                     {conv.lastMessage || 'Start the conversation...'}
@@ -58,7 +61,7 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">
                   {conv.updatedAt?.toDate ? conv.updatedAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
                 </span>
-                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
               </div>
             </button>
           ))

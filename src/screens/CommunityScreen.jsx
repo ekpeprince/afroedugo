@@ -18,7 +18,7 @@ import StoriesBar from '../components/StoriesBar'
 import { useNotifications } from '../hooks/useNotifications'
 import { notifyUser } from '../utils/notifyUser'
 
-const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
+const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onLogin }) => {
   const { user } = useAuth();
   const { getOrCreateConversation } = useChat();
   const { profile } = useProfile();
@@ -363,7 +363,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onLogin }) => {
                 </li>
                 <li>
                   <button
-                    onClick={() => { if (!user) { onLogin?.(); return; } onOpenChat?.(); }}
+                    onClick={() => { if (!user) { onLogin?.(); return; } onOpenMessages ? onOpenMessages() : onOpenChat?.(); }}
                     className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300 font-semibold border-l-4 border-transparent"
                   >
                     <span className="text-xl">✉️</span> Messages

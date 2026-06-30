@@ -117,7 +117,10 @@ service cloud.firestore {
       match /messages/{messageId} {
         allow read: if isAuthenticated() && (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants);
         allow create: if isAuthenticated() && (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants) && (request.resource.data.senderId == request.auth.uid);
-        allow update, delete: if false; // Messages are write-once, no modification
+        allow update: if isAuthenticated() && 
+          (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants) &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+        allow delete: if false;
       }
     }
  
