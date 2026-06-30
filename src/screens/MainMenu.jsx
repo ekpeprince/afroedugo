@@ -5,6 +5,7 @@ import { useNotifications } from '../hooks/useNotifications'
 import { useTheme } from '../context/ThemeContext'
 import WelcomeModal from '../components/WelcomeModal'
 import { getWhatsAppLink } from '../utils/whatsapp'
+import { useGlobalState } from '../context/GlobalStateContext'
 
 const MainMenu = ({ onNavigate }) => {
   const { user } = useAuth();
@@ -13,34 +14,19 @@ const MainMenu = ({ onNavigate }) => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [isTrayOpen, setIsTrayOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const { deferredPrompt, installPWA } = useGlobalState();
   const [showInstallBanner, setShowInstallBanner] = useState(false);
 
   useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      // Prevent the mini-infobar from appearing on mobile
-      e.preventDefault();
-      // Stash the event so it can be triggered later.
-      setDeferredPrompt(e);
-      // Update UI notify the user they can install the PWA
+    if (deferredPrompt) {
       setShowInstallBanner(true);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
+    } else {
+      setShowInstallBanner(false);
+    }
+  }, [deferredPrompt]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    // Show the install prompt
-    deferredPrompt.prompt();
-    // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    // We no longer need the prompt. Clear it up
-    setDeferredPrompt(null);
+    await installPWA();
     setShowInstallBanner(false);
   };
 
