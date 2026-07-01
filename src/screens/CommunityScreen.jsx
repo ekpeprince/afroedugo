@@ -841,6 +841,49 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
 
       </div>
 
+      {/* ── MOBILE BOTTOM NAVIGATION ──────────────────────────────────── */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-40 pb-[env(safe-area-inset-bottom)]">
+        <div className="flex items-center justify-around p-2">
+          <button
+            onClick={() => { setSavedView(false); setActiveTab('feed'); }}
+            className={`flex flex-col items-center p-2 min-w-[64px] ${!savedView && activeTab === 'feed' ? 'text-primary' : 'text-gray-500 dark:text-gray-400'}`}
+          >
+            <span className="text-xl mb-1">🏠</span>
+            <span className="text-[10px] font-bold">Home</span>
+          </button>
+          
+          <button
+            onClick={() => { if (!user) { onLogin?.(); return; } setActiveTab('matches'); setSavedView(false); }}
+            className={`flex flex-col items-center p-2 min-w-[64px] ${activeTab === 'matches' ? 'text-primary' : 'text-gray-500 dark:text-gray-400'}`}
+          >
+            <span className="text-xl mb-1">🤝</span>
+            <span className="text-[10px] font-bold">Matches</span>
+          </button>
+
+          <button
+            onClick={() => { if (!user) { onLogin?.(); return; } setSavedView(true); setActiveTab('feed'); }}
+            className={`flex flex-col items-center p-2 min-w-[64px] ${savedView ? 'text-primary' : 'text-gray-500 dark:text-gray-400'} relative`}
+          >
+            <span className="text-xl mb-1">🔖</span>
+            <span className="text-[10px] font-bold">Saved</span>
+            {savedPosts.length > 0 && (
+              <span className="absolute top-1 right-2 bg-primary text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 shadow-sm">{savedPosts.length}</span>
+            )}
+          </button>
+
+          <button
+            onClick={() => { if (!user) { onLogin?.(); return; } onOpenMessages ? onOpenMessages() : onOpenChat?.(); }}
+            className={`flex flex-col items-center p-2 min-w-[64px] text-gray-500 dark:text-gray-400 relative`}
+          >
+            <span className="text-xl mb-1">✉️</span>
+            <span className="text-[10px] font-bold">Messages</span>
+            {unreadDMsCount > 0 && (
+              <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 animate-pulse shadow-sm">{unreadDMsCount}</span>
+            )}
+          </button>
+        </div>
+      </div>
+
       <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
 
       {/* User Profile Viewer (avatar click) */}
