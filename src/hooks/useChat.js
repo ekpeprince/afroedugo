@@ -233,6 +233,17 @@ export const useChat = (conversationId = null) => {
     }
   };
 
+  const deleteConversation = async (convId) => {
+    if (!user) return;
+    // Confirm before deleting
+    if (!window.confirm("Are you sure you want to delete this conversation?")) return;
+    try {
+      await deleteDoc(doc(db, 'conversations', convId));
+    } catch (err) {
+      console.error('Error deleting conversation:', err);
+    }
+  };
+
   const setTypingStatus = async (convId, isTyping) => {
     if (!user) return;
     try {
@@ -287,6 +298,7 @@ export const useChat = (conversationId = null) => {
     loading, 
     sendMessage, 
     deleteMessage,
+    deleteConversation,
     setTypingStatus,
     getOrCreateConversation,
     unreadDMsCount

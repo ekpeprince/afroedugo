@@ -4,7 +4,7 @@ import { useChat } from '../hooks/useChat';
 
 const ChatScreen = ({ onBack, onOpenChat }) => {
   const { user } = useAuth();
-  const { conversations, loading } = useChat();
+  const { conversations, loading, deleteConversation } = useChat();
 
   if (loading) {
     return (
@@ -35,11 +35,14 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
           </div>
         ) : (
           conversations.map((conv) => (
-            <button 
+            <div 
               key={conv.id}
-              onClick={() => onOpenChat(conv.id)}
-              className="w-full bg-white p-6 rounded-[2rem] shadow-xl shadow-gray-200 border border-gray-100 flex items-center justify-between hover:scale-[1.02] active:scale-95 transition-all group"
+              className="relative group w-full bg-white rounded-[2rem] shadow-xl shadow-gray-200 border border-gray-100 flex items-center justify-between hover:scale-[1.02] transition-all"
             >
+              <button
+                onClick={() => onOpenChat(conv.id)}
+                className="flex-grow p-6 flex items-center justify-between text-left"
+              >
               <div className="flex items-center gap-4">
                 <div className="relative">
                   <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 font-black shadow-lg overflow-hidden border border-gray-200">
@@ -70,7 +73,20 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
                 )}
               </div>
-            </button>
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteConversation(conv.id);
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
+                title="Delete Conversation"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+              </button>
+            </div>
           ))
         )}
       </div>
