@@ -47,7 +47,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
     
     try {
       await resetPassword(email);
-      setLocalSuccess('Password reset email sent! Check your inbox.');
+      setLocalSuccess('Password reset email sent! Please check your Spam or Junk folder if you do not see it in your Inbox.');
     } catch (err) {
       console.error(err);
       if (err.code === 'auth/user-not-found') {
