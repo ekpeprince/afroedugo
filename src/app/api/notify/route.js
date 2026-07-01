@@ -41,22 +41,18 @@ export async function POST(request) {
     // Use an absolute URL for the icon, otherwise Android Web Push fails to load it
     const iconUrl = icon || `${baseUrl}/icon-192.png`;
 
+    // By using 'data' instead of 'notification', we prevent FCM from auto-displaying it,
+    // allowing our Service Worker to render it with 100% custom styling (badge, image, vibration).
     const baseMessage = {
-      notification: { title, body },
-      webpush: {
-        notification: {
-          title,
-          body,
-          icon: iconUrl,
-          badge: `${baseUrl}/icon-192.png`,
-          ...(image && { image }),
-          ...(tag && { tag, renotify: true }),
-          requireInteraction: false,
-        },
-        fcmOptions: {
-          link,
-        },
-      },
+      data: {
+        title: title || 'New Notification',
+        body: body || '',
+        icon: iconUrl || '',
+        badge: `${baseUrl}/icon-192.png`,
+        image: image || '',
+        tag: tag || '',
+        link: link || '/'
+      }
     };
 
     if (broadcast) {
