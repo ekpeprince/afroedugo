@@ -3,17 +3,20 @@ import { db } from '../firebase/config'
 import { collection, query, orderBy, onSnapshot, updateDoc, doc, deleteDoc, getDocs, where, addDoc, serverTimestamp } from 'firebase/firestore'
 import { useAuth } from '../hooks/useAuth'
 import { getWhatsAppLink } from '../utils/whatsapp'
+import { useGlobalState } from '../context/GlobalStateContext'
 
 const AdminDashboard = ({ onBack }) => {
   const { user } = useAuth();
+  const { openChat } = useGlobalState();
   const [leads, setLeads] = useState([]);
   const [discussions, setDiscussions] = useState([]);
   const [reportedComments, setReportedComments] = useState([]);
   const [housing, setHousing] = useState([]);
   const [services, setServices] = useState([]);
   const [schools, setSchools] = useState([]);
+  const [supportChats, setSupportChats] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('leads'); // 'leads', 'moderation', 'housing', 'services', 'schools', 'settings'
+  const [activeTab, setActiveTab] = useState('leads'); // 'leads', 'moderation', 'housing', 'services', 'schools', 'expert_chats', 'settings'
 
   useEffect(() => {
     // 1. Fetch Leads
@@ -53,6 +56,12 @@ const AdminDashboard = ({ onBack }) => {
       setLoading(false);
     });
 
+    // 7. Fetch Support Chats
+    const qSupport = query(collection(db, 'conversations'), where('participants', 'array-contains', 'admin_support'), orderBy('updatedAt', 'desc'));
+    const unsubscribeSupport = onSnapshot(qSupport, (snapshot) => {
+      setSupportChats(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubscribeLeads();
       unsubscribePosts();
@@ -60,6 +69,7 @@ const AdminDashboard = ({ onBack }) => {
       unsubscribeHousing();
       unsubscribeServices();
       unsubscribeSchools();
+      unsubscribeSupport();
     };
   }, []);
 
@@ -188,8 +198,8 @@ const AdminDashboard = ({ onBack }) => {
              <h4 className="text-3xl font-black text-primary">{leads.length}</h4>
            </div>
            <div className="bg-white p-6 rounded-[2rem] shadow-xl shadow-gray-100 border border-gray-50">
-             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Active Posts</p>
-             <h4 className="text-3xl font-black text-secondary">{discussions.length}</h4>
+             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">Expert Chats</p>
+             <h4 className="text-3xl font-black text-secondary">{supportChats.length}</h4>
            </div>
         </div>
 
@@ -224,6 +234,12 @@ const AdminDashboard = ({ onBack }) => {
             className={`flex-1 min-w-[100px] py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'schools' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
           >
             Schools
+          </button>
+          <button 
+            onClick={() => setActiveTab('expert_chats')}
+            className={`flex-1 min-w-[100px] py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'expert_chats' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
+          >
+            Chats
           </button>
           <button 
             onClick={() => setActiveTab('settings')}
@@ -547,6 +563,39 @@ const AdminDashboard = ({ onBack }) => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {activeTab === 'expert_chats' && (
+          <div className="space-y-4">
+            {supportChats.length === 0 ? (
+              <div className="text-center py-20 text-gray-400 font-bold">No active expert chats.</div>
+            ) : supportChats.map(chat => {
+              const otherUserId = chat.participants.find(id => id !== 'admin_support');
+              return (
+                <button 
+                  key={chat.id}
+                  onClick={() => {
+                     openChat(chat.id);
+                  }}
+                  className="w-full bg-white p-6 rounded-[2rem] shadow-sm border border-gray-150 flex items-center justify-between hover:border-primary transition-all text-left group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-xl">👤</div>
+                    <div>
+                      <h4 className="font-bold text-gray-900 leading-none mb-1">User ID: {otherUserId ? otherUserId.slice(0,6) : 'Unknown'}</h4>
+                      <p className="text-gray-400 text-sm font-medium line-clamp-1">{chat.lastMessage || 'Started conversation'}</p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">
+                      {chat.updatedAt?.toDate ? chat.updatedAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+                    </span>
+                    <span className="text-primary font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity">Open →</span>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
 

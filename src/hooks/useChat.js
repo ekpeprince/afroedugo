@@ -107,7 +107,7 @@ export const useChat = (conversationId = null) => {
     const clearUnreadStatus = async () => {
       try {
         await updateDoc(doc(db, 'conversations', conversationId), {
-          unreadBy: arrayRemove(user.uid)
+          unreadBy: arrayRemove(user.uid, 'admin_support')
         });
       } catch (e) {
         // Silently catch in case document hasn't fully propagated yet
@@ -199,6 +199,22 @@ export const useChat = (conversationId = null) => {
 
           // 2. Trigger push notification
           notifyUser(recipientId, `💬 ${senderName}`, preview);
+
+          // 3. If recipient is the expert, trigger the email notification API
+          if (recipientId === 'admin_support') {
+            try {
+              fetch('/api/notify-expert', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  senderName,
+                  senderEmail: user.email,
+                  messagePreview: preview,
+                  conversationId: convId
+                })
+              }).catch(e => console.error("Expert email trigger failed:", e));
+            } catch (err) { /* non-critical */ }
+          }
         } catch (_) { /* non-critical */ }
       }
 
