@@ -28,11 +28,18 @@ export async function POST(request) {
       return NextResponse.json({ skipped: true, reason: 'Admin not configured' }, { status: 200 });
     }
 
-    const { token, broadcast, title, body, link = '/' } = await request.json();
+    const { token, broadcast, title, body, link = '/', icon = null } = await request.json();
 
     if (!token && !broadcast) {
       return NextResponse.json({ error: 'FCM token or broadcast flag required' }, { status: 400 });
     }
+
+    const host = request.headers.get('host');
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    const baseUrl = `${protocol}://${host}`;
+    
+    // Use an absolute URL for the icon, otherwise Android Web Push fails to load it
+    const iconUrl = icon || `${baseUrl}/icon-192.png`;
 
     const baseMessage = {
       notification: { title, body },
@@ -40,8 +47,8 @@ export async function POST(request) {
         notification: {
           title,
           body,
-          icon: '/icon-192.png',
-          badge: '/icon-192.png',
+          icon: iconUrl,
+          badge: `${baseUrl}/icon-192.png`,
           requireInteraction: false,
         },
         fcmOptions: {

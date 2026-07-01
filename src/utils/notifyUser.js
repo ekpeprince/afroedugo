@@ -9,8 +9,9 @@ import { doc, getDoc } from 'firebase/firestore';
  * @param {string} title         - Notification title
  * @param {string} body          - Notification body text
  * @param {string} [link='/']    - URL to open when the notification is clicked
+ * @param {string|null} [icon=null] - URL to an image/icon to display (e.g., sender's avatar)
  */
-export async function notifyUser(targetUserId, title, body, link = '/') {
+export async function notifyUser(targetUserId, title, body, link = '/', icon = null) {
   if (!targetUserId) return;
   try {
     const idToken = await auth.currentUser?.getIdToken();
@@ -26,7 +27,7 @@ export async function notifyUser(targetUserId, title, body, link = '/') {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${idToken}`
       },
-      body: JSON.stringify({ token, title, body, link }),
+      body: JSON.stringify({ token, title, body, link, icon }),
     });
   } catch (err) {
     // Non-critical — silently fail (push is best-effort)
