@@ -2,7 +2,8 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth } from "firebase/auth";
-import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAnalytics, isSupported as isAnalyticsSupported } from "firebase/analytics";
+import { getMessaging, isSupported as isMessagingSupported } from "firebase/messaging";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -21,11 +22,18 @@ const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
 let analytics = null;
+let messaging = null;
 
 if (typeof window !== "undefined") {
-  isSupported().then((supported) => {
+  isAnalyticsSupported().then((supported) => {
     if (supported) {
       analytics = getAnalytics(app);
+    }
+  });
+
+  isMessagingSupported().then((supported) => {
+    if (supported) {
+      messaging = getMessaging(app);
     }
   });
 }
@@ -44,4 +52,4 @@ if (typeof window !== 'undefined') {
   });
 }
 
-export { app, db, storage, auth, analytics, GOOGLE_MAPS_API_KEY };
+export { app, db, storage, auth, analytics, messaging, GOOGLE_MAPS_API_KEY };

@@ -3,9 +3,10 @@ import admin from '../../../firebase/adminConfig';
 
 /**
  * POST /api/notify
- * Body: { token: string, title: string, body: string, link?: string }
+ * Body: { token?: string, broadcast?: boolean, title: string, body: string, link?: string }
  *
- * Sends an FCM push notification to the device identified by `token`.
+ * Sends an FCM push notification to the device identified by `token`,
+ * or to all users with `fcmToken` if `broadcast` is true.
  * Requires Firebase Admin credentials in .env.local.
  */
 export async function POST(request) {
@@ -27,14 +28,13 @@ export async function POST(request) {
       return NextResponse.json({ skipped: true, reason: 'Admin not configured' }, { status: 200 });
     }
 
-    const { token, title, body, link = '/' } = await request.json();
+    const { token, broadcast, title, body, link = '/' } = await request.json();
 
-    if (!token) {
-      return NextResponse.json({ error: 'FCM token required' }, { status: 400 });
+    if (!token && !broadcast) {
+      return NextResponse.json({ error: 'FCM token or broadcast flag required' }, { status: 400 });
     }
 
-    const message = {
-      token,
+    const baseMessage = {
       notification: { title, body },
       webpush: {
         notification: {
@@ -50,10 +50,38 @@ export async function POST(request) {
       },
     };
 
-    const response = await admin.messaging().send(message);
-    return NextResponse.json({ success: true, messageId: response });
+    if (broadcast) {
+      // Fetch all users with fcmToken
+      const usersSnap = await admin.firestore().collection('users').get();
+      const tokens = [];
+      usersSnap.forEach(doc => {
+        const data = doc.data();
+        if (data.fcmToken) {
+          tokens.push(data.fcmToken);
+        }
+      });
+
+      if (tokens.length === 0) {
+        return NextResponse.json({ skipped: true, reason: 'No users have FCM tokens' });
+      }
+
+      const message = {
+        ...baseMessage,
+        tokens,
+      };
+
+      const response = await admin.messaging().sendEachForMulticast(message);
+      return NextResponse.json({ success: true, responses: response });
+    } else {
+      const message = {
+        ...baseMessage,
+        token,
+      };
+      const response = await admin.messaging().send(message);
+      return NextResponse.json({ success: true, messageId: response });
+    }
+
   } catch (err) {
-    // Token might be expired/invalid — not a fatal error
     if (err.code === 'messaging/registration-token-not-registered') {
       return NextResponse.json({ skipped: true, reason: 'Token expired' }, { status: 200 });
     }

@@ -4,6 +4,9 @@ import React, { useEffect, useRef } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
 import { useAuth } from '../hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { db, messaging } from '../firebase/config';
+import { doc, updateDoc } from 'firebase/firestore';
+import { getToken } from 'firebase/messaging';
 
 const playChime = () => {
   try {
@@ -48,19 +51,38 @@ export default function NotificationManager() {
   const previousNotificationsCount = useRef(0);
   const mountTime = useRef(Date.now());
 
-  // 1. Request notification permission on user login
+  // 1. Request notification permission and get FCM token
   useEffect(() => {
     if (!user) return;
 
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (Notification.permission === 'default') {
-        Notification.requestPermission().then((permission) => {
-          if (permission === 'granted') {
+    const setupFCM = async () => {
+      try {
+        if (typeof window !== 'undefined' && 'Notification' in window) {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted' && messaging) {
             console.log('AfroEduGo desktop notifications enabled.');
+            
+            // Get FCM Token
+            const currentToken = await getToken(messaging, { 
+              vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY 
+            });
+            
+            if (currentToken) {
+              // Save token to Firestore profile
+              await updateDoc(doc(db, 'users', user.uid), {
+                fcmToken: currentToken
+              });
+            } else {
+              console.log('No registration token available. Request permission to generate one.');
+            }
           }
-        });
+        }
+      } catch (err) {
+        console.error('An error occurred while retrieving token. ', err);
       }
-    }
+    };
+
+    setupFCM();
   }, [user]);
 
   // 2. Watch for new notifications and trigger desktop OS banners

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react'
 import { useFirestore } from '../hooks/useFirestore'
-import { db, storage } from '../firebase/config'
+import { db, storage, auth } from '../firebase/config'
 import {
   collection, addDoc, serverTimestamp, doc, updateDoc,
   arrayUnion, arrayRemove, deleteDoc
@@ -200,6 +200,27 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         imageUrls,
         imageUrl: imageUrls[0] || ''
       });
+
+      // Broadcast push notification to all users
+      try {
+        const idToken = await auth.currentUser?.getIdToken();
+        if (idToken) {
+          fetch('/api/notify', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${idToken}`
+            },
+            body: JSON.stringify({
+              broadcast: true,
+              title: `New Post in ${postCategory}`,
+              body: `${profile?.displayName || user.displayName || user.email.split('@')[0]} just posted: "${newMessage.slice(0, 50)}${newMessage.length > 50 ? '...' : ''}"`,
+              link: 'community'
+            })
+          }).catch(err => console.warn('Failed to broadcast post notification:', err));
+        }
+      } catch (notifyErr) {}
+
       setNewMessage('');
       setAttachedImages([]);
       setImagePreviews([]);
