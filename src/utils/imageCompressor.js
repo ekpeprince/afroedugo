@@ -59,12 +59,16 @@ export function compressImage(file, maxWidth = 1200, maxHeight = 1200, quality =
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              // Wrap the blob as a File object under the original file name
-              const compressedFile = new File([blob], file.name, {
-                type: 'image/jpeg',
-                lastModified: Date.now(),
-              });
-              resolve(compressedFile);
+              try {
+                // Wrap the blob as a File object under the original file name
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now(),
+                });
+                resolve(compressedFile);
+              } catch (e) {
+                resolve(file);
+              }
             } else {
               resolve(file); // fallback on blob creation errors
             }

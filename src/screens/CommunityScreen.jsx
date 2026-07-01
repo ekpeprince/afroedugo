@@ -178,7 +178,9 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
     try {
       let imageUrls = [];
       for (const file of attachedImages) {
-        const snap = await uploadBytes(ref(storage, `community/${user.uid}_${Date.now()}_${file.name}`), file);
+        const safeName = file.name ? file.name.replace(/[^a-zA-Z0-9.\-_]/g, '') : 'image.jpg';
+        const metadata = { contentType: file.type || 'image/jpeg' };
+        const snap = await uploadBytes(ref(storage, `community/${user.uid}_${Date.now()}_${safeName}`), file, metadata);
         imageUrls.push(await getDownloadURL(snap.ref));
       }
       const postCategory = selectedCategory === 'all' ? 'general' : selectedCategory;
