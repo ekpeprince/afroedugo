@@ -50,9 +50,9 @@ service firebase.storage {
                     && (request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants);
     }
 
-    // Enrollments documents: writeable/deletable by owner only
+    // Enrollments documents: writeable/deletable by owner only. NOT PUBLIC.
     match /enrollments/{fileName} {
-      allow read: if true;
+      allow read: if isAuthenticated() && fileName.matches(request.auth.uid + '_.*');
       allow create, update, delete: if isAuthenticated() && fileName.matches(request.auth.uid + '_.*');
     }
 

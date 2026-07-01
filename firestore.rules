@@ -115,7 +115,7 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (request.auth.uid in resource.data.participants);
       allow create: if isAuthenticated() && (request.auth.uid in request.resource.data.participants);
       allow update: if isAuthenticated() && (request.auth.uid in resource.data.participants);
-      allow delete: if false;
+      allow delete: if isAuthenticated() && (request.auth.uid in resource.data.participants);
  
       // Messages sub-collection
       match /messages/{messageId} {
@@ -124,7 +124,7 @@ service cloud.firestore {
         allow update: if isAuthenticated() && 
           (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants) &&
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
-        allow delete: if false;
+        allow delete: if isAuthenticated() && (request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants);
       }
     }
  
