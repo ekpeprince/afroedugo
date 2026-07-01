@@ -90,8 +90,8 @@ export const useChat = (conversationId = null) => {
       return {
         ...conv,
         participantId: otherUid,
-        participantName: profile?.displayName || otherUid.slice(0, 6),
-        participantAvatar: profile?.photoURL || profile?.photoUrl || '👤',
+        participantName: profile?.displayName || conv.participantName || otherUid.slice(0, 6),
+        participantAvatar: profile?.photoURL || profile?.photoUrl || conv.participantAvatar || '👤',
         participantStatus: profile?.status || 'offline',
         participantLastOnline: profile?.lastOnline || null
       };

@@ -4,8 +4,8 @@ import { useProfile } from '../hooks/useProfile'
 import { useNotifications } from '../hooks/useNotifications'
 import { useTheme } from '../context/ThemeContext'
 import WelcomeModal from '../components/WelcomeModal'
-import { getWhatsAppLink } from '../utils/whatsapp'
 import { useGlobalState } from '../context/GlobalStateContext'
+import { useChat } from '../hooks/useChat'
 
 const MainMenu = ({ onNavigate }) => {
   const { user } = useAuth();
@@ -14,8 +14,10 @@ const MainMenu = ({ onNavigate }) => {
   const { isDarkMode, toggleTheme } = useTheme();
   const [isTrayOpen, setIsTrayOpen] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
-  const { deferredPrompt, installPWA } = useGlobalState();
+  const { deferredPrompt, installPWA, openChat } = useGlobalState();
   const [showInstallBanner, setShowInstallBanner] = useState(false);
+  const { getOrCreateConversation } = useChat();
+  const [loadingExpert, setLoadingExpert] = useState(false);
 
   useEffect(() => {
     if (deferredPrompt) {
@@ -39,6 +41,26 @@ const MainMenu = ({ onNavigate }) => {
       }
     }
   }, [user]);
+
+  const handleTalkToExpert = async () => {
+    if (!user) {
+      onNavigate('auth');
+      return;
+    }
+    setLoadingExpert(true);
+    try {
+      const convId = await getOrCreateConversation('admin_support', {
+        type: 'support',
+        participantName: 'AfroEduGo Expert',
+        participantAvatar: '👨‍💼'
+      });
+      if (convId) openChat(convId);
+    } catch (err) {
+      console.error('Error starting expert chat:', err);
+    } finally {
+      setLoadingExpert(false);
+    }
+  };
 
   const menuItems = [
     {
@@ -220,14 +242,16 @@ const MainMenu = ({ onNavigate }) => {
         <div className="relative z-10">
           <h4 className="text-white text-xl font-black mb-2 leading-none">Need Visa Help?</h4>
           <p className="text-gray-400 text-xs font-bold leading-relaxed mb-6">Our experts are waiting to help you.</p>
-          <a
-            href={getWhatsAppLink('', 'Hi, I need expert help with Visa and Student Services.')}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-block bg-primary text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 transition-transform"
+          <button
+            onClick={handleTalkToExpert}
+            disabled={loadingExpert}
+            className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:scale-105 active:scale-95 transition-all"
           >
+            {loadingExpert ? (
+              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+            ) : null}
             Talk to Expert
-          </a>
+          </button>
         </div>
         <div className="absolute -right-4 -bottom-4 text-[120px] opacity-10 group-hover:scale-110 transition-transform duration-700">🌍</div>
       </div>
