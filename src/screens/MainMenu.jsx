@@ -77,8 +77,9 @@ const MainMenu = ({ onNavigate }) => {
     {
       id: 'housing',
       label: 'Find Housing',
-      sub: 'Verified rooms & apartments',
-      color: 'bg-secondary',
+      sub: 'Premium Upgrade',
+      color: 'bg-gray-300 dark:bg-gray-700',
+      comingSoon: true,
       icon: (
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
@@ -225,13 +226,26 @@ const MainMenu = ({ onNavigate }) => {
         {menuItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => onNavigate(item.id)}
-            className="flex flex-col items-start bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] shadow-xl shadow-gray-100 dark:shadow-none border border-gray-50 dark:border-gray-700 hover:shadow-2xl hover:scale-[1.02] transition-all active:scale-[0.98] group"
+            onClick={() => {
+              if (item.comingSoon) {
+                alert("Find Housing is launching soon as an exclusive Premium Upgrade! Stay tuned. 🚀");
+              } else {
+                onNavigate(item.id);
+              }
+            }}
+            className={`flex flex-col items-start bg-white dark:bg-gray-800 p-6 rounded-[2.5rem] shadow-xl shadow-gray-100 dark:shadow-none border border-gray-50 dark:border-gray-700 transition-all ${item.comingSoon ? 'opacity-80' : 'hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] group'}`}
           >
-            <div className={`w-16 h-16 ${item.color} rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-gray-200 dark:shadow-none group-hover:rotate-12 transition-transform`}>
+            <div className={`w-16 h-16 ${item.color} rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-gray-200 dark:shadow-none ${!item.comingSoon && 'group-hover:rotate-12 transition-transform'}`}>
               {item.icon}
             </div>
-            <h3 className="text-lg font-black text-gray-900 dark:text-white mb-1 leading-tight">{item.label}</h3>
+            <div className="flex items-center gap-2 mb-1 w-full flex-wrap">
+              <h3 className="text-lg font-black text-gray-900 dark:text-white leading-tight">{item.label}</h3>
+              {item.comingSoon && (
+                <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm">
+                  Soon
+                </span>
+              )}
+            </div>
             <p className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">{item.sub}</p>
           </button>
         ))}
