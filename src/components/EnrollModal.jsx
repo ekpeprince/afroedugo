@@ -13,6 +13,7 @@ const EnrollModal = ({ isOpen, onClose, school }) => {
   const [program, setProgram] = useState('');
   const [course, setCourse] = useState('');
   const [phone, setPhone] = useState('');
+  const [contactEmail, setContactEmail] = useState(user?.email || '');
   
   const [loading, setLoading] = useState(false);
 
@@ -51,6 +52,7 @@ const EnrollModal = ({ isOpen, onClose, school }) => {
       await addDoc(collection(db, 'enrollments'), {
         userId: user.uid,
         userEmail: user.email,
+        contactEmail,
         studentName: user.displayName || user.email.split('@')[0],
         schoolId: school.id,
         schoolName: school.name,
@@ -63,7 +65,7 @@ const EnrollModal = ({ isOpen, onClose, school }) => {
         createdAt: serverTimestamp(),
       });
 
-      const waText = `*New Enrollment via AfroEduGo*\n\n*School:* ${school.name}\n*Program:* ${program}\n*Course:* ${course}\n*Student Phone:* ${phone}\n*Student Email:* ${user.email}`;
+      const waText = `*New Enrollment via AfroEduGo*\n\n*School:* ${school.name}\n*Program:* ${program}\n*Course:* ${course}\n*Student Phone:* ${phone}\n*Contact Email:* ${contactEmail}`;
       const waUrl = getWhatsAppLink('', waText);
       
       // Redirect directly to WhatsApp without opening a new window
@@ -141,6 +143,20 @@ const EnrollModal = ({ isOpen, onClose, school }) => {
                   className="w-full bg-transparent p-3 outline-none text-gray-900 font-bold placeholder:text-gray-300"
                 />
               )}
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Contact Email</label>
+            <div className="bg-gray-50 rounded-2xl p-1 border border-gray-100 focus-within:border-primary/30 transition-colors">
+              <input 
+                required
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="student@example.com"
+                className="w-full bg-transparent p-3 outline-none text-gray-900 font-bold placeholder:text-gray-300"
+              />
             </div>
           </div>
 
