@@ -7,6 +7,7 @@ const withPWA = withPWAInit({
   skipWaiting: true,
   workboxOptions: {
     navigateFallbackDenylist: [/^\/__\//],
+    importScripts: ["/firebase-messaging-sw.js"]
   }
 });
 

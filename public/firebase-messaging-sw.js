@@ -25,44 +25,6 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// ── Handle background messages ──────────────────────────────────────────────
-messaging.onBackgroundMessage(function (payload) {
-  const title = payload.notification?.title || 'AfroEduGo';
-  const body  = payload.notification?.body  || 'You have a new update.';
-  const link  = payload.fcmOptions?.link || payload.data?.link || '/';
-
-  return self.registration.showNotification(title, {
-    body,
-    icon:          '/icon-192.png',
-    badge:         '/icon-192.png',
-    tag:           'afroedugo-' + Date.now(),
-    renotify:      true,
-    requireInteraction: false,
-    vibrate:       [100, 50, 100], // vibration pattern
-    sound:         'default',      // plays default sound
-    data:          { link },
-  });
-});
-
-// ── Handle notification click ────────────────────────────────────────────────
-self.addEventListener('notificationclick', function (event) {
-  event.notification.close();
-  const link = event.notification.data?.link || '/';
-
-  event.waitUntil(
-    clients
-      .matchAll({ type: 'window', includeUncontrolled: true })
-      .then(function (clientList) {
-        // If a tab is already open, focus it and navigate
-        for (const client of clientList) {
-          if ('focus' in client) {
-            client.focus();
-            client.navigate(link);
-            return;
-          }
-        }
-        // Otherwise, open a new window
-        if (clients.openWindow) return clients.openWindow(link);
-      })
-  );
-});
+// ── Firebase handles background messages automatically if payload contains `notification` ──
+// We do not need a custom onBackgroundMessage or notificationclick listener 
+// because Firebase uses the webpush options (including fcmOptions.link) sent by the server.

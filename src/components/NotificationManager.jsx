@@ -62,9 +62,13 @@ export default function NotificationManager() {
           if (permission === 'granted' && messaging) {
             console.log('AfroEduGo desktop notifications enabled.');
             
+            // Wait for the PWA service worker to be ready so Firebase uses it
+            const registration = await navigator.serviceWorker.ready;
+
             // Get FCM Token
             const currentToken = await getToken(messaging, { 
-              vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY 
+              vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY,
+              serviceWorkerRegistration: registration
             });
             
             if (currentToken) {
