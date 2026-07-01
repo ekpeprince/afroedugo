@@ -10,7 +10,7 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
   const { user, logout } = useAuth();
   const { profile, updateProfile, loading: profileLoading } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({ country: '', major: '', bio: '', role: 'incoming' });
+  const [editData, setEditData] = useState({ displayName: '', country: '', major: '', bio: '', role: 'incoming' });
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const fileInputRef = React.useRef(null);
 
@@ -76,6 +76,7 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
 
   const startEdit = () => {
     setEditData({
+      displayName: profile?.displayName || user?.displayName || user?.email?.split('@')[0] || '',
       country: profile?.country || '',
       major: profile?.major || '',
       bio: profile?.bio || '',
@@ -205,6 +206,15 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
           <section className="bg-white p-8 rounded-[3rem] shadow-xl border border-gray-100 animate-in zoom-in-95 duration-300">
             <h3 className="text-xl font-black mb-6">Edit Social Profile</h3>
             <div className="space-y-6">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Display Name</label>
+                <input 
+                  value={editData.displayName}
+                  onChange={e => setEditData({...editData, displayName: e.target.value})}
+                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1"
+                  placeholder="e.g. John Doe"
+                />
+              </div>
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Country of Origin</label>
                 <input 
