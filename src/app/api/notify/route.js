@@ -52,6 +52,14 @@ export async function POST(request) {
         image: image || '',
         tag: tag || '',
         link: link || '/'
+      },
+      android: {
+        priority: 'high' // Wakes up Android devices from Doze mode
+      },
+      webpush: {
+        headers: {
+          Urgency: 'high' // Tells browser push services this is time-sensitive
+        }
       }
     };
 
