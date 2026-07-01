@@ -10,7 +10,7 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
   const { user, logout } = useAuth();
   const { profile, updateProfile, loading: profileLoading } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({ displayName: '', country: '', major: '', bio: '', role: 'incoming' });
+  const [editData, setEditData] = useState({ displayName: '', country: '', major: '', bio: '', role: 'incoming', school: '' });
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const fileInputRef = React.useRef(null);
 
@@ -80,7 +80,8 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
       country: profile?.country || '',
       major: profile?.major || '',
       bio: profile?.bio || '',
-      role: profile?.role || 'incoming'
+      role: profile?.role || 'incoming',
+      school: profile?.school || ''
     });
     setIsEditing(true);
   };
@@ -251,6 +252,17 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
                   </div>
                 </div>
               </div>
+              {editData.role === 'current' && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">University / School</label>
+                  <input 
+                    value={editData.school || ''}
+                    onChange={e => setEditData({...editData, school: e.target.value})}
+                    className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1"
+                    placeholder="e.g. Vilnius University"
+                  />
+                </div>
+              )}
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Short Bio</label>
                 <textarea 
@@ -285,6 +297,7 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
                  <span className={`px-4 py-1.5 rounded-full text-xs font-black border border-white/5 ${profile.role === 'current' ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300' : 'bg-gradient-to-r from-blue-500/20 to-indigo-500/20 text-blue-300'}`}>
                    {profile.role === 'current' ? '🎓 Current Student' : '✈️ Incoming Student'}
                  </span>
+                 {profile.role === 'current' && profile.school && <span className="bg-white/10 px-4 py-1.5 rounded-full text-xs font-black border border-white/5 text-emerald-200">🏫 {profile.school}</span>}
                  {profile.country && <span className="bg-white/10 px-4 py-1.5 rounded-full text-xs font-black border border-white/5">{profile.country}</span>}
                  {profile.major && <span className="bg-white/10 px-4 py-1.5 rounded-full text-xs font-black border border-white/5">{profile.major}</span>}
                </div>
