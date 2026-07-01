@@ -8,7 +8,7 @@ import { getWhatsAppLink } from '../utils/whatsapp';
 const EnrollModal = ({ isOpen, onClose, school }) => {
   const { user } = useAuth();
   
-  const [academicDoc, setAcademicDoc] = useState(null);
+  const [academicDocs, setAcademicDocs] = useState([]);
   const [passport, setPassport] = useState(null);
   const [program, setProgram] = useState('');
   const [course, setCourse] = useState('');
@@ -22,6 +22,12 @@ const EnrollModal = ({ isOpen, onClose, school }) => {
   const handleFileChange = (e, setter) => {
     if (e.target.files[0]) {
       setter(e.target.files[0]);
+    }
+  };
+
+  const handleMultipleFilesChange = (e, setter) => {
+    if (e.target.files) {
+      setter(Array.from(e.target.files));
     }
   };
 
@@ -39,14 +45,18 @@ const EnrollModal = ({ isOpen, onClose, school }) => {
       return;
     }
     
-    if (!academicDoc || !passport) {
-        alert("Please upload both Academic Document and Passport.");
+    if (academicDocs.length === 0 || !passport) {
+        alert("Please upload at least one Academic Document and your Passport.");
         return;
     }
 
     setLoading(true);
     try {
-      const academicDocUrl = await uploadFile(academicDoc, 'academic');
+      const academicDocUrls = [];
+      for (const file of academicDocs) {
+        const url = await uploadFile(file, 'academic');
+        academicDocUrls.push(url);
+      }
       const passportUrl = await uploadFile(passport, 'passport');
 
       await addDoc(collection(db, 'enrollments'), {
@@ -59,7 +69,7 @@ const EnrollModal = ({ isOpen, onClose, school }) => {
         program,
         course,
         phone,
-        academicDocUrl,
+        academicDocUrls,
         passportUrl,
         status: 'pending',
         createdAt: serverTimestamp(),
@@ -175,15 +185,21 @@ const EnrollModal = ({ isOpen, onClose, school }) => {
           </div>
 
           <div className="space-y-1">
-            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Upload Academic Document</label>
+            <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Upload Academic Documents</label>
             <div className="bg-gray-50 rounded-2xl p-1 border border-gray-100 focus-within:border-primary/30 transition-colors">
               <input 
                 required
                 type="file"
+                multiple
                 accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                onChange={(e) => handleFileChange(e, setAcademicDoc)}
+                onChange={(e) => handleMultipleFilesChange(e, setAcademicDocs)}
                 className="w-full bg-transparent p-3 outline-none text-gray-600 font-medium text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-black file:uppercase file:tracking-widest file:bg-primary/10 file:text-primary hover:file:bg-primary/20 transition-all"
               />
+              {academicDocs.length > 0 && (
+                <div className="px-3 pb-2 text-[10px] font-bold text-primary">
+                  {academicDocs.length} file(s) selected
+                </div>
+              )}
             </div>
           </div>
 
