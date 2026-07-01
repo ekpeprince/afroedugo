@@ -18,23 +18,21 @@ service firebase.storage {
       allow write: if isAuthenticated() && fileName.matches(request.auth.uid + '_.*');
     }
 
-    // Community images: publicly readable, writeable/deletable by owner only
     match /community/{fileName} {
       allow read: if true;
-      allow create, update, delete: if isAuthenticated() 
-                    && fileName.matches(request.auth.uid + '_.*')
+      allow create, update: if isAuthenticated() 
                     && request.resource.contentType.matches('image/.*')
                     && request.resource.size < 5 * 1024 * 1024;
+      allow delete: if isAuthenticated();
     }
 
     // Story images: publicly readable, writeable/deletable by owner only
     match /stories/{fileName} {
       allow read: if true;
-      allow create: if isAuthenticated()
-                    && fileName.matches(request.auth.uid + '_.*')
+      allow create, update: if isAuthenticated()
                     && request.resource.contentType.matches('image/.*')
                     && request.resource.size < 5 * 1024 * 1024;
-      allow delete: if isAuthenticated() && fileName.matches(request.auth.uid + '_.*');
+      allow delete: if isAuthenticated();
     }
 
     // Housing Images: publicly readable, writeable/deletable only if file starts with 'housing_<uid>_'
