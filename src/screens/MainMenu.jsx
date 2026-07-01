@@ -169,8 +169,8 @@ const MainMenu = ({ onNavigate }) => {
             className="w-12 h-12 bg-white dark:bg-gray-800 rounded-2xl shadow-xl shadow-gray-200 dark:shadow-none border border-gray-50 dark:border-gray-700 flex items-center justify-center text-primary group hover:scale-110 active:scale-95 transition-all overflow-hidden"
           >
             {user ? (
-              user.photoURL ? (
-                <img src={user.photoURL} className="w-full h-full object-cover" alt="Profile" />
+              (profile?.photoURL || user.photoURL) ? (
+                <img src={profile?.photoURL || user.photoURL} className="w-full h-full object-cover" alt="Profile" />
               ) : (
                 <span className="font-black text-lg">{user.email[0].toUpperCase()}</span>
               )
