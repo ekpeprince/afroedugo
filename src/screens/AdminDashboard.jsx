@@ -15,6 +15,7 @@ const AdminDashboard = ({ onBack }) => {
   const [services, setServices] = useState([]);
   const [schools, setSchools] = useState([]);
   const [supportChats, setSupportChats] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('leads'); // 'leads', 'moderation', 'housing', 'services', 'schools', 'expert_chats', 'settings'
 
@@ -62,6 +63,12 @@ const AdminDashboard = ({ onBack }) => {
       setSupportChats(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
 
+    // 8. Fetch Enrollments
+    const qEnrollments = query(collection(db, 'enrollments'), orderBy('createdAt', 'desc'));
+    const unsubscribeEnrollments = onSnapshot(qEnrollments, (snapshot) => {
+      setEnrollments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
       unsubscribeLeads();
       unsubscribePosts();
@@ -70,6 +77,7 @@ const AdminDashboard = ({ onBack }) => {
       unsubscribeServices();
       unsubscribeSchools();
       unsubscribeSupport();
+      unsubscribeEnrollments();
     };
   }, []);
 
@@ -130,6 +138,25 @@ const AdminDashboard = ({ onBack }) => {
       }
     } catch (err) {
       console.error("Error updating service status:", err);
+    }
+  };
+
+  const handleUpdateEnrollmentStatus = async (enrollmentId, newStatus) => {
+    try {
+      await updateDoc(doc(db, 'enrollments', enrollmentId), { status: newStatus });
+      const item = enrollments.find(e => e.id === enrollmentId);
+      if (item && item.userId) {
+        await addDoc(collection(db, 'notifications'), {
+          userId: item.userId,
+          title: '🎓 Enrollment Update',
+          message: `Your enrollment application for ${item.schoolName || 'school'} has been ${newStatus}.`,
+          type: 'status',
+          read: false,
+          createdAt: serverTimestamp()
+        });
+      }
+    } catch (err) {
+      console.error("Error updating enrollment status:", err);
     }
   };
 
@@ -210,6 +237,12 @@ const AdminDashboard = ({ onBack }) => {
             className={`flex-1 min-w-[100px] py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'leads' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
           >
             Leads
+          </button>
+          <button 
+            onClick={() => setActiveTab('enrollments')}
+            className={`flex-1 min-w-[100px] py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all ${activeTab === 'enrollments' ? 'bg-white shadow-sm text-primary' : 'text-gray-400'}`}
+          >
+            Enrollments
           </button>
           <button 
             onClick={() => setActiveTab('moderation')}
@@ -295,6 +328,67 @@ const AdminDashboard = ({ onBack }) => {
                 <div className="mt-4 pt-4 border-t border-gray-50 flex justify-between items-center">
                   <span className="text-[10px] text-gray-300 font-bold uppercase">Ref: {lead.id.slice(0, 8)}</span>
                   <span className="text-[10px] text-gray-400 font-bold">{lead.createdAt?.toDate()?.toLocaleString() || 'Recent'}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === 'enrollments' && (
+          <div className="space-y-4">
+            {enrollments.length === 0 ? (
+               <div className="text-center py-20 text-gray-400 font-bold">No enrollments yet.</div>
+            ) : enrollments.map(enrollment => (
+              <div key={enrollment.id} className="bg-white p-6 rounded-[2rem] shadow-lg border border-gray-50 hover:border-primary/20 transition-all">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full ${
+                      enrollment.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 
+                      enrollment.status === 'rejected' ? 'bg-red-100 text-red-600' : 
+                      'bg-amber-100 text-amber-600'
+                    }`}>
+                      {enrollment.status || 'pending'}
+                    </span>
+                    <h5 className="text-xl font-bold text-gray-900 mt-2">{enrollment.studentName}</h5>
+                    <p className="text-xs text-gray-500 font-bold">{enrollment.contactEmail} • {enrollment.phone}</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleUpdateEnrollmentStatus(enrollment.id, 'approved')}
+                      className="p-2 bg-emerald-50 text-emerald-600 rounded-lg hover:bg-emerald-100 font-bold text-xs uppercase"
+                    >✅ Approve</button>
+                    <button 
+                      onClick={() => handleUpdateEnrollmentStatus(enrollment.id, 'rejected')}
+                      className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 font-bold text-xs uppercase"
+                    >🚫 Reject</button>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 p-4 rounded-2xl mb-4 space-y-2">
+                  <p className="text-sm"><strong>School:</strong> {enrollment.schoolName}</p>
+                  <p className="text-sm"><strong>Program:</strong> {enrollment.program}</p>
+                  <p className="text-sm"><strong>Course:</strong> {enrollment.course}</p>
+                </div>
+
+                <div className="space-y-3">
+                  <h6 className="text-xs font-black uppercase tracking-widest text-gray-400">Documents</h6>
+                  <div className="flex flex-wrap gap-2">
+                    {enrollment.passportUrl && (
+                      <a href={enrollment.passportUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-xl font-bold text-xs hover:bg-primary/20 transition-colors">
+                        📷 Passport
+                      </a>
+                    )}
+                    {enrollment.academicDocUrls?.map((url, index) => (
+                      <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-bold text-xs hover:bg-blue-100 transition-colors">
+                        📄 Academic Doc {index + 1}
+                      </a>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="mt-6 pt-4 border-t border-gray-50 flex justify-between items-center">
+                  <span className="text-[10px] text-gray-300 font-bold uppercase">Ref: {enrollment.id.slice(0, 8)}</span>
+                  <span className="text-[10px] text-gray-400 font-bold">{enrollment.createdAt?.toDate()?.toLocaleString() || 'Recent'}</span>
                 </div>
               </div>
             ))}

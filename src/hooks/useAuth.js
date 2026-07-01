@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '../firebase/config';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc, collection, addDoc } from 'firebase/firestore';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -64,7 +64,8 @@ export const useAuth = () => {
     setLoading(true);
     setError(null);
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await syncUserProfile(userCredential.user);
     } catch (err) {
       setError(err.message);
       throw err;
@@ -77,15 +78,33 @@ export const useAuth = () => {
     if (!user) return;
     try {
       const userRef = doc(db, 'users', user.uid);
+      const userSnap = await getDoc(userRef);
+      const isNewUser = !userSnap.exists();
+      
+      const displayName = user.displayName || user.email?.split('@')[0] || "Scholar";
+
       await setDoc(userRef, {
         uid: user.uid,
-        displayName: user.displayName || user.email?.split('@')[0] || "Scholar",
-        photoURL: user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName || "Scholar"}&background=random`,
+        displayName: displayName,
+        photoURL: user.photoURL || `https://ui-avatars.com/api/?name=${displayName}&background=random`,
         email: user.email,
         lastOnline: serverTimestamp(),
         status: "online",
-        joinedAt: serverTimestamp()
+        ...(isNewUser ? { joinedAt: serverTimestamp() } : {})
       }, { merge: true });
+
+      if (isNewUser) {
+        // Welcome Bot Post
+        await addDoc(collection(db, 'discussions'), {
+          text: `👋 Please welcome our newest member, ${displayName}! Say hi and make them feel at home.`,
+          user: "🤖 Welcome Bot",
+          userId: "system_bot",
+          category: "General",
+          createdAt: serverTimestamp(),
+          likes: [],
+          commentCount: 0
+        });
+      }
     } catch (err) {
       console.error("Profile sync error:", err);
     }
