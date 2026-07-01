@@ -5,6 +5,19 @@ import { storage, db } from '../firebase/config';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { onSnapshot, doc } from 'firebase/firestore';
 
+const formatMessageDate = (timestamp) => {
+  if (!timestamp) return 'Today';
+  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+  
+  return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
 const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const { user } = useAuth();
 
@@ -14,11 +27,13 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const stableConvId = useRef(conversationId);
   if (conversationId) stableConvId.current = conversationId;
 
-  const { messages, sendMessage, conversations } = useChat(stableConvId.current);
+  const { messages, sendMessage, deleteMessage, setTypingStatus, conversations } = useChat(stableConvId.current);
   const [inputText, setInputText] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [fullScreenImage, setFullScreenImage] = useState(null);
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -28,8 +43,10 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const [participantLastOnline, setParticipantLastOnline] = useState(null);
 
   const currentConv = conversations?.find(c => c.id === conversationId);
+  const participantId = currentConv?.participantId;
   const participantName = currentConv?.participantName || 'Fellow Student';
   const participantAvatar = currentConv?.participantAvatar || '👤';
+  const isParticipantTyping = currentConv?.typing?.[participantId];
 
   useEffect(() => {
     const participantId = currentConv?.participantId;
@@ -73,6 +90,18 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     
     await sendMessage(stableConvId.current, inputText);
     setInputText('');
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    setTypingStatus(stableConvId.current, false);
+  };
+
+  const handleInputChange = (e) => {
+    setInputText(e.target.value);
+    setTypingStatus(stableConvId.current, true);
+    
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      setTypingStatus(stableConvId.current, false);
+    }, 2000);
   };
 
   const handleImageUpload = async (e) => {
@@ -148,34 +177,73 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
             No messages yet. Break the ice! 🧊
           </div>
         ) : (
-          messages.map((msg) => (
-            <div 
-              key={msg.id}
-              className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'}`}
-            >
-              <div 
-                className={`max-w-[75%] p-4 rounded-[1.5rem] shadow-sm text-sm font-bold ${
-                  msg.senderId === user.uid 
-                    ? 'bg-primary text-white rounded-br-none' 
-                    : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none border border-gray-100 dark:border-gray-600'
-                }`}
-              >
-                {msg.imageUrl && (
-                  <img src={msg.imageUrl} alt="Chat attachment" className="rounded-xl mb-2 max-w-full h-auto" />
-                )}
-                {msg.text && <p>{msg.text}</p>}
-                <div className={`flex items-center gap-1 text-[9px] mt-1 opacity-60 ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'}`}>
-                  {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
-                  {msg.senderId === user.uid && (
-                    <span className="ml-1 font-black tracking-tighter">
-                      {msg.read ? '✓✓' : '✓'}
+          messages.map((msg, index) => {
+            const currentDate = formatMessageDate(msg.createdAt);
+            const prevDate = index > 0 ? formatMessageDate(messages[index - 1].createdAt) : null;
+            const showDateHeader = currentDate !== prevDate;
+
+            return (
+              <React.Fragment key={msg.id}>
+                {showDateHeader && (
+                  <div className="flex justify-center my-4">
+                    <span className="bg-gray-200/50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                      {currentDate}
                     </span>
+                  </div>
+                )}
+                <div className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'} group relative`}>
+                  
+                  {msg.senderId === user.uid && (
+                    <button 
+                      onClick={() => { if(window.confirm('Delete this message?')) deleteMessage(stableConvId.current, msg.id) }}
+                      className="opacity-0 group-hover:opacity-100 absolute -left-10 top-1/2 -translate-y-1/2 p-2 text-red-400 hover:text-red-600 transition-opacity"
+                      title="Delete message"
+                    >
+                      🗑️
+                    </button>
                   )}
+
+                  <div 
+                    className={`max-w-[75%] p-4 rounded-[1.5rem] shadow-sm text-sm font-bold ${
+                      msg.senderId === user.uid 
+                        ? 'bg-primary text-white rounded-br-none' 
+                        : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none border border-gray-100 dark:border-gray-600'
+                    }`}
+                  >
+                    {msg.imageUrl && (
+                      <img 
+                        src={msg.imageUrl} 
+                        alt="Chat attachment" 
+                        className="rounded-xl mb-2 max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity" 
+                        onClick={() => setFullScreenImage(msg.imageUrl)}
+                      />
+                    )}
+                    {msg.text && <p className="whitespace-pre-wrap break-words">{msg.text}</p>}
+                    <div className={`flex items-center gap-1 text-[9px] mt-1 opacity-60 ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'}`}>
+                      {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+                      {msg.senderId === user.uid && (
+                        <span className="ml-1 font-black tracking-tighter">
+                          {msg.read ? '✓✓' : '✓'}
+                        </span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))
+              </React.Fragment>
+            );
+          })
         )}
+        
+        {isParticipantTyping && (
+          <div className="flex justify-start">
+            <div className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-4 py-3 rounded-[1.5rem] rounded-bl-none flex gap-1 items-center">
+              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+            </div>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -202,7 +270,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
         <input 
           type="text"
           value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
+          onChange={handleInputChange}
           placeholder="Write your message..."
           className="flex-grow bg-gray-50 dark:bg-gray-800 py-4 px-6 rounded-[2rem] border border-transparent focus:border-primary/20 dark:focus:border-primary/40 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all font-bold text-gray-700 dark:text-gray-200"
         />
@@ -216,6 +284,14 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
           </svg>
         </button>
       </form>
+
+      {/* Full Screen Image Viewer Modal */}
+      {fullScreenImage && (
+        <div className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setFullScreenImage(null)}>
+          <button className="absolute top-6 right-6 text-white bg-black/50 hover:bg-black w-12 h-12 rounded-full font-bold flex items-center justify-center transition-colors">✕</button>
+          <img src={fullScreenImage} alt="Full screen" className="max-w-full max-h-full object-contain rounded-lg" onClick={e => e.stopPropagation()} />
+        </div>
+      )}
     </div>
   );
 };

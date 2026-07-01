@@ -66,7 +66,9 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
                 <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">
                   {conv.updatedAt?.toDate ? conv.updatedAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
                 </span>
-                <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                {conv.unreadBy?.includes(user.uid) && (
+                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
+                )}
               </div>
             </button>
           ))

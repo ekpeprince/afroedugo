@@ -15,7 +15,8 @@ import {
   getDocs,
   limit,
   arrayUnion,
-  arrayRemove
+  arrayRemove,
+  deleteDoc
 } from 'firebase/firestore';
 import { useAuth } from './useAuth';
 import { notifyUser } from '../utils/notifyUser';
@@ -223,6 +224,26 @@ export const useChat = (conversationId = null) => {
     }
   };
 
+  const deleteMessage = async (convId, msgId) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, 'conversations', convId, 'messages', msgId));
+    } catch (err) {
+      console.error('Error deleting message:', err);
+    }
+  };
+
+  const setTypingStatus = async (convId, isTyping) => {
+    if (!user) return;
+    try {
+      await setDoc(doc(db, 'conversations', convId), {
+        typing: {
+          [user.uid]: isTyping
+        }
+      }, { merge: true });
+    } catch (err) {}
+  };
+
   const getOrCreateConversation = async (participantId, metadata = {}) => {
     if (!user) return null;
 
@@ -265,6 +286,8 @@ export const useChat = (conversationId = null) => {
     messages, 
     loading, 
     sendMessage, 
+    deleteMessage,
+    setTypingStatus,
     getOrCreateConversation,
     unreadDMsCount
   };
