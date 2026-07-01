@@ -28,7 +28,7 @@ export async function POST(request) {
       return NextResponse.json({ skipped: true, reason: 'Admin not configured' }, { status: 200 });
     }
 
-    const { token, broadcast, title, body, link = '/', icon = null, image = null } = await request.json();
+    const { token, broadcast, title, body, link = '/', icon = null, image = null, tag = null } = await request.json();
 
     if (!token && !broadcast) {
       return NextResponse.json({ error: 'FCM token or broadcast flag required' }, { status: 400 });
@@ -50,6 +50,7 @@ export async function POST(request) {
           icon: iconUrl,
           badge: `${baseUrl}/icon-192.png`,
           ...(image && { image }),
+          ...(tag && { tag, renotify: true }),
           requireInteraction: false,
         },
         fcmOptions: {
