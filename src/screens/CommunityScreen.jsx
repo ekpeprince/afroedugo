@@ -215,7 +215,9 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
               broadcast: true,
               title: `New Post in ${postCategory}`,
               body: `${profile?.displayName || user.displayName || user.email.split('@')[0]} just posted: "${newMessage.slice(0, 50)}${newMessage.length > 50 ? '...' : ''}"`,
-              link: 'community'
+              link: 'community',
+              icon: profile?.photoURL || user?.photoURL || null,
+              image: imageUrls[0] || null
             })
           }).catch(err => console.warn('Failed to broadcast post notification:', err));
         }

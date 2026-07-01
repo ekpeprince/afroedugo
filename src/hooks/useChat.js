@@ -198,8 +198,8 @@ export const useChat = (conversationId = null) => {
             createdAt: serverTimestamp()
           });
 
-          // 2. Trigger push notification with sender's avatar
-          notifyUser(recipientId, `💬 ${senderName}`, preview, 'chat', senderPhotoURL);
+          // 2. Trigger push notification with sender's avatar and optional image attachment
+          notifyUser(recipientId, `💬 ${senderName}`, preview, 'chat', senderPhotoURL, imageUrl);
 
           // 3. If recipient is the expert, trigger the email notification API
           if (recipientId === 'admin_support') {
