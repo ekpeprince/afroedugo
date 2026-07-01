@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SmartImage from '../../../components/SmartImage';
 import InquiryModal from '../../../components/InquiryModal';
+import EnrollModal from '../../../components/EnrollModal';
 import { getWhatsAppLink } from '../../../utils/whatsapp';
 import { useAuth } from '../../../hooks/useAuth';
 
@@ -11,6 +12,7 @@ export default function SchoolDetailClient({ school }) {
   const router = useRouter();
   const { user } = useAuth();
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
+  const [isEnrollOpen, setIsEnrollOpen] = useState(false);
   const [expandedCourse, setExpandedCourse] = useState(null);
 
   const handleEnrollClick = () => {
@@ -19,7 +21,7 @@ export default function SchoolDetailClient({ school }) {
       router.push('/auth');
       return;
     }
-    setIsInquiryOpen(true);
+    setIsEnrollOpen(true);
   };
 
   return (
@@ -251,6 +253,12 @@ export default function SchoolDetailClient({ school }) {
         onClose={() => setIsInquiryOpen(false)} 
         item={school} 
         type="school" 
+      />
+
+      <EnrollModal
+        isOpen={isEnrollOpen}
+        onClose={() => setIsEnrollOpen(false)}
+        school={school}
       />
     </div>
   );

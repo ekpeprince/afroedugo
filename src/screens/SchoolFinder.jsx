@@ -3,6 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { getWhatsAppLink } from '../utils/whatsapp'
 import SmartImage from '../components/SmartImage'
 import InquiryModal from '../components/InquiryModal'
+import EnrollModal from '../components/EnrollModal'
 import ComparisonModal from '../components/ComparisonModal'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -76,10 +77,21 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
   const router = useRouter();
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [inquiryItem, setInquiryItem] = useState(null);
+  const [isEnrollOpen, setIsEnrollOpen] = useState(false);
+  const [enrollItem, setEnrollItem] = useState(null);
 
   const openInquiry = (item) => {
     setInquiryItem(item);
     setIsInquiryOpen(true);
+  };
+
+  const openEnroll = (item) => {
+    if (!user) {
+      alert("Please login to enroll!");
+      return;
+    }
+    setEnrollItem(item);
+    setIsEnrollOpen(true);
   };
   const { isLoaded } = useLoadScript({
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -643,7 +655,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          openInquiry(school);
+                          openEnroll(school);
                         }}
                         className="bg-primary text-white px-5 py-3 rounded-xl font-bold text-xs shadow-md shadow-primary/10 hover:scale-103 transition-all active:scale-97"
                       >
@@ -745,6 +757,14 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
         item={inquiryItem} 
         type="school" 
       />
+
+      {enrollItem && (
+        <EnrollModal
+          isOpen={isEnrollOpen}
+          onClose={() => setIsEnrollOpen(false)}
+          school={enrollItem}
+        />
+      )}
 
       {compareList.length > 0 && (
         <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-[2rem] shadow-2xl flex items-center gap-6 z-50 animate-in slide-in-from-bottom-10">
