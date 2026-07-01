@@ -87,7 +87,7 @@ const ServicesScreen = ({ onBack, onLogin }) => {
   }
 
   return (
-    <div className="min-h-screen bg-white pb-20">
+    <div className="min-h-screen bg-white pb-20 max-w-5xl mx-auto">
       <header className="p-6 bg-white shadow-sm sticky top-0 z-20 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="text-2xl hover:text-primary transition-colors">←</button>

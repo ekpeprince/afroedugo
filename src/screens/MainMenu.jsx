@@ -110,7 +110,7 @@ const MainMenu = ({ onNavigate }) => {
   ]
 
   return (
-    <div className="min-h-screen bg-transparent dark:bg-gray-900 transition-colors duration-300 p-6 pb-32 flex flex-col">
+    <div className="min-h-screen bg-transparent dark:bg-gray-900 transition-colors duration-300 p-6 pb-32 flex flex-col max-w-5xl mx-auto">
       {/* Header */}
       <header className="flex items-center justify-between py-6 mb-4">
         <div>
@@ -221,7 +221,7 @@ const MainMenu = ({ onNavigate }) => {
       </div>
 
       {/* Cards Grid */}
-      <div className="grid grid-cols-2 gap-5 mb-10">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-10">
         {menuItems.map((item) => (
           <button
             key={item.id}

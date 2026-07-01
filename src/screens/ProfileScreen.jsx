@@ -111,7 +111,7 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
 
 
   return (
-    <div className="min-h-screen bg-transparent pb-20">
+    <div className="min-h-screen bg-transparent pb-20 max-w-4xl mx-auto">
       <header className="p-8 bg-gray-900/90 backdrop-blur-2xl text-white rounded-b-[3rem] shadow-2xl shadow-gray-200/20 mb-8 sticky top-0 z-20 border-b border-white/5">
         <button onClick={onBack} className="text-2xl mb-8 opacity-60 hover:opacity-100 transition-opacity">←</button>
         <div className="flex items-center justify-between">

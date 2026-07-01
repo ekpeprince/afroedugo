@@ -124,9 +124,9 @@ const HousingFinder = ({ onBack, onNavigate, onOpenChat, initialHousing }) => {
   }
 
   return (
-    <div className="min-h-screen bg-transparent flex flex-col relative">
+    <div className="min-h-screen bg-transparent flex flex-col relative max-w-5xl mx-auto">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 bg-white/40 backdrop-blur-2xl z-50 px-6 py-4 flex items-center justify-between border-b border-white/10">
+      <header className="fixed top-0 left-0 right-0 max-w-5xl mx-auto bg-white/40 backdrop-blur-2xl z-50 px-6 py-4 flex items-center justify-between border-b border-white/10">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="text-2xl hover:text-primary transition-colors">←</button>
           <h2 className="text-2xl font-black tracking-tight">Housing Finder</h2>
