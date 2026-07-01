@@ -62,6 +62,8 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
   const bio     = profile?.bio || null;
   const major   = profile?.major || null;
   const country = profile?.country || null;
+  const school  = profile?.school || null;
+  const interests = profile?.interests || [];
   const role    = profile?.role || 'incoming';
   const initial = name[0]?.toUpperCase() || '?';
 
@@ -195,6 +197,33 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
                     </span>
                   </div>
                 )}
+                {school && (
+                  <div className="flex flex-col items-start p-3 bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/30 rounded-2xl col-span-2">
+                    <div className="flex items-center gap-1.5 text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                      </svg>
+                      <span>School</span>
+                    </div>
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate w-full" title={school}>
+                      {school}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Interests Section */}
+            {interests.length > 0 && (
+              <div className="mb-5">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2 px-1">Interests</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {interests.map((interest, idx) => (
+                    <span key={idx} className="px-2.5 py-1 bg-fuchsia-50 dark:bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 border border-fuchsia-100 dark:border-fuchsia-500/20 rounded-lg text-[10px] font-bold">
+                      {interest}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 

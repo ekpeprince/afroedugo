@@ -11,6 +11,8 @@ export default function ProfileModal({ isOpen, onClose }) {
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [major, setMajor] = useState('');
+  const [school, setSchool] = useState('');
+  const [interests, setInterests] = useState('');
   const [country, setCountry] = useState('');
   const [role, setRole] = useState('incoming');
   const [isSaving, setIsSaving] = useState(false);
@@ -24,6 +26,8 @@ export default function ProfileModal({ isOpen, onClose }) {
       setDisplayName(profile.displayName || (user?.email?.split('@')[0] || ''));
       setBio(profile.bio || '');
       setMajor(profile.major || '');
+      setSchool(profile.school || '');
+      setInterests(profile.interests?.join(', ') || '');
       setCountry(profile.country || '');
       setRole(profile.role || 'incoming');
     }
@@ -57,6 +61,8 @@ export default function ProfileModal({ isOpen, onClose }) {
         displayName,
         bio,
         major,
+        school,
+        interests: interests.split(',').map(i => i.trim()).filter(i => i),
         country,
         role,
         photoURL: finalPhotoUrl
@@ -151,6 +157,29 @@ export default function ProfileModal({ isOpen, onClose }) {
                   onChange={(e) => setMajor(e.target.value)}
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-primary focus:ring-2 ring-primary/20 outline-none transition-all font-medium"
                   placeholder="e.g. Computer Science"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">School</label>
+                <input 
+                  type="text"
+                  value={school}
+                  onChange={(e) => setSchool(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-primary focus:ring-2 ring-primary/20 outline-none transition-all font-medium"
+                  placeholder="e.g. Harvard University"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Interests</label>
+                <input 
+                  type="text"
+                  value={interests}
+                  onChange={(e) => setInterests(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-primary focus:ring-2 ring-primary/20 outline-none transition-all font-medium"
+                  placeholder="e.g. Tech, Football"
                 />
               </div>
             </div>

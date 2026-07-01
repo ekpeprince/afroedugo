@@ -19,6 +19,7 @@ import StoriesBar from '../components/StoriesBar'
 import { useNotifications } from '../hooks/useNotifications'
 import { notifyUser } from '../utils/notifyUser'
 import UserProfileViewer from '../components/UserProfileViewer'
+import NetworkMatch from '../components/NetworkMatch'
 
 const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotifications, onLogin }) => {
   const { user } = useAuth();
@@ -38,6 +39,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [expandedPost, setExpandedPost] = useState(null);
+  const [activeTab, setActiveTab] = useState('feed'); // 'feed' or 'matches'
   const [attachedImages, setAttachedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const fileInputRef = useRef(null);
@@ -365,15 +367,23 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
               <ul className="flex flex-col py-2">
                 <li>
                   <button
-                    onClick={() => setSavedView(false)}
-                    className={`w-full flex items-center gap-4 px-6 py-3 text-left transition-colors font-bold border-l-4 ${!savedView ? 'text-primary bg-primary/5 border-primary' : 'text-gray-700 dark:text-gray-300 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                    onClick={() => { setSavedView(false); setActiveTab('feed'); }}
+                    className={`w-full flex items-center gap-4 px-6 py-3 text-left transition-colors font-bold border-l-4 ${!savedView && activeTab === 'feed' ? 'text-primary bg-primary/5 border-primary' : 'text-gray-700 dark:text-gray-300 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                   >
                     <span className="text-xl">🏠</span> Home Feed
                   </button>
                 </li>
                 <li>
                   <button
-                    onClick={() => { if (!user) { onLogin?.(); return; } setSavedView(true); }}
+                    onClick={() => { if (!user) { onLogin?.(); return; } setActiveTab('matches'); setSavedView(false); }}
+                    className={`w-full flex items-center gap-4 px-6 py-3 text-left transition-colors font-bold border-l-4 ${activeTab === 'matches' ? 'text-primary bg-primary/5 border-primary' : 'text-gray-700 dark:text-gray-300 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'}`}
+                  >
+                    <span className="text-xl">🤝</span> Network Matches
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={() => { if (!user) { onLogin?.(); return; } setSavedView(true); setActiveTab('feed'); }}
                     className={`w-full flex items-center gap-4 px-6 py-3 text-left transition-colors font-bold border-l-4 ${savedView ? 'text-primary bg-primary/5 border-primary' : 'text-gray-700 dark:text-gray-300 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                   >
                     <span className="text-xl">🔖</span>
@@ -405,7 +415,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         <div className="flex-grow max-w-2xl w-full mx-auto min-w-0">
 
           {/* Stories Bar */}
-          <StoriesBar onLogin={onLogin} />
+          {activeTab === 'feed' && <StoriesBar onLogin={onLogin} />}
 
           {/* Category pills */}
           <div className="flex gap-2 overflow-x-auto no-scrollbar mb-5 pb-1">
@@ -424,9 +434,18 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
             ))}
           </div>
 
-          {/* Saved posts banner */}
-          {savedView && (
-            <div className="flex items-center gap-3 mb-4 bg-primary/10 border border-primary/20 text-primary rounded-2xl px-4 py-3">
+          {activeTab === 'matches' ? (
+            <div className="mt-4">
+              <NetworkMatch 
+                onStartChat={handleStartPrivateChat} 
+                onViewProfile={(u) => setViewingUser({ userId: u.id, displayName: u.displayName, photoURL: u.photoURL })} 
+              />
+            </div>
+          ) : (
+            <>
+              {/* Saved posts banner */}
+              {savedView && (
+                <div className="flex items-center gap-3 mb-4 bg-primary/10 border border-primary/20 text-primary rounded-2xl px-4 py-3">
               <span className="text-xl">🔖</span>
               <span className="font-bold text-sm">Showing your {savedPosts.length} saved post{savedPosts.length !== 1 ? 's' : ''}</span>
               <button onClick={() => setSavedView(false)} className="ml-auto text-xs font-bold hover:underline opacity-70 hover:opacity-100">
@@ -716,6 +735,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
               })
             )}
           </div>
+            </>
+          )}
         </div>
 
         {/* ── RIGHT SIDEBAR ─────────────────────────────────────────────── */}
