@@ -32,9 +32,13 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -154,6 +158,62 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     }
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.error("Error accessing microphone:", err);
+      alert("Could not access microphone.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (!mediaRecorderRef.current) return;
+    
+    mediaRecorderRef.current.onstop = async () => {
+      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      const stream = mediaRecorderRef.current.stream;
+      stream.getTracks().forEach(track => track.stop()); // release mic
+      
+      if (audioBlob.size > 0 && user) {
+        setIsUploading(true);
+        try {
+          const storageRef = ref(storage, `chat_audio/${conversationId}/${user.uid}_${Date.now()}_audio.webm`);
+          const uploadTask = uploadBytesResumable(storageRef, audioBlob);
+          uploadTask.on(
+            'state_changed', null,
+            (error) => {
+              console.error("Audio upload failed:", error);
+              setIsUploading(false);
+            },
+            async () => {
+              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+              await sendMessage(stableConvId.current, '', null, downloadURL);
+              setIsUploading(false);
+            }
+          );
+        } catch (err) {
+          console.error("Audio upload error:", err);
+          setIsUploading(false);
+        }
+      }
+    };
+    
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+  };
+
   return (
     <div className={`fixed inset-0 z-[100] flex flex-col bg-white transition-transform duration-500 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
       {/* Chat Header */}
@@ -251,6 +311,11 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                         onClick={() => setFullScreenImage(msg.imageUrl)}
                       />
                     )}
+                    {msg.audioUrl && (
+                      <div className="mb-2 w-48 sm:w-64">
+                        <audio controls src={msg.audioUrl} className="w-full h-10" />
+                      </div>
+                    )}
                     {msg.text && <p className="whitespace-pre-wrap break-words">{msg.text}</p>}
                     <div className={`flex items-center gap-1 text-[9px] mt-1 opacity-60 ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'}`}>
                       {msg.isEdited && <span className="mr-1 italic">(edited)</span>}
@@ -306,9 +371,24 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 className="w-12 h-12 flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                disabled={isUploading}
+                disabled={isUploading || isRecording}
               >
                 {isUploading ? '⌛' : '📷'}
+              </button>
+              <button 
+                type="button"
+                onPointerDown={startRecording}
+                onPointerUp={stopRecording}
+                onPointerLeave={() => { if (isRecording) stopRecording(); }}
+                className={`w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center transition-all ${
+                  isRecording 
+                    ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40 scale-110' 
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+                disabled={isUploading}
+                title="Hold to record audio"
+              >
+                🎙️
               </button>
             </>
           )}

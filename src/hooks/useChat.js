@@ -144,14 +144,15 @@ export const useChat = (conversationId = null) => {
     return unsub;
   }, [conversationId, user]);
 
-  const sendMessage = async (convId, text, imageUrl = null) => {
-    if (!user || (!text.trim() && !imageUrl)) return;
+  const sendMessage = async (convId, text, imageUrl = null, audioUrl = null) => {
+    if (!user || (!text.trim() && !imageUrl && !audioUrl)) return;
 
     try {
       const messagesRef = collection(db, 'conversations', convId, 'messages');
       await addDoc(messagesRef, {
         text,
         imageUrl,
+        audioUrl,
         senderId: user.uid,
         read: false,
         createdAt: serverTimestamp()
@@ -168,7 +169,7 @@ export const useChat = (conversationId = null) => {
       } catch (_) {}
 
       await setDoc(convRef, {
-        lastMessage: imageUrl ? '📷 Image' : text,
+        lastMessage: audioUrl ? '🎤 Voice Message' : (imageUrl ? '📷 Image' : text),
         updatedAt: serverTimestamp(),
         unreadBy: recipientId ? arrayUnion(recipientId) : []
       }, { merge: true });
@@ -181,7 +182,7 @@ export const useChat = (conversationId = null) => {
           const senderData = senderSnap.data();
           const senderName = senderData?.displayName || user.displayName || user.email?.split('@')[0] || 'Someone';
           const senderPhotoURL = senderData?.photoURL || senderData?.photoUrl || user.photoURL || null;
-          const preview = imageUrl ? '📷 Sent a photo' : text.slice(0, 60);
+          const preview = audioUrl ? '🎤 Sent a voice message' : (imageUrl ? '📷 Sent a photo' : text.slice(0, 60));
 
           // 1. Create a Firestore notification document so it displays in the Feed!
           await addDoc(collection(db, 'notifications'), {

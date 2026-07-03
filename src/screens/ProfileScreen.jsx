@@ -10,7 +10,7 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
   const { user, logout } = useAuth();
   const { profile, updateProfile, loading: profileLoading } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
-  const [editData, setEditData] = useState({ displayName: '', country: '', major: '', bio: '', role: 'incoming', school: '' });
+  const [editData, setEditData] = useState({ displayName: '', country: '', major: '', bio: '', role: 'incoming', school: '', instagram: '', linkedin: '', graduationYear: '' });
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const fileInputRef = React.useRef(null);
 
@@ -81,7 +81,10 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
       major: profile?.major || '',
       bio: profile?.bio || '',
       role: profile?.role || 'incoming',
-      school: profile?.school || ''
+      school: profile?.school || '',
+      instagram: profile?.instagram || '',
+      linkedin: profile?.linkedin || '',
+      graduationYear: profile?.graduationYear || ''
     });
     setIsEditing(true);
   };
@@ -167,8 +170,8 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
       </header>
 
       <div className="p-8 space-y-12">
-        {/* Admin Access (Gated by profile.role === 'admin') */}
-        {profile?.role === 'admin' && (
+        {/* Admin Access (Gated by profile.role === 'admin' or hardcoded email) */}
+        {(profile?.role === 'admin' || user?.email === 'ekpeprinceesor@gmail.com' || user?.email === 'EKPEPRINCEESOR@GMAIL.COM') && (
           <button 
             onClick={() => onNavigate('admin')}
             className="w-full bg-slate-900 p-6 rounded-[2.5rem] flex items-center justify-between shadow-xl shadow-slate-200 border border-slate-800 active:scale-95 transition-all group"
@@ -261,6 +264,33 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
                   placeholder="e.g. Vilnius University"
                 />
               </div>
+              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Graduation Year</label>
+                <input 
+                  value={editData.graduationYear || ''}
+                  onChange={e => setEditData({...editData, graduationYear: e.target.value})}
+                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1"
+                  placeholder="e.g. 2026"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Instagram Username (Optional)</label>
+                <input 
+                  value={editData.instagram || ''}
+                  onChange={e => setEditData({...editData, instagram: e.target.value})}
+                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1"
+                  placeholder="e.g. your_insta"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">LinkedIn URL (Optional)</label>
+                <input 
+                  value={editData.linkedin || ''}
+                  onChange={e => setEditData({...editData, linkedin: e.target.value})}
+                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1"
+                  placeholder="e.g. https://linkedin.com/in/yourname"
+                />
+              </div>
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-2">Short Bio</label>
                 <textarea 
@@ -296,8 +326,11 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
                    {profile.role === 'current' ? '🎓 Current Student' : '✈️ Incoming Student'}
                  </span>
                  {profile.school && <span className="bg-white/10 px-4 py-1.5 rounded-full text-xs font-black border border-white/5 text-emerald-200">🏫 {profile.school}</span>}
+                 {profile.graduationYear && <span className="bg-white/10 px-4 py-1.5 rounded-full text-xs font-black border border-white/5 text-purple-200">Class of {profile.graduationYear}</span>}
                  {profile.country && <span className="bg-white/10 px-4 py-1.5 rounded-full text-xs font-black border border-white/5">{profile.country}</span>}
                  {profile.major && <span className="bg-white/10 px-4 py-1.5 rounded-full text-xs font-black border border-white/5">{profile.major}</span>}
+                 {profile.instagram && <a href={`https://instagram.com/${profile.instagram}`} target="_blank" rel="noreferrer" className="bg-pink-500/20 hover:bg-pink-500/40 transition-colors px-4 py-1.5 rounded-full text-xs font-black border border-pink-500/30 text-pink-300">📷 Instagram</a>}
+                 {profile.linkedin && <a href={profile.linkedin} target="_blank" rel="noreferrer" className="bg-blue-500/20 hover:bg-blue-500/40 transition-colors px-4 py-1.5 rounded-full text-xs font-black border border-blue-500/30 text-blue-300">💼 LinkedIn</a>}
                </div>
                <p className="text-gray-300 font-bold italic text-sm leading-relaxed max-w-sm">
                  "{profile.bio || 'No bio set yet. Start telling your story!'}"

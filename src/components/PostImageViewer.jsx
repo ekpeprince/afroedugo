@@ -10,8 +10,7 @@ const PostImageViewer = ({
   initialIndex = 0,
   post,
   onLogin,
-  onToggleLike,
-  currentUserId
+  onToggleReaction,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [showComments, setShowComments] = useState(false);
@@ -54,7 +53,11 @@ const PostImageViewer = ({
     setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
   };
 
-  const isLiked = currentUserId && post.likes?.includes(currentUserId);
+  // Check if current user reacted to anything (for highlighting the heart icon generally)
+  const hasReacted = currentUserId && (
+    post.likes?.includes(currentUserId) || 
+    Object.values(post.reactions || {}).some(uids => uids.includes(currentUserId))
+  );
 
   return (
     <div className="fixed inset-0 z-[100] flex flex-col lg:flex-row bg-black/95 backdrop-blur-sm animate-in fade-in duration-200">
@@ -171,17 +174,41 @@ const PostImageViewer = ({
 
           {/* Action Row */}
           <div className="flex items-center gap-6 py-3 border-y border-gray-100 dark:border-gray-800 mb-2">
-            <button
-              onClick={() => onToggleLike(post.id, post.likes, post.userId, post.text)}
-              className={`flex items-center gap-2 font-bold transition-colors ${
-                isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
-              }`}
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-              {post.likes?.length || 0}
-            </button>
+            <div className="relative group">
+              <button
+                className={`flex items-center gap-2 font-bold transition-colors ${
+                  hasReacted ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                }`}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill={hasReacted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                </svg>
+                <span className="flex items-center gap-1">
+                  {Object.values(post.reactions || {}).reduce((sum, arr) => sum + arr.length, 0) + (post.likes?.length || 0)}
+                  <span className="flex -space-x-1 ml-1 text-xs">
+                    {(post.likes?.length > 0 ? ['❤️'] : []).concat(Object.keys(post.reactions || {})).slice(0, 3).map((e, i) => (
+                      <span key={i} className="bg-white dark:bg-gray-800 rounded-full">{e}</span>
+                    ))}
+                  </span>
+                </span>
+              </button>
+              
+              {/* Hoverable Emoji Picker */}
+              <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl rounded-full p-2 gap-2 animate-in slide-in-from-bottom-2 duration-200 z-10">
+                {['👍', '🤣', '❤️', '😮', '🙏'].map(emoji => (
+                  <button
+                    key={emoji}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleReaction(post.id, post.reactions || {}, post.userId, post.text, emoji);
+                    }}
+                    className={`text-xl hover:scale-125 transition-transform ${post.reactions?.[emoji]?.includes(currentUserId) ? 'bg-indigo-500/20 rounded-full' : ''}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="flex items-center gap-2 font-bold text-gray-500">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />

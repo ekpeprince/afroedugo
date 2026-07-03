@@ -43,7 +43,12 @@ service firebase.storage {
     }
 
     // Chats: Only accessible by authenticated participants of the conversation
-    match /chats/{conversationId}/{fileName} {
+    match /chats/{conversationId}/{allPaths=**} {
+      allow read, write: if isAuthenticated() 
+                    && (request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants);
+    }
+
+    match /chat_audio/{conversationId}/{allPaths=**} {
       allow read, write: if isAuthenticated() 
                     && (request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants);
     }

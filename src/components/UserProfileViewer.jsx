@@ -63,6 +63,9 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
   const major   = profile?.major || null;
   const country = profile?.country || null;
   const school  = profile?.school || null;
+  const graduationYear = profile?.graduationYear || null;
+  const instagram = profile?.instagram || null;
+  const linkedin = profile?.linkedin || null;
   const interests = profile?.interests || [];
   const role    = profile?.role || 'incoming';
   const initial = name[0]?.toUpperCase() || '?';
@@ -206,9 +209,25 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
                       <span>School</span>
                     </div>
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate w-full" title={school}>
-                      {school}
+                      {school} {graduationYear && <span className="text-slate-400 ml-1">('{(graduationYear).slice(-2)})</span>}
                     </span>
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* Social Links */}
+            {(instagram || linkedin) && (
+              <div className="flex gap-2 mb-5 justify-center">
+                {instagram && (
+                  <a href={`https://instagram.com/${instagram}`} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-pink-50 dark:bg-pink-500/10 text-pink-600 dark:text-pink-400 border border-pink-100 dark:border-pink-500/20 rounded-xl text-[10px] font-bold hover:scale-105 transition-transform">
+                    📷 Instagram
+                  </a>
+                )}
+                {linkedin && (
+                  <a href={linkedin} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-500/20 rounded-xl text-[10px] font-bold hover:scale-105 transition-transform">
+                    💼 LinkedIn
+                  </a>
                 )}
               </div>
             )}

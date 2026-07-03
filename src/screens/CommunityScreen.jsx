@@ -48,9 +48,10 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const [editingPostId, setEditingPostId] = useState(null);
   const [editPostText, setEditPostText] = useState('');
   const [mentionState, setMentionState] = useState({ isOpen: false, query: '', target: null });
+  const [postLimit, setPostLimit] = useState(10);
   const fileInputRef = useRef(null);
 
-  const { data: discussions, loading } = useFirestore('discussions', 'createdAt');
+  const { data: discussions, loading } = useFirestore('discussions', 'createdAt', postLimit);
 
   // ── Load saved posts from user profile ──────────────────────────────────
   useEffect(() => {
@@ -93,14 +94,36 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
     if (convId) onOpenChat(convId);
   };
 
-  const handleToggleLike = async (postId, likes = [], postAuthorId, postText, authorFcmToken) => {
+  const handleToggleReaction = async (postId, reactions = {}, postAuthorId, postText, emoji) => {
     if (!user) { onLogin?.(); return; }
-    const isLiked = likes?.includes(user.uid);
+    
+    // Determine if the user has already reacted with THIS emoji
+    const userReactedWithEmoji = reactions[emoji]?.includes(user.uid);
+    
+    // Create a copy of reactions to manipulate
+    const updatedReactions = { ...reactions };
+    
+    if (userReactedWithEmoji) {
+      // Remove the user from this emoji's array
+      updatedReactions[emoji] = updatedReactions[emoji].filter(uid => uid !== user.uid);
+      if (updatedReactions[emoji].length === 0) {
+        delete updatedReactions[emoji];
+      }
+    } else {
+      // Optional: if users can only have ONE reaction per post, 
+      // we could remove them from all other emoji arrays here.
+      // But usually multiple emoji reactions are allowed per user.
+      if (!updatedReactions[emoji]) {
+        updatedReactions[emoji] = [];
+      }
+      updatedReactions[emoji].push(user.uid);
+    }
+
     try {
       await updateDoc(doc(db, 'discussions', postId), {
-        likes: isLiked ? arrayRemove(user.uid) : arrayUnion(user.uid)
+        reactions: updatedReactions
       });
-      if (!isLiked && postAuthorId && postAuthorId !== user.uid) {
+      if (!userReactedWithEmoji && postAuthorId && postAuthorId !== user.uid) {
         const senderName = profile?.displayName || user.displayName || user.email.split('@')[0];
         const snippet = (postText || '').slice(0, 40);
         await addDoc(collection(db, 'notifications'), {
@@ -109,17 +132,16 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
           senderName,
           senderPhotoURL: profile?.photoURL || user?.photoURL || null,
           postId,
-          title: '❤️ New Like!',
-          message: `${senderName} liked your post: "${snippet}..."`,
+          title: `${emoji} New Reaction!`,
+          message: `${senderName} reacted to your post: "${snippet}..."`,
           type: 'like',
           link: 'community',
           read: false,
           createdAt: serverTimestamp()
         });
-        // Push notification even when app is closed
-        notifyUser(postAuthorId, '❤️ New Like!', `${senderName} liked your post`);
+        notifyUser(postAuthorId, `${emoji} New Reaction!`, `${senderName} reacted to your post`);
       }
-    } catch (err) { console.error('Error toggling like:', err); }
+    } catch (err) { console.error('Error toggling reaction:', err); }
   };
 
   const handleSavePost = async (postId) => {
@@ -232,7 +254,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         userMajor: profile?.major || '',
         userRole: profile?.role || 'incoming',
         userPhotoURL: profile?.photoURL || user?.photoURL || null,
-        likes: [],
+        reactions: {},
         commentCount: 0,
         imageUrls: imageUrls,
         imageUrl: imageUrls[0] || ''
@@ -840,18 +862,42 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                           <span className="text-sm font-semibold">{msg.commentCount || 0}</span>
                         </button>
 
-                        {/* Like */}
-                        <button
-                          onClick={() => handleToggleLike(msg.id, msg.likes, msg.userId, msg.text)}
-                          className={`flex items-center gap-1.5 transition-colors group ${user && msg.likes?.includes(user.uid) ? 'text-red-500' : 'text-gray-500 dark:text-gray-400 hover:text-red-500'}`}
-                        >
-                          <div className="p-1.5 rounded-full group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
-                            <svg width="19" height="19" viewBox="0 0 24 24" fill={user && msg.likes?.includes(user.uid) ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2">
-                              <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                            </svg>
+                        {/* Reactions */}
+                        <div className="relative group">
+                          <button
+                            className="flex items-center gap-1.5 transition-colors text-gray-500 dark:text-gray-400 hover:text-red-500"
+                          >
+                            <div className="p-1.5 rounded-full group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
+                              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                              </svg>
+                            </div>
+                            <span className="text-sm font-semibold flex items-center gap-1">
+                              {Object.values(msg.reactions || {}).reduce((sum, arr) => sum + arr.length, 0) + (msg.likes?.length || 0)}
+                              <span className="flex -space-x-1 ml-1 text-xs">
+                                {(msg.likes?.length > 0 ? ['❤️'] : []).concat(Object.keys(msg.reactions || {})).slice(0, 3).map((e, i) => (
+                                  <span key={i} className="bg-white dark:bg-gray-800 rounded-full">{e}</span>
+                                ))}
+                              </span>
+                            </span>
+                          </button>
+                          
+                          {/* Hoverable Emoji Picker */}
+                          <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl rounded-full p-2 gap-2 animate-in slide-in-from-bottom-2 duration-200 z-10">
+                            {['👍', '🤣', '❤️', '😮', '🙏'].map(emoji => (
+                              <button
+                                key={emoji}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleReaction(msg.id, msg.reactions || {}, msg.userId, msg.text, emoji);
+                                }}
+                                className={`text-xl hover:scale-125 transition-transform ${msg.reactions?.[emoji]?.includes(user?.uid) ? 'bg-primary/20 rounded-full' : ''}`}
+                              >
+                                {emoji}
+                              </button>
+                            ))}
                           </div>
-                          <span className="text-sm font-semibold">{msg.likes?.length || 0}</span>
-                        </button>
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-1">
@@ -897,6 +943,18 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
               })
             )}
           </div>
+          
+          {/* Load More Button */}
+          {discussions.length >= postLimit && !loading && (
+            <div className="flex justify-center mt-6 mb-10">
+              <button 
+                onClick={() => setPostLimit(prev => prev + 10)}
+                className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-6 py-3 rounded-full font-bold text-sm transition-colors border border-gray-200 dark:border-gray-700"
+              >
+                Load More Posts
+              </button>
+            </div>
+          )}
             </>
           )}
         </div>
@@ -1042,7 +1100,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         initialIndex={viewerState.initialIndex}
         post={viewerState.post}
         onLogin={onLogin}
-        onToggleLike={handleToggleLike}
+        onToggleReaction={handleToggleReaction}
         currentUserId={user?.uid}
       />
     </div>
