@@ -376,35 +376,46 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
       </div>
 
       {/* Input Area */}
-      <div className="p-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 sticky bottom-0 transition-colors duration-300">
+      <div className="p-2 sm:p-4 bg-[url('https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png')] bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 sticky bottom-0 transition-colors duration-300">
         {editingMessageId && (
-          <div className="flex items-center justify-between mb-2 px-2 text-xs font-bold text-blue-500 animate-in fade-in slide-in-from-bottom-2">
+          <div className="flex items-center justify-between mb-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 animate-in fade-in slide-in-from-bottom-2">
             <span>✏️ Editing message...</span>
-            <button onClick={cancelEdit} className="hover:underline">Cancel</button>
+            <button onClick={cancelEdit} className="text-red-500 hover:text-red-600 font-bold">Cancel</button>
           </div>
         )}
         <form 
           onSubmit={handleSend}
-          className="flex items-center gap-4"
+          className="flex items-end gap-2 max-w-4xl mx-auto"
         >
           {isRecording ? (
-            <div className="flex-grow flex items-center justify-between bg-red-50 dark:bg-red-900/20 py-4 px-6 rounded-[2rem] border border-red-200 dark:border-red-800/50 animate-in fade-in slide-in-from-right-4 transition-all">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
-                <span className="text-red-500 font-black tracking-widest font-mono text-lg">
-                  {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
-                </span>
-              </div>
+            <div className="flex-grow flex items-center justify-between bg-white dark:bg-gray-800 h-12 px-4 rounded-full shadow-sm animate-in fade-in slide-in-from-right-4 transition-all">
               <button
                 type="button"
                 onClick={cancelRecording}
-                className="text-gray-400 hover:text-red-500 transition-colors text-sm font-bold flex items-center gap-1"
+                className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-2 -ml-2 rounded-full transition-colors flex items-center justify-center"
+                title="Discard Voice Note"
               >
-                Discard
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
               </button>
+
+              <div className="flex items-center gap-2">
+                <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-sm shadow-red-500/50"></div>
+                <span className="text-gray-800 dark:text-gray-200 font-medium font-mono text-base tracking-wide">
+                  {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+                </span>
+              </div>
+              
+              <div className="text-gray-400 text-sm italic pr-2 hidden sm:block">
+                Slide to cancel &lt;
+              </div>
             </div>
           ) : (
-            <>
+            <div className="flex-grow flex items-end bg-white dark:bg-gray-800 rounded-[1.5rem] shadow-sm min-h-[48px] px-2 py-1 transition-all">
               {!editingMessageId && (
                 <>
                   <input 
@@ -417,32 +428,48 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                   <button 
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-12 h-12 flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className="p-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex-shrink-0"
                     disabled={isUploading}
+                    title="Attach Image"
                   >
-                    {isUploading ? '⌛' : '📷'}
+                    {isUploading ? (
+                      <span className="w-6 h-6 flex items-center justify-center animate-spin">⏳</span>
+                    ) : (
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+                      </svg>
+                    )}
                   </button>
                 </>
               )}
-              <input 
+              
+              <textarea 
                 id="chat-input-field"
-                type="text"
                 value={inputText}
                 onChange={handleInputChange}
-                placeholder={editingMessageId ? "Edit your message..." : "Write your message..."}
-                className="flex-grow bg-gray-50 dark:bg-gray-800 py-4 px-6 rounded-[2rem] border border-transparent focus:border-primary/20 dark:focus:border-primary/40 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all font-bold text-gray-700 dark:text-gray-200"
+                placeholder={editingMessageId ? "Edit message..." : "Message"}
+                className="flex-grow bg-transparent py-2.5 px-2 max-h-32 outline-none text-gray-800 dark:text-gray-200 resize-none overflow-y-auto"
+                rows="1"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    if (inputText.trim() || editingMessageId) {
+                      handleSend(e);
+                    }
+                  }
+                }}
               />
-            </>
+            </div>
           )}
 
           {isRecording ? (
             <button 
               type="button"
               onClick={stopRecording}
-              className="w-14 h-14 flex-shrink-0 bg-red-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/30 hover:scale-105 active:scale-95 transition-all"
+              className="w-12 h-12 flex-shrink-0 bg-[#00a884] hover:bg-[#008f6f] text-white rounded-full flex items-center justify-center shadow-md transition-all scale-100"
             >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
               </svg>
             </button>
           ) : (
@@ -450,15 +477,15 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
               <button 
                 type="submit"
                 disabled={isUploading}
-                className="w-14 h-14 flex-shrink-0 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                className="w-12 h-12 flex-shrink-0 bg-[#00a884] hover:bg-[#008f6f] text-white rounded-full flex items-center justify-center shadow-md transition-all scale-100 disabled:opacity-50"
               >
                 {editingMessageId ? (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                    <path d="M5 12l5 5L20 7"/>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                 ) : (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                   </svg>
                 )}
               </button>
@@ -467,9 +494,11 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                 type="button"
                 onClick={startRecording}
                 disabled={isUploading}
-                className="w-14 h-14 flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-all disabled:opacity-50"
+                className="w-12 h-12 flex-shrink-0 bg-[#00a884] hover:bg-[#008f6f] text-white rounded-full flex items-center justify-center shadow-md transition-all scale-100 disabled:opacity-50"
               >
-                🎙️
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 14c1.66 0 2.99-1.34 2.99-3L15 5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                </svg>
               </button>
             )
           )}
