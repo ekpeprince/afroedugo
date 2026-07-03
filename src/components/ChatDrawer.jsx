@@ -40,6 +40,10 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
   const recordingTimerRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const canvasRef = useRef(null);
   const [recordingTime, setRecordingTime] = useState(0);
   const [previewAudioBlob, setPreviewAudioBlob] = useState(null);
   const [previewAudioUrl, setPreviewAudioUrl] = useState(null);
@@ -180,10 +184,80 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
       recordingTimerRef.current = setInterval(() => {
         setRecordingTime(prev => prev + 1);
       }, 1000);
+
+      // Start Audio Visualization
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) {
+          audioContextRef.current = new AudioContext();
+          analyserRef.current = audioContextRef.current.createAnalyser();
+          const source = audioContextRef.current.createMediaStreamSource(stream);
+          source.connect(analyserRef.current);
+          analyserRef.current.fftSize = 64; // Small size for simple bars
+          
+          const bufferLength = analyserRef.current.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+
+          const drawWave = () => {
+            if (!canvasRef.current || !analyserRef.current) return;
+            const canvas = canvasRef.current;
+            const ctx = canvas.getContext('2d');
+            
+            if (canvas.width !== canvas.offsetWidth * 2) {
+              canvas.width = canvas.offsetWidth * 2;
+              canvas.height = canvas.offsetHeight * 2;
+              ctx.scale(2, 2); // HiDPI
+            }
+            
+            analyserRef.current.getByteFrequencyData(dataArray);
+            ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+            
+            const barWidth = 3;
+            const gap = 2;
+            const height = canvas.offsetHeight;
+            const totalBars = Math.min(Math.floor(canvas.offsetWidth / (barWidth + gap)), bufferLength);
+            const step = Math.max(1, Math.floor(bufferLength / totalBars));
+            
+            for (let i = 0; i < totalBars; i++) {
+              const value = dataArray[i * step]; 
+              // Convert 0-255 to a height (min 2px)
+              const barHeight = Math.max(3, (value / 255) * height * 0.8);
+              const x = i * (barWidth + gap);
+              const y = (height - barHeight) / 2;
+              
+              ctx.fillStyle = '#00a884'; 
+              
+              // Draw rounded rect
+              if (ctx.roundRect) {
+                ctx.beginPath();
+                ctx.roundRect(x, y, barWidth, barHeight, 2);
+                ctx.fill();
+              } else {
+                ctx.fillRect(x, y, barWidth, barHeight);
+              }
+            }
+            
+            animationFrameRef.current = requestAnimationFrame(drawWave);
+          };
+          
+          drawWave();
+        }
+      } catch (e) {
+        console.warn("Audio visualization not supported", e);
+      }
     } catch (err) {
       console.error("Error accessing microphone:", err);
       alert("Could not access microphone.");
     }
+  };
+
+  const cleanupAudioNodes = () => {
+    if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(() => {});
+      audioContextRef.current = null;
+    }
+    analyserRef.current = null;
   };
 
   const cancelRecording = () => {
@@ -199,11 +273,13 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     setIsRecording(false);
     clearInterval(recordingTimerRef.current);
     setRecordingTime(0);
+    cleanupAudioNodes();
   };
 
   const stopRecording = () => {
     if (!mediaRecorderRef.current) return;
     clearInterval(recordingTimerRef.current);
+    cleanupAudioNodes();
     
     mediaRecorderRef.current.onstop = async () => {
       const mimeType = typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
@@ -439,14 +515,16 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                 </svg>
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-shrink-0">
                 <div className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-sm shadow-red-500/50"></div>
-                <span className="text-gray-800 dark:text-gray-200 font-medium font-mono text-base tracking-wide">
+                <span className="text-gray-800 dark:text-gray-200 font-medium font-mono text-base tracking-wide min-w-[45px]">
                   {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
                 </span>
               </div>
               
-              <div className="text-gray-400 text-sm italic pr-2 hidden sm:block">
+              <canvas ref={canvasRef} className="flex-grow h-8 mx-2 hidden sm:block opacity-80" />
+              
+              <div className="text-gray-400 text-sm italic pr-2 hidden sm:block flex-shrink-0">
                 Slide to cancel &lt;
               </div>
             </div>
