@@ -8,6 +8,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
 import { notifyUser } from '../utils/notifyUser';
 import UserProfileViewer from './UserProfileViewer';
+import MentionDropdown from './MentionDropdown';
+import PostText from './PostText';
 
 const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
   const { user } = useAuth();
@@ -16,7 +18,8 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [replyingTo, setReplyingTo] = useState(null);
-  const [viewingUser, setViewingUser] = useState(null); // { userId, displayName, photoURL }
+  const [viewingUser, setViewingUser] = useState(null);
+  const [mentionState, setMentionState] = useState({ isOpen: false, query: '' });
   
   const inputRef = useRef(null);
 
@@ -51,6 +54,37 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
     });
     return map;
   }, [comments]);
+
+  const handleTextChange = (e) => {
+    const val = e.target.value;
+    setNewComment(val);
+    
+    const cursor = e.target.selectionStart;
+    const textBeforeCursor = val.slice(0, cursor);
+    const match = textBeforeCursor.match(/@([a-zA-Z0-9_ ]*)$/);
+    
+    if (match) {
+      setMentionState({ isOpen: true, query: match[1] });
+    } else {
+      setMentionState({ isOpen: false, query: '' });
+    }
+  };
+
+  const insertMention = (mentionUser) => {
+    const val = newComment;
+    const cursor = inputRef.current ? inputRef.current.selectionStart : val.length;
+    
+    const textBeforeCursor = val.slice(0, cursor);
+    const match = textBeforeCursor.match(/@([a-zA-Z0-9_ ]*)$/);
+    
+    if (match) {
+      const start = cursor - match[0].length;
+      const newText = val.slice(0, start) + `@[${mentionUser.displayName}](${mentionUser.uid}) ` + val.slice(cursor);
+      setNewComment(newText);
+    }
+    setMentionState({ isOpen: false, query: '' });
+    if (inputRef.current) setTimeout(() => inputRef.current.focus(), 10);
+  };
 
   const handleSendComment = async (e) => {
     e.preventDefault();
@@ -115,6 +149,28 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
           createdAt: serverTimestamp()
         });
         notifyUser(postAuthorId, '💬 New Reply!', `${senderName} replied: "${postTitle}"`);
+      }
+
+      // 3. Mentions logic
+      const mentionMatches = [...newComment.matchAll(/@\[([^\]]+)\]\(([^)]+)\)/g)];
+      const mentionedUids = [...new Set(mentionMatches.map(m => m[2]))];
+      
+      for (const mentionedUid of mentionedUids) {
+        if (mentionedUid === user.uid) continue;
+        addDoc(collection(db, 'notifications'), {
+          userId: mentionedUid,
+          senderId: user.uid,
+          senderName,
+          senderPhotoURL: profile?.photoURL || user?.photoURL || null,
+          postId,
+          commentId: commentData.id,
+          title: '📢 You were mentioned!',
+          message: `${senderName} mentioned you in a comment.`,
+          type: 'mention',
+          link: 'community',
+          read: false,
+          createdAt: serverTimestamp()
+        });
       }
 
       setNewComment('');
@@ -203,7 +259,10 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
                 {comment.createdAt?.toDate ? comment.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
               </span>
             </div>
-            <p className="text-gray-800 dark:text-gray-200 text-sm font-medium leading-relaxed break-words">{comment.text}</p>
+            <PostText 
+              text={comment.text} 
+              onMentionClick={(u) => setViewingUser({ userId: u.userId, displayName: u.displayName })}
+            />
           </div>
 
           {/* Action Row */}
@@ -299,14 +358,23 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
               (user.email?.[0] || '?').toUpperCase()
             )}
           </div>
-          <input 
-            type="text"
-            ref={inputRef}
-            placeholder={replyingTo ? `Write a reply to @${replyingTo.userName}...` : "Write a reply..."}
-            className="flex-grow bg-transparent px-2 py-2 text-sm font-medium text-gray-900 dark:text-white outline-none placeholder:text-gray-400"
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-          />
+          <div className="flex-grow relative">
+            <input 
+              type="text"
+              ref={inputRef}
+              placeholder={replyingTo ? `Write a reply to @${replyingTo.userName}...` : "Write a reply..."}
+              className="w-full bg-transparent px-2 py-2 text-sm font-medium text-gray-900 dark:text-white outline-none placeholder:text-gray-400"
+              value={newComment}
+              onChange={handleTextChange}
+            />
+            {mentionState.isOpen && (
+              <MentionDropdown 
+                searchQuery={mentionState.query} 
+                onSelect={insertMention} 
+                position="top"
+              />
+            )}
+          </div>
           <button 
             type="submit"
             disabled={!newComment.trim()}

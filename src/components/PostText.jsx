@@ -1,11 +1,12 @@
 import React, { useMemo } from 'react';
 import LinkPreview from './LinkPreview';
 
-// Regular expressions for detecting URLs and Hashtags
+// Regular expressions for detecting URLs, Hashtags, and Mentions
 const URL_REGEX = /(https?:\/\/[^\s]+)/g;
 const HASHTAG_REGEX = /(#[a-zA-Z0-9_]+)/g;
+const MENTION_REGEX = /(@\[[^\]]+\]\([^)]+\))/g;
 
-export default function PostText({ text, onHashtagClick }) {
+export default function PostText({ text, onHashtagClick, onMentionClick }) {
   // Extract all URLs from the text for the LinkPreview components
   const extractedUrls = useMemo(() => {
     if (!text) return [];
@@ -36,27 +37,51 @@ export default function PostText({ text, onHashtagClick }) {
         );
       }
       
-      // Then split the remaining text by Hashtags
-      const subParts = part.split(HASHTAG_REGEX);
-      return subParts.map((subPart, j) => {
-        if (subPart.match(HASHTAG_REGEX)) {
-          return (
-            <span 
-              key={`${i}-${j}`} 
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onHashtagClick) onHashtagClick(subPart);
-              }}
-              className="text-blue-500 font-semibold cursor-pointer hover:underline"
-            >
-              {subPart}
-            </span>
-          );
+      // Then split by Mentions
+      const mentionParts = part.split(MENTION_REGEX);
+      return mentionParts.map((mPart, k) => {
+        if (mPart.match(MENTION_REGEX)) {
+          const match = mPart.match(/^@\[([^\]]+)\]\(([^)]+)\)$/);
+          if (match) {
+            const displayName = match[1];
+            const userId = match[2];
+            return (
+              <span
+                key={`${i}-${k}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onMentionClick) onMentionClick({ userId, displayName });
+                }}
+                className="text-primary font-bold cursor-pointer hover:underline"
+              >
+                @{displayName}
+              </span>
+            );
+          }
         }
-        return <span key={`${i}-${j}`}>{subPart}</span>;
+        
+        // Finally split the remaining text by Hashtags
+        const subParts = mPart.split(HASHTAG_REGEX);
+        return subParts.map((subPart, j) => {
+          if (subPart.match(HASHTAG_REGEX)) {
+            return (
+              <span 
+                key={`${i}-${k}-${j}`} 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onHashtagClick) onHashtagClick(subPart);
+                }}
+                className="text-blue-500 font-semibold cursor-pointer hover:underline"
+              >
+                {subPart}
+              </span>
+            );
+          }
+          return <span key={`${i}-${k}-${j}`}>{subPart}</span>;
+        });
       });
     });
-  }, [text, onHashtagClick]);
+  }, [text, onHashtagClick, onMentionClick]);
 
   return (
     <div>

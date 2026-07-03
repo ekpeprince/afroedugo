@@ -16,6 +16,7 @@ import ProfileModal from '../components/ProfileModal'
 import NotificationsDropdown from '../components/NotificationsDropdown'
 import PostText from '../components/PostText'
 import StoriesBar from '../components/StoriesBar'
+import MentionDropdown from '../components/MentionDropdown'
 import { useNotifications } from '../hooks/useNotifications'
 import { notifyUser } from '../utils/notifyUser'
 import UserProfileViewer from '../components/UserProfileViewer'
@@ -46,6 +47,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const [viewerState, setViewerState] = useState({ isOpen: false, post: null, initialIndex: 0 });
   const [editingPostId, setEditingPostId] = useState(null);
   const [editPostText, setEditPostText] = useState('');
+  const [mentionState, setMentionState] = useState({ isOpen: false, query: '', target: null });
   const fileInputRef = useRef(null);
 
   const { data: discussions, loading } = useFirestore('discussions', 'createdAt');
@@ -174,6 +176,37 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleTextChange = (e, setter, targetName) => {
+    const val = e.target.value;
+    setter(val);
+    
+    const cursor = e.target.selectionStart;
+    const textBeforeCursor = val.slice(0, cursor);
+    const match = textBeforeCursor.match(/@([a-zA-Z0-9_ ]*)$/);
+    
+    if (match) {
+      setMentionState({ isOpen: true, query: match[1], target: targetName });
+    } else {
+      setMentionState({ isOpen: false, query: '', target: null });
+    }
+  };
+
+  const insertMention = (user, setter, val, targetName) => {
+    const textarea = document.getElementById(targetName);
+    const cursor = textarea ? textarea.selectionStart : val.length;
+    
+    const textBeforeCursor = val.slice(0, cursor);
+    const match = textBeforeCursor.match(/@([a-zA-Z0-9_ ]*)$/);
+    
+    if (match) {
+      const start = cursor - match[0].length;
+      const newText = val.slice(0, start) + `@[${user.displayName}](${user.uid}) ` + val.slice(cursor);
+      setter(newText);
+    }
+    setMentionState({ isOpen: false, query: '', target: null });
+    if (textarea) setTimeout(() => textarea.focus(), 10);
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!newMessage.trim() && attachedImages.length === 0) return;
@@ -188,7 +221,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         imageUrls.push(await getDownloadURL(snap.ref));
       }
       const postCategory = selectedCategory === 'all' ? 'general' : selectedCategory;
-      await addDoc(collection(db, 'discussions'), {
+      const postRef = await addDoc(collection(db, 'discussions'), {
         text: newMessage,
         category: postCategory,
         createdAt: serverTimestamp(),
@@ -201,9 +234,29 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         userPhotoURL: profile?.photoURL || user?.photoURL || null,
         likes: [],
         commentCount: 0,
-        imageUrls,
+        imageUrls: imageUrls,
         imageUrl: imageUrls[0] || ''
       });
+
+      // Handle mentions notifications
+      const mentionMatches = [...newMessage.matchAll(/@\[([^\]]+)\]\(([^)]+)\)/g)];
+      const mentionedUids = [...new Set(mentionMatches.map(m => m[2]))];
+      
+      for (const mentionedUid of mentionedUids) {
+        if (mentionedUid === user.uid) continue;
+        addDoc(collection(db, 'notifications'), {
+          userId: mentionedUid,
+          fromUserId: user.uid,
+          fromUserName: profile?.displayName || user.displayName,
+          fromUserPhoto: profile?.photoURL || user?.photoURL || null,
+          type: 'mention',
+          postId: postRef.id,
+          postText: newMessage.substring(0, 50) + '...',
+          createdAt: serverTimestamp(),
+          read: false,
+          link: 'community'
+        }).catch(err => console.warn('Failed to send mention notification:', err));
+      }
 
       // Broadcast push notification to all users
       try {
@@ -507,14 +560,24 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                     ? <img src={profile?.photoURL || user?.photoURL} alt="" className="w-full h-full object-cover" />
                     : user ? user.email[0].toUpperCase() : '👤'}
                 </div>
-                <textarea
-                  placeholder={user ? `What's on your mind, ${profile?.displayName?.split(' ')[0] || 'friend'}?` : 'Log in to share your thoughts…'}
-                  className="flex-grow bg-transparent pt-2 outline-none font-medium text-gray-900 dark:text-white text-base placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none min-h-[48px]"
-                  value={newMessage}
-                  onChange={e => setNewMessage(e.target.value)}
-                  disabled={isSending || !user}
-                  rows={newMessage.length > 60 ? 3 : 2}
-                />
+                <div className="flex-grow relative">
+                  <textarea
+                    id="newPost"
+                    placeholder={user ? `What's on your mind, ${profile?.displayName?.split(' ')[0] || 'friend'}?` : 'Log in to share your thoughts…'}
+                    className="w-full bg-transparent pt-2 outline-none font-medium text-gray-900 dark:text-white text-base placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none min-h-[48px]"
+                    value={newMessage}
+                    onChange={e => handleTextChange(e, setNewMessage, 'newPost')}
+                    disabled={isSending || !user}
+                    rows={newMessage.length > 60 ? 3 : 2}
+                  />
+                  {mentionState.isOpen && mentionState.target === 'newPost' && (
+                    <MentionDropdown 
+                      searchQuery={mentionState.query} 
+                      onSelect={(u) => insertMention(u, setNewMessage, newMessage, 'newPost')} 
+                      position="bottom"
+                    />
+                  )}
+                </div>
               </div>
 
               {imagePreviews.length > 0 && (
@@ -700,13 +763,21 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                     {/* Post body */}
                     <div className="px-4 sm:px-5 pb-3">
                       {editingPostId === msg.id ? (
-                        <div className="flex flex-col gap-2 mt-2">
+                        <div className="flex flex-col gap-2 mt-2 relative">
                           <textarea
+                            id="editPost"
                             value={editPostText}
-                            onChange={(e) => setEditPostText(e.target.value)}
+                            onChange={(e) => handleTextChange(e, setEditPostText, 'editPost')}
                             className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none resize-none"
                             rows="3"
                           />
+                          {mentionState.isOpen && mentionState.target === 'editPost' && (
+                            <MentionDropdown 
+                              searchQuery={mentionState.query} 
+                              onSelect={(u) => insertMention(u, setEditPostText, editPostText, 'editPost')} 
+                              position="bottom"
+                            />
+                          )}
                           <div className="flex justify-end gap-2">
                             <button
                               onClick={() => { setEditingPostId(null); setEditPostText(''); }}
@@ -726,6 +797,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                         <PostText
                           text={msg.text}
                           onHashtagClick={tag => { setSearchTerm(tag); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                          onMentionClick={(u) => setViewingUser({ userId: u.userId, displayName: u.displayName })}
                         />
                       )}
                     </div>
