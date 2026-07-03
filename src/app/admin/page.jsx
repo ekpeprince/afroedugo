@@ -4,10 +4,13 @@ import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminDashboard from '../../screens/AdminDashboard';
 import { useProfile } from '../../hooks/useProfile';
+import { useAuth } from '../../hooks/useAuth';
 
 export default function AdminPage() {
   const router = useRouter();
   const { profile, loading } = useProfile();
+
+  const { user } = useAuth();
 
   if (loading) {
     return (
@@ -18,7 +21,9 @@ export default function AdminPage() {
   }
 
   // Gate access to admin users only
-  if (!profile || profile.role !== 'admin') {
+  const isAuthorized = profile?.role === 'admin' || user?.email === 'ekpeprinceesor@gmail.com' || user?.email === 'EKPEPRINCEESOR@GMAIL.COM';
+
+  if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center select-none font-sans">
         <div className="absolute top-20 left-1/2 -translate-x-1/2 w-80 h-80 bg-red-500/10 rounded-full blur-3xl -z-10 animate-pulse"></div>
