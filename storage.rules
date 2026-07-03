@@ -8,6 +8,18 @@ service firebase.storage {
       return request.auth != null;
     }
 
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        (firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin') ||
+        request.auth.token.email == 'ekpeprinceesor@gmail.com' ||
+        request.auth.token.email == 'EKPEPRINCEESOR@GMAIL.COM'
+      );
+    }
+
     // Profiles & Avatars: Publicly readable, writeable only if file name starts with user's UID
     match /profiles/{fileName} {
       allow read: if true;
@@ -45,13 +57,13 @@ service firebase.storage {
     // Chats: Only accessible by authenticated participants of the conversation or admin
     match /chats/{conversationId}/{allPaths=**} {
       allow read, write: if isAuthenticated() 
-                    && ((request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants) || (firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+                    && ((request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants) || isAdmin());
     }
 
     // Voice Notes
     match /chat_audio/{conversationId}/{allPaths=**} {
       allow read, write: if isAuthenticated() 
-                    && ((request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants) || (firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'));
+                    && ((request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants) || isAdmin());
     }
 
     // Enrollments documents: writeable/deletable by owner only. NOT PUBLIC.

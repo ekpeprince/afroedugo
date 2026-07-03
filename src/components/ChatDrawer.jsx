@@ -170,12 +170,12 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
+        if (event.data && event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
-      mediaRecorderRef.current.start();
+      mediaRecorderRef.current.start(250); // Get data every 250ms
       setIsRecording(true);
     } catch (err) {
       console.error("Error accessing microphone:", err);
@@ -202,6 +202,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
             'state_changed', null,
             (error) => {
               console.error("Audio upload failed:", error);
+              alert("Audio upload failed: " + error.message);
               setIsUploading(false);
             },
             async () => {
@@ -212,8 +213,11 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
           );
         } catch (err) {
           console.error("Audio upload error:", err);
+          alert("Upload error: " + err.message);
           setIsUploading(false);
         }
+      } else {
+        alert("Recording failed: no audio data was captured. Please check your microphone permissions.");
       }
     };
     
