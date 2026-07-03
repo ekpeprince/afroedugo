@@ -18,6 +18,72 @@ const formatMessageDate = (timestamp) => {
   return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 };
 
+const SwipeableMessage = ({ onReply, children }) => {
+  const [offsetX, setOffsetX] = useState(0);
+  const startXRef = useRef(null);
+  const isDraggingRef = useRef(false);
+
+  const handlePointerDown = (e) => {
+    isDraggingRef.current = true;
+    startXRef.current = e.clientX || (e.touches && e.touches[0].clientX);
+  };
+
+  const handlePointerMove = (e) => {
+    if (!isDraggingRef.current || startXRef.current === null) return;
+    const currentX = e.clientX || (e.touches && e.touches[0].clientX);
+    const diff = currentX - startXRef.current;
+    
+    // Only allow swipe right for reply (positive X)
+    if (diff > 0 && diff < 80) {
+      setOffsetX(diff);
+    } else if (diff >= 80) {
+      setOffsetX(80);
+    }
+  };
+
+  const handlePointerUp = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    if (offsetX > 50) {
+      onReply();
+    }
+    setOffsetX(0); // Snap back smoothly
+  };
+
+  return (
+    <div 
+      className="relative w-full flex items-center"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onTouchStart={handlePointerDown}
+      onTouchMove={handlePointerMove}
+      onTouchEnd={handlePointerUp}
+      onTouchCancel={handlePointerUp}
+    >
+      {/* Reply Icon Background */}
+      <div 
+        className="absolute left-2 flex items-center justify-center w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 transition-opacity z-0"
+        style={{ opacity: offsetX / 80, transform: `scale(${Math.min(1, offsetX / 50)})` }}
+      >
+        <span className="text-gray-600 dark:text-gray-300 transform -scale-x-100 text-sm">↩️</span>
+      </div>
+      
+      {/* The actual message bubble */}
+      <div 
+        className="w-full z-10"
+        style={{ 
+          transform: `translateX(${offsetX}px)`, 
+          transition: isDraggingRef.current ? 'none' : 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)' 
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const { user } = useAuth();
 
@@ -30,6 +96,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const { messages, sendMessage, editMessage, deleteMessage, setTypingStatus, conversations } = useChat(stableConvId.current);
   const [inputText, setInputText] = useState('');
   const [editingMessageId, setEditingMessageId] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -105,12 +172,12 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
       await editMessage(stableConvId.current, editingMessageId, inputText);
       setEditingMessageId(null);
     } else {
-      await sendMessage(stableConvId.current, inputText);
+      await sendMessage(stableConvId.current, inputText.trim(), null, null, replyingTo);
+      setInputText('');
+      setReplyingTo(null);
+      scrollToBottom();
+      setTypingStatus(stableConvId.current, false);
     }
-    
-    setInputText('');
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    setTypingStatus(stableConvId.current, false);
   };
 
   const handleEditClick = (msg) => {
@@ -126,6 +193,10 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const cancelEdit = () => {
     setEditingMessageId(null);
     setInputText('');
+  };
+
+  const cancelReply = () => {
+    setReplyingTo(null);
   };
 
   const handleInputChange = (e) => {
@@ -318,10 +389,11 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
         },
         async () => {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          await sendMessage(stableConvId.current, '', null, downloadURL);
+          await sendMessage(stableConvId.current, '', null, downloadURL, replyingTo);
           setIsUploading(false);
           setPreviewAudioBlob(null);
           setPreviewAudioUrl(null);
+          setReplyingTo(null);
         }
       );
     } catch (err) {
@@ -395,10 +467,10 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                     </span>
                   </div>
                 )}
-                <div className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'} group relative`}>
+                <div id={`msg-${msg.id}`} className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'} group relative overflow-hidden`}>
                   
                   {msg.senderId === user.uid && (
-                    <div className="opacity-0 group-hover:opacity-100 absolute -left-16 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity">
+                    <div className="opacity-0 group-hover:opacity-100 absolute -left-16 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity z-10 hidden sm:flex">
                       {msg.text && (
                         <button 
                           onClick={() => handleEditClick(msg)}
@@ -418,37 +490,55 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                     </div>
                   )}
 
-                  <div 
-                    className={`max-w-[75%] p-4 rounded-[1.5rem] shadow-sm text-sm font-bold ${
-                      msg.senderId === user.uid 
-                        ? 'bg-primary text-white rounded-br-none' 
-                        : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none border border-gray-100 dark:border-gray-600'
-                    }`}
-                  >
-                    {msg.imageUrl && (
-                      <img 
-                        src={msg.imageUrl} 
-                        alt="Chat attachment" 
-                        className="rounded-xl mb-2 max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity" 
-                        onClick={() => setFullScreenImage(msg.imageUrl)}
-                      />
-                    )}
-                    {msg.audioUrl && (
-                      <div className="mb-2 w-48 sm:w-64">
-                        <audio controls src={msg.audioUrl} className="w-full h-10" />
-                      </div>
-                    )}
-                    {msg.text && <p className="whitespace-pre-wrap break-words">{msg.text}</p>}
-                    <div className={`flex items-center gap-1 text-[9px] mt-1 opacity-60 ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'}`}>
-                      {msg.isEdited && <span className="mr-1 italic">(edited)</span>}
-                      {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
-                      {msg.senderId === user.uid && (
-                        <span className="ml-1 font-black tracking-tighter">
-                          {msg.read ? '✓✓' : '✓'}
-                        </span>
+                  <SwipeableMessage onReply={() => setReplyingTo(msg)}>
+                    <div 
+                      className={`max-w-[85%] sm:max-w-[75%] p-4 rounded-[1.5rem] shadow-sm text-sm font-bold ${
+                        msg.senderId === user.uid 
+                          ? 'bg-primary text-white rounded-br-none ml-auto' 
+                          : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none border border-gray-100 dark:border-gray-600'
+                      }`}
+                    >
+                      {msg.replyToMessageId && (
+                        <div 
+                          className={`rounded-lg p-2 mb-2 border-l-4 text-xs overflow-hidden cursor-pointer ${
+                            msg.senderId === user.uid ? 'bg-black/20 border-white/50 text-white/90' : 'bg-gray-100 dark:bg-gray-800 border-primary/50 text-gray-600 dark:text-gray-300'
+                          }`}
+                          onClick={() => {
+                            const el = document.getElementById(`msg-${msg.replyToMessageId}`);
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }}
+                        >
+                          <div className={`font-black mb-1 ${msg.senderId === user.uid ? 'text-white' : 'text-primary'}`}>
+                            {msg.replyToSenderId === user.uid ? 'You' : participantName}
+                          </div>
+                          <div className="truncate opacity-90">{msg.replyToText}</div>
+                        </div>
                       )}
+                      {msg.imageUrl && (
+                        <img 
+                          src={msg.imageUrl} 
+                          alt="Chat attachment" 
+                          className="rounded-xl mb-2 max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity" 
+                          onClick={() => setFullScreenImage(msg.imageUrl)}
+                        />
+                      )}
+                      {msg.audioUrl && (
+                        <div className="mb-2 w-48 sm:w-64">
+                          <audio controls src={msg.audioUrl} className="w-full h-10" />
+                        </div>
+                      )}
+                      {msg.text && <p className="whitespace-pre-wrap break-words">{msg.text}</p>}
+                      <div className={`flex items-center gap-1 text-[9px] mt-1 opacity-60 ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'}`}>
+                        {msg.isEdited && <span className="mr-1 italic">(edited)</span>}
+                        {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+                        {msg.senderId === user.uid && (
+                          <span className="ml-1 font-black tracking-tighter">
+                            {msg.read ? '✓✓' : '✓'}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </SwipeableMessage>
                 </div>
               </React.Fragment>
             );
@@ -470,6 +560,17 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
 
       {/* Input Area */}
       <div className="p-2 sm:p-4 bg-[url('https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png')] bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 sticky bottom-0 transition-colors duration-300">
+        {replyingTo && !editingMessageId && (
+          <div className="flex items-center justify-between mb-2 px-4 py-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl text-sm border-l-4 border-primary shadow-sm animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex flex-col overflow-hidden">
+              <span className="text-primary font-black text-xs mb-1">Replying to {replyingTo.senderId === user.uid ? 'yourself' : participantName}</span>
+              <span className="text-gray-600 dark:text-gray-300 truncate font-medium">
+                {replyingTo.text || (replyingTo.audioUrl ? '🎤 Voice Message' : (replyingTo.imageUrl ? '📷 Image' : 'Message'))}
+              </span>
+            </div>
+            <button onClick={cancelReply} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 ml-4 p-2 rounded-full transition-colors flex-shrink-0">✕</button>
+          </div>
+        )}
         {editingMessageId && (
           <div className="flex items-center justify-between mb-2 px-4 py-2 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-xl text-sm font-medium text-gray-700 dark:text-gray-300 animate-in fade-in slide-in-from-bottom-2">
             <span>✏️ Editing message...</span>

@@ -144,19 +144,27 @@ export const useChat = (conversationId = null) => {
     return unsub;
   }, [conversationId, user]);
 
-  const sendMessage = async (convId, text, imageUrl = null, audioUrl = null) => {
+  const sendMessage = async (convId, text, imageUrl = null, audioUrl = null, replyTo = null) => {
     if (!user || (!text.trim() && !imageUrl && !audioUrl)) return;
 
     try {
       const messagesRef = collection(db, 'conversations', convId, 'messages');
-      await addDoc(messagesRef, {
+      const msgData = {
         text,
         imageUrl,
         audioUrl,
         senderId: user.uid,
         read: false,
         createdAt: serverTimestamp()
-      });
+      };
+      
+      if (replyTo) {
+        msgData.replyToMessageId = replyTo.id;
+        msgData.replyToText = replyTo.text || (replyTo.audioUrl ? '🎤 Voice Message' : (replyTo.imageUrl ? '📷 Image' : ''));
+        msgData.replyToSenderId = replyTo.senderId;
+      }
+
+      await addDoc(messagesRef, msgData);
 
       // Update parent conversation's last message, timestamp, and unread status
       const convRef = doc(db, 'conversations', convId);
