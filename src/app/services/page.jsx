@@ -1,15 +1,11 @@
-'use client';
-
 import React from 'react';
-import { useRouter } from 'next/navigation';
-import ServicesScreen from '../../screens/ServicesScreen';
+import ServicesClient from './ServicesClient';
+
+export const metadata = {
+  title: 'Student Services & Support | AfroEduGo',
+  description: 'Access essential student services including visa assistance, flight booking, financial aid, and health insurance designed for African students.',
+};
 
 export default function ServicesPage() {
-  const router = useRouter();
-
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans selection:bg-pink-100">
-      <ServicesScreen onBack={() => router.push('/')} />
-    </div>
-  );
+  return <ServicesClient />;
 }

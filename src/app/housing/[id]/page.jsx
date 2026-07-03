@@ -89,5 +89,26 @@ export default async function HousingDetailPage({ params }) {
     );
   }
 
-  return <HousingDetailClient item={item} />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'RealEstateListing',
+            name: item.title,
+            description: item.description,
+            image: item.imageUrl,
+            offers: {
+              '@type': 'Offer',
+              price: item.price?.replace(/[^0-9.]/g, '') || '0',
+              priceCurrency: 'EUR', // Assuming EUR, adjust if needed
+            },
+          })
+        }}
+      />
+      <HousingDetailClient item={item} />
+    </>
+  );
 }

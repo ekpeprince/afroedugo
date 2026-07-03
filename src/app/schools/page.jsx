@@ -3,6 +3,11 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import SchoolsPageClient from './SchoolsPageClient';
 
+export const metadata = {
+  title: 'Discover Universities & Schools | AfroEduGo',
+  description: 'Explore top universities, colleges, and educational programs globally, trusted by the African student community.',
+};
+
 export default async function SchoolsPage() {
   let initialSchools = [];
   try {

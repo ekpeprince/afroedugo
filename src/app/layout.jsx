@@ -2,12 +2,13 @@ import '../index.css';
 import ClientWrapper from '../components/ClientWrapper';
 
 export const metadata = {
+  metadataBase: new URL('https://afroedugo.vercel.app'),
   title: 'AfroEduGo | The Ultimate Hub for African Students Studying Abroad',
   description: 'Join the AfroEduGo community. Find affordable housing, discover schools, get visa assistance, and connect with other African students studying globally.',
   openGraph: {
     title: 'AfroEduGo | African Students Guide',
     description: 'Find affordable housing, discover schools, and connect with other African students studying globally.',
-    url: 'https://afroedugo.com',
+    url: 'https://afroedugo.vercel.app',
     siteName: 'AfroEduGo',
     images: [
       {
@@ -43,6 +44,18 @@ export default function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className="bg-white text-gray-900">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebSite',
+              name: 'AfroEduGo',
+              url: 'https://afroedugo.vercel.app',
+              description: 'The Ultimate Hub for African Students Studying Abroad.',
+            })
+          }}
+        />
         <ClientWrapper>
           {children}
         </ClientWrapper>

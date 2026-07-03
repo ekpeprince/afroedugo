@@ -3,6 +3,11 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import HousingPageClient from './HousingPageClient';
 
+export const metadata = {
+  title: 'Student Housing & Accommodation | AfroEduGo',
+  description: 'Find affordable and safe student housing, apartments, and rooms for rent across Europe, curated for African students.',
+};
+
 export default async function HousingPage() {
   let initialHousing = [];
   try {
