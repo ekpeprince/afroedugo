@@ -233,6 +233,20 @@ export const useChat = (conversationId = null) => {
     }
   };
 
+  const editMessage = async (convId, msgId, newText) => {
+    if (!user || !newText.trim()) return;
+    try {
+      await updateDoc(doc(db, 'conversations', convId, 'messages', msgId), {
+        text: newText,
+        isEdited: true
+      });
+      // Optionally update the parent conversation's lastMessage if it's the last one,
+      // but that requires knowing if it's the last. We can just skip updating lastMessage for edits for simplicity.
+    } catch (err) {
+      console.error('Error editing message:', err);
+    }
+  };
+
   const deleteConversation = async (convId) => {
     if (!user) return;
     // Confirm before deleting
@@ -297,6 +311,7 @@ export const useChat = (conversationId = null) => {
     messages, 
     loading, 
     sendMessage, 
+    editMessage,
     deleteMessage,
     deleteConversation,
     setTypingStatus,

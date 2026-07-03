@@ -27,8 +27,9 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const stableConvId = useRef(conversationId);
   if (conversationId) stableConvId.current = conversationId;
 
-  const { messages, sendMessage, deleteMessage, setTypingStatus, conversations } = useChat(stableConvId.current);
+  const { messages, sendMessage, editMessage, deleteMessage, setTypingStatus, conversations } = useChat(stableConvId.current);
   const [inputText, setInputText] = useState('');
+  const [editingMessageId, setEditingMessageId] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
   const messagesEndRef = useRef(null);
@@ -88,10 +89,31 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     e.preventDefault();
     if (!inputText.trim() && !isUploading) return;
     
-    await sendMessage(stableConvId.current, inputText);
+    if (editingMessageId) {
+      await editMessage(stableConvId.current, editingMessageId, inputText);
+      setEditingMessageId(null);
+    } else {
+      await sendMessage(stableConvId.current, inputText);
+    }
+    
     setInputText('');
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     setTypingStatus(stableConvId.current, false);
+  };
+
+  const handleEditClick = (msg) => {
+    if (!msg.text) return; // Can only edit text messages
+    setEditingMessageId(msg.id);
+    setInputText(msg.text);
+    // Focus the input
+    setTimeout(() => {
+      document.getElementById('chat-input-field')?.focus();
+    }, 100);
+  };
+
+  const cancelEdit = () => {
+    setEditingMessageId(null);
+    setInputText('');
   };
 
   const handleInputChange = (e) => {
@@ -194,13 +216,24 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                 <div className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'} group relative`}>
                   
                   {msg.senderId === user.uid && (
-                    <button 
-                      onClick={() => { if(window.confirm('Delete this message?')) deleteMessage(stableConvId.current, msg.id) }}
-                      className="opacity-0 group-hover:opacity-100 absolute -left-10 top-1/2 -translate-y-1/2 p-2 text-red-400 hover:text-red-600 transition-opacity"
-                      title="Delete message"
-                    >
-                      🗑️
-                    </button>
+                    <div className="opacity-0 group-hover:opacity-100 absolute -left-16 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity">
+                      {msg.text && (
+                        <button 
+                          onClick={() => handleEditClick(msg)}
+                          className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"
+                          title="Edit message"
+                        >
+                          ✏️
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => { if(window.confirm('Delete this message?')) deleteMessage(stableConvId.current, msg.id) }}
+                        className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+                        title="Delete message"
+                      >
+                        🗑️
+                      </button>
+                    </div>
                   )}
 
                   <div 
@@ -220,6 +253,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                     )}
                     {msg.text && <p className="whitespace-pre-wrap break-words">{msg.text}</p>}
                     <div className={`flex items-center gap-1 text-[9px] mt-1 opacity-60 ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'}`}>
+                      {msg.isEdited && <span className="mr-1 italic">(edited)</span>}
                       {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
                       {msg.senderId === user.uid && (
                         <span className="ml-1 font-black tracking-tighter">
@@ -248,42 +282,61 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
       </div>
 
       {/* Input Area */}
-      <form 
-        onSubmit={handleSend}
-        className="p-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 flex items-center gap-4 sticky bottom-0 transition-colors duration-300"
-      >
-        <input 
-          type="file" 
-          accept="image/*" 
-          className="hidden" 
-          ref={fileInputRef} 
-          onChange={handleImageUpload} 
-        />
-        <button 
-          type="button"
-          onClick={() => fileInputRef.current?.click()}
-          className="w-12 h-12 flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-          disabled={isUploading}
+      <div className="p-6 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 sticky bottom-0 transition-colors duration-300">
+        {editingMessageId && (
+          <div className="flex items-center justify-between mb-2 px-2 text-xs font-bold text-blue-500 animate-in fade-in slide-in-from-bottom-2">
+            <span>✏️ Editing message...</span>
+            <button onClick={cancelEdit} className="hover:underline">Cancel</button>
+          </div>
+        )}
+        <form 
+          onSubmit={handleSend}
+          className="flex items-center gap-4"
         >
-          {isUploading ? '⌛' : '📷'}
-        </button>
-        <input 
-          type="text"
-          value={inputText}
-          onChange={handleInputChange}
-          placeholder="Write your message..."
-          className="flex-grow bg-gray-50 dark:bg-gray-800 py-4 px-6 rounded-[2rem] border border-transparent focus:border-primary/20 dark:focus:border-primary/40 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all font-bold text-gray-700 dark:text-gray-200"
-        />
-        <button 
-          type="submit"
-          disabled={isUploading || (!inputText.trim() && !isUploading)}
-          className="w-14 h-14 flex-shrink-0 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-            <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-          </svg>
-        </button>
-      </form>
+          {!editingMessageId && (
+            <>
+              <input 
+                type="file" 
+                accept="image/*" 
+                className="hidden" 
+                ref={fileInputRef} 
+                onChange={handleImageUpload} 
+              />
+              <button 
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-12 h-12 flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                disabled={isUploading}
+              >
+                {isUploading ? '⌛' : '📷'}
+              </button>
+            </>
+          )}
+          <input 
+            id="chat-input-field"
+            type="text"
+            value={inputText}
+            onChange={handleInputChange}
+            placeholder={editingMessageId ? "Edit your message..." : "Write your message..."}
+            className="flex-grow bg-gray-50 dark:bg-gray-800 py-4 px-6 rounded-[2rem] border border-transparent focus:border-primary/20 dark:focus:border-primary/40 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all font-bold text-gray-700 dark:text-gray-200"
+          />
+          <button 
+            type="submit"
+            disabled={isUploading || (!inputText.trim() && !isUploading)}
+            className="w-14 h-14 flex-shrink-0 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
+          >
+            {editingMessageId ? (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="M5 12l5 5L20 7"/>
+              </svg>
+            ) : (
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+              </svg>
+            )}
+          </button>
+        </form>
+      </div>
 
       {/* Full Screen Image Viewer Modal */}
       {fullScreenImage && (

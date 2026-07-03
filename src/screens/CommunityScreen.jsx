@@ -44,6 +44,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const [attachedImages, setAttachedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
   const [viewerState, setViewerState] = useState({ isOpen: false, post: null, initialIndex: 0 });
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [editPostText, setEditPostText] = useState('');
   const fileInputRef = useRef(null);
 
   const { data: discussions, loading } = useFirestore('discussions', 'createdAt');
@@ -233,6 +235,21 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
       alert('Failed to publish post. If you attached photos, please make sure they are less than 5MB and try again.');
     }
     finally { setIsSending(false); }
+  };
+
+  const handleEditPostSubmit = async (postId) => {
+    if (!editPostText.trim()) return;
+    try {
+      await updateDoc(doc(db, 'discussions', postId), {
+        text: editPostText,
+        isEdited: true
+      });
+      setEditingPostId(null);
+      setEditPostText('');
+    } catch (error) {
+      console.error("Error updating post:", error);
+      alert("Failed to update post.");
+    }
   };
 
   // ── Derived data ─────────────────────────────────────────────────────────
@@ -608,8 +625,10 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                             >
                               {msg.user}
                             </button>
-                            <span className="text-gray-400 text-xs">·</span>
-                            <span className="text-gray-400 text-xs whitespace-nowrap">{formatTime(msg.createdAt)}</span>
+                            <span className="text-gray-400 text-xs whitespace-nowrap">
+                              {formatTime(msg.createdAt)}
+                              {msg.isEdited && <span className="italic ml-1">(edited)</span>}
+                            </span>
                             {msg.category && msg.category !== 'general' && (() => {
                               const cat = categories.find(c => c.id === msg.category);
                               return cat ? (
@@ -640,12 +659,24 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                         {isMenuOpen && (
                           <div className="absolute right-0 top-9 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 py-1 z-50 w-44 overflow-hidden">
                             {isMyPost ? (
-                              <button
-                                onClick={() => handleDeletePost(msg.id)}
-                                className="w-full text-left px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5 transition-colors"
-                              >
-                                🗑️ Delete Post
-                              </button>
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setEditingPostId(msg.id);
+                                    setEditPostText(msg.text);
+                                    setOpenMenuId(null);
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-semibold text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center gap-2.5 transition-colors"
+                                >
+                                  ✏️ Edit Post
+                                </button>
+                                <button
+                                  onClick={() => handleDeletePost(msg.id)}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2.5 transition-colors"
+                                >
+                                  🗑️ Delete Post
+                                </button>
+                              </>
                             ) : (
                               <button
                                 onClick={() => handleReportPost(msg.id)}
@@ -668,10 +699,35 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
 
                     {/* Post body */}
                     <div className="px-4 sm:px-5 pb-3">
-                      <PostText
-                        text={msg.text}
-                        onHashtagClick={tag => { setSearchTerm(tag); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                      />
+                      {editingPostId === msg.id ? (
+                        <div className="flex flex-col gap-2 mt-2">
+                          <textarea
+                            value={editPostText}
+                            onChange={(e) => setEditPostText(e.target.value)}
+                            className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none resize-none"
+                            rows="3"
+                          />
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => { setEditingPostId(null); setEditPostText(''); }}
+                              className="px-4 py-1.5 rounded-lg text-xs font-bold text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => handleEditPostSubmit(msg.id)}
+                              className="px-4 py-1.5 rounded-lg text-xs font-bold bg-primary text-white hover:bg-primary-600 transition-colors"
+                            >
+                              Save
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <PostText
+                          text={msg.text}
+                          onHashtagClick={tag => { setSearchTerm(tag); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                        />
+                      )}
                     </div>
 
                     {/* Images */}
