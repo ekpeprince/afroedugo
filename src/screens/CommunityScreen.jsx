@@ -677,13 +677,13 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                       <div className={`mt-1 mb-1 border-y border-gray-100 dark:border-gray-700 grid gap-0.5 ${msg.imageUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                         {msg.imageUrls.map((url, i) => (
                           <div key={i} className={msg.imageUrls.length === 3 && i === 0 ? 'col-span-2' : ''}>
-                            <SmartImage src={url} className={`w-full object-cover ${msg.imageUrls.length === 1 ? 'max-h-[500px] h-auto' : 'h-60'}`} />
+                            <SmartImage src={url} className={`w-full object-cover ${msg.imageUrls.length === 1 ? 'h-[400px] sm:h-[500px]' : 'h-60'}`} />
                           </div>
                         ))}
                       </div>
                     ) : msg.imageUrl ? (
                       <div className="mt-1 mb-1 border-y border-gray-100 dark:border-gray-700">
-                        <SmartImage src={msg.imageUrl} className="w-full h-auto max-h-[500px] object-cover" />
+                        <SmartImage src={msg.imageUrl} className="w-full h-[400px] sm:h-[500px] object-cover" />
                       </div>
                     ) : null}
 
