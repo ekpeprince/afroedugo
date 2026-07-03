@@ -39,6 +39,8 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const typingTimeoutRef = useRef(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
+  const recordingTimerRef = useRef(null);
+  const [recordingTime, setRecordingTime] = useState(0);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -158,12 +160,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     }
   };
 
-  const toggleRecording = async () => {
-    if (isRecording) {
-      stopRecording();
-      return;
-    }
-
+  const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
@@ -177,14 +174,34 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
 
       mediaRecorderRef.current.start(250); // Get data every 250ms
       setIsRecording(true);
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingTime(prev => prev + 1);
+      }, 1000);
     } catch (err) {
       console.error("Error accessing microphone:", err);
       alert("Could not access microphone.");
     }
   };
 
+  const cancelRecording = () => {
+    if (!mediaRecorderRef.current) return;
+    
+    // Override onstop so it doesn't upload
+    mediaRecorderRef.current.onstop = () => {
+      const stream = mediaRecorderRef.current.stream;
+      stream.getTracks().forEach(track => track.stop());
+    };
+    
+    mediaRecorderRef.current.stop();
+    setIsRecording(false);
+    clearInterval(recordingTimerRef.current);
+    setRecordingTime(0);
+  };
+
   const stopRecording = () => {
     if (!mediaRecorderRef.current) return;
+    clearInterval(recordingTimerRef.current);
     
     mediaRecorderRef.current.onstop = async () => {
       const mimeType = typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
@@ -223,6 +240,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     
     mediaRecorderRef.current.stop();
     setIsRecording(false);
+    setRecordingTime(0);
   };
 
   return (
@@ -369,61 +387,92 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
           onSubmit={handleSend}
           className="flex items-center gap-4"
         >
-          {!editingMessageId && (
+          {isRecording ? (
+            <div className="flex-grow flex items-center justify-between bg-red-50 dark:bg-red-900/20 py-4 px-6 rounded-[2rem] border border-red-200 dark:border-red-800/50 animate-in fade-in slide-in-from-right-4 transition-all">
+              <div className="flex items-center gap-3">
+                <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse shadow-lg shadow-red-500/50"></div>
+                <span className="text-red-500 font-black tracking-widest font-mono text-lg">
+                  {Math.floor(recordingTime / 60).toString().padStart(2, '0')}:{(recordingTime % 60).toString().padStart(2, '0')}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={cancelRecording}
+                className="text-gray-400 hover:text-red-500 transition-colors text-sm font-bold flex items-center gap-1"
+              >
+                Discard
+              </button>
+            </div>
+          ) : (
             <>
+              {!editingMessageId && (
+                <>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden" 
+                    ref={fileInputRef} 
+                    onChange={handleImageUpload} 
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-12 h-12 flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    disabled={isUploading}
+                  >
+                    {isUploading ? '⌛' : '📷'}
+                  </button>
+                </>
+              )}
               <input 
-                type="file" 
-                accept="image/*" 
-                className="hidden" 
-                ref={fileInputRef} 
-                onChange={handleImageUpload} 
+                id="chat-input-field"
+                type="text"
+                value={inputText}
+                onChange={handleInputChange}
+                placeholder={editingMessageId ? "Edit your message..." : "Write your message..."}
+                className="flex-grow bg-gray-50 dark:bg-gray-800 py-4 px-6 rounded-[2rem] border border-transparent focus:border-primary/20 dark:focus:border-primary/40 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all font-bold text-gray-700 dark:text-gray-200"
               />
-              <button 
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="w-12 h-12 flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                disabled={isUploading || isRecording}
-              >
-                {isUploading ? '⌛' : '📷'}
-              </button>
-              <button 
-                type="button"
-                onClick={toggleRecording}
-                className={`w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center transition-all ${
-                  isRecording 
-                    ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40 scale-110' 
-                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-                disabled={isUploading}
-                title={isRecording ? "Tap to stop & send" : "Tap to record audio"}
-              >
-                {isRecording ? '⏹️' : '🎙️'}
-              </button>
             </>
           )}
-          <input 
-            id="chat-input-field"
-            type="text"
-            value={inputText}
-            onChange={handleInputChange}
-            placeholder={editingMessageId ? "Edit your message..." : "Write your message..."}
-            className="flex-grow bg-gray-50 dark:bg-gray-800 py-4 px-6 rounded-[2rem] border border-transparent focus:border-primary/20 dark:focus:border-primary/40 focus:bg-white dark:focus:bg-gray-900 outline-none transition-all font-bold text-gray-700 dark:text-gray-200"
-          />
-          <button 
-            type="submit"
-            disabled={isUploading || (!inputText.trim() && !isUploading)}
-            className="w-14 h-14 flex-shrink-0 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100"
-          >
-            {editingMessageId ? (
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <path d="M5 12l5 5L20 7"/>
-              </svg>
-            ) : (
+
+          {isRecording ? (
+            <button 
+              type="button"
+              onClick={stopRecording}
+              className="w-14 h-14 flex-shrink-0 bg-red-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-red-500/30 hover:scale-105 active:scale-95 transition-all"
+            >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
                 <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
               </svg>
-            )}
-          </button>
+            </button>
+          ) : (
+            inputText.trim() || editingMessageId ? (
+              <button 
+                type="submit"
+                disabled={isUploading}
+                className="w-14 h-14 flex-shrink-0 bg-primary text-white rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {editingMessageId ? (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <path d="M5 12l5 5L20 7"/>
+                  </svg>
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                  </svg>
+                )}
+              </button>
+            ) : (
+              <button 
+                type="button"
+                onClick={startRecording}
+                disabled={isUploading}
+                className="w-14 h-14 flex-shrink-0 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-2xl flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition-all disabled:opacity-50"
+              >
+                🎙️
+              </button>
+            )
+          )}
         </form>
       </div>
 
