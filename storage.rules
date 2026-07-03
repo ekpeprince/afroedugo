@@ -42,15 +42,16 @@ service firebase.storage {
                     && fileName.matches('housing_' + request.auth.uid + '_.*');
     }
 
-    // Chats: Only accessible by authenticated participants of the conversation
+    // Chats: Only accessible by authenticated participants of the conversation or admin
     match /chats/{conversationId}/{allPaths=**} {
       allow read, write: if isAuthenticated() 
-                    && (request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants);
+                    && ((request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants) || (firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'));
     }
 
+    // Voice Notes
     match /chat_audio/{conversationId}/{allPaths=**} {
       allow read, write: if isAuthenticated() 
-                    && (request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants);
+                    && ((request.auth.uid in firestore.get(/databases/(default)/documents/conversations/$(conversationId)).data.participants) || (firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin'));
     }
 
     // Enrollments documents: writeable/deletable by owner only. NOT PUBLIC.

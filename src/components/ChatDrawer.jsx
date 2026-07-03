@@ -182,14 +182,16 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     if (!mediaRecorderRef.current) return;
     
     mediaRecorderRef.current.onstop = async () => {
-      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+      const mimeType = typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
       const stream = mediaRecorderRef.current.stream;
       stream.getTracks().forEach(track => track.stop()); // release mic
       
       if (audioBlob.size > 0 && user) {
         setIsUploading(true);
         try {
-          const storageRef = ref(storage, `chat_audio/${conversationId}/${user.uid}_${Date.now()}_audio.webm`);
+          const ext = mimeType === 'audio/webm' ? 'webm' : 'mp4';
+          const storageRef = ref(storage, `chat_audio/${stableConvId.current}/${user.uid}_${Date.now()}_audio.${ext}`);
           const uploadTask = uploadBytesResumable(storageRef, audioBlob);
           uploadTask.on(
             'state_changed', null,
