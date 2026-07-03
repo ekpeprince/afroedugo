@@ -41,6 +41,8 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const audioChunksRef = useRef([]);
   const recordingTimerRef = useRef(null);
   const [recordingTime, setRecordingTime] = useState(0);
+  const [previewAudioBlob, setPreviewAudioBlob] = useState(null);
+  const [previewAudioUrl, setPreviewAudioUrl] = useState(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -210,29 +212,9 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
       stream.getTracks().forEach(track => track.stop()); // release mic
       
       if (audioBlob.size > 0 && user) {
-        setIsUploading(true);
-        try {
-          const ext = mimeType === 'audio/webm' ? 'webm' : 'mp4';
-          const storageRef = ref(storage, `chat_audio/${stableConvId.current}/${user.uid}_${Date.now()}_audio.${ext}`);
-          const uploadTask = uploadBytesResumable(storageRef, audioBlob);
-          uploadTask.on(
-            'state_changed', null,
-            (error) => {
-              console.error("Audio upload failed:", error);
-              alert("Audio upload failed: " + error.message);
-              setIsUploading(false);
-            },
-            async () => {
-              const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-              await sendMessage(stableConvId.current, '', null, downloadURL);
-              setIsUploading(false);
-            }
-          );
-        } catch (err) {
-          console.error("Audio upload error:", err);
-          alert("Upload error: " + err.message);
-          setIsUploading(false);
-        }
+        const url = URL.createObjectURL(audioBlob);
+        setPreviewAudioBlob(audioBlob);
+        setPreviewAudioUrl(url);
       } else {
         alert("Recording failed: no audio data was captured. Please check your microphone permissions.");
       }
@@ -241,6 +223,41 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     mediaRecorderRef.current.stop();
     setIsRecording(false);
     setRecordingTime(0);
+  };
+
+  const sendPreviewAudio = async () => {
+    if (!previewAudioBlob) return;
+    setIsUploading(true);
+    try {
+      const mimeType = previewAudioBlob.type;
+      const ext = mimeType === 'audio/webm' ? 'webm' : 'mp4';
+      const storageRef = ref(storage, `chat_audio/${stableConvId.current}/${user.uid}_${Date.now()}_audio.${ext}`);
+      const uploadTask = uploadBytesResumable(storageRef, previewAudioBlob);
+      uploadTask.on(
+        'state_changed', null,
+        (error) => {
+          console.error("Audio upload failed:", error);
+          alert("Audio upload failed: " + error.message);
+          setIsUploading(false);
+        },
+        async () => {
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          await sendMessage(stableConvId.current, '', null, downloadURL);
+          setIsUploading(false);
+          setPreviewAudioBlob(null);
+          setPreviewAudioUrl(null);
+        }
+      );
+    } catch (err) {
+      console.error("Audio upload error:", err);
+      alert("Upload error: " + err.message);
+      setIsUploading(false);
+    }
+  };
+
+  const cancelPreview = () => {
+    setPreviewAudioBlob(null);
+    setPreviewAudioUrl(null);
   };
 
   return (
@@ -387,7 +404,26 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
           onSubmit={handleSend}
           className="flex items-end gap-2 max-w-4xl mx-auto"
         >
-          {isRecording ? (
+          {previewAudioUrl ? (
+            <div className="flex-grow flex items-center justify-between bg-white dark:bg-gray-800 h-12 px-2 rounded-full shadow-sm animate-in fade-in slide-in-from-right-4 transition-all gap-2">
+              <button
+                type="button"
+                onClick={cancelPreview}
+                className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 p-2 rounded-full transition-colors flex items-center justify-center flex-shrink-0"
+                title="Discard Voice Note"
+                disabled={isUploading}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+
+              <audio controls src={previewAudioUrl} className="h-8 w-full max-w-[200px]" />
+            </div>
+          ) : isRecording ? (
             <div className="flex-grow flex items-center justify-between bg-white dark:bg-gray-800 h-12 px-4 rounded-full shadow-sm animate-in fade-in slide-in-from-right-4 transition-all">
               <button
                 type="button"
@@ -462,14 +498,29 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
             </div>
           )}
 
-          {isRecording ? (
+          {previewAudioUrl ? (
+            <button 
+              type="button"
+              onClick={sendPreviewAudio}
+              disabled={isUploading}
+              className="w-12 h-12 flex-shrink-0 bg-[#00a884] hover:bg-[#008f6f] text-white rounded-full flex items-center justify-center shadow-md transition-all scale-100 disabled:opacity-50"
+            >
+              {isUploading ? (
+                <span className="animate-spin text-xl">⏳</span>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+              )}
+            </button>
+          ) : isRecording ? (
             <button 
               type="button"
               onClick={stopRecording}
               className="w-12 h-12 flex-shrink-0 bg-[#00a884] hover:bg-[#008f6f] text-white rounded-full flex items-center justify-center shadow-md transition-all scale-100"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                <rect x="6" y="6" width="12" height="12" rx="2" ry="2"/>
               </svg>
             </button>
           ) : (
