@@ -27,6 +27,9 @@ export const metadata = {
     description: 'Find affordable housing, discover schools, get visa assistance, and connect with other African students studying globally.',
     images: ['/icon-512.png'],
   },
+  verification: {
+    google: 'nrmwOLBrsBCBenjesDiCeED-7vqF1go8rY7OJ9HMxqs',
+  },
 };
 
 export default function RootLayout({ children }) {
