@@ -18,20 +18,45 @@ const formatMessageDate = (timestamp) => {
   return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
 };
 
-const SwipeableMessage = ({ onReply, children }) => {
+const SwipeableMessage = ({ onReply, onLongPress, children }) => {
   const [offsetX, setOffsetX] = useState(0);
   const startXRef = useRef(null);
   const isDraggingRef = useRef(false);
+  const longPressTimerRef = useRef(null);
+  const hasLongPressedRef = useRef(false);
+
+  const startLongPress = () => {
+    if (onLongPress) {
+      hasLongPressedRef.current = false;
+      longPressTimerRef.current = setTimeout(() => {
+        hasLongPressedRef.current = true;
+        onLongPress();
+      }, 500); // 500ms long press
+    }
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
 
   const handlePointerDown = (e) => {
     isDraggingRef.current = true;
     startXRef.current = e.clientX || (e.touches && e.touches[0].clientX);
+    startLongPress();
   };
 
   const handlePointerMove = (e) => {
     if (!isDraggingRef.current || startXRef.current === null) return;
     const currentX = e.clientX || (e.touches && e.touches[0].clientX);
     const diff = currentX - startXRef.current;
+    
+    // If moved, cancel long press
+    if (Math.abs(diff) > 10) {
+      cancelLongPress();
+    }
     
     // Only allow swipe right for reply (positive X)
     if (diff > 0 && diff < 80) {
@@ -42,9 +67,11 @@ const SwipeableMessage = ({ onReply, children }) => {
   };
 
   const handlePointerUp = () => {
+    cancelLongPress();
     if (!isDraggingRef.current) return;
     isDraggingRef.current = false;
-    if (offsetX > 50) {
+    
+    if (offsetX > 50 && !hasLongPressedRef.current && onReply) {
       onReply();
     }
     setOffsetX(0); // Snap back smoothly
@@ -61,6 +88,10 @@ const SwipeableMessage = ({ onReply, children }) => {
       onTouchMove={handlePointerMove}
       onTouchEnd={handlePointerUp}
       onTouchCancel={handlePointerUp}
+      onContextMenu={(e) => {
+        // Prevent default context menu on long press on mobile
+        if (onLongPress) e.preventDefault();
+      }}
     >
       {/* Reply Icon Background */}
       <div 
@@ -490,7 +521,12 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                     </div>
                   )}
 
-                  <SwipeableMessage onReply={() => setReplyingTo(msg)}>
+                  <SwipeableMessage 
+                    onReply={() => setReplyingTo(msg)}
+                    onLongPress={msg.senderId === user.uid ? () => {
+                      if(window.confirm('Delete this message?')) deleteMessage(stableConvId.current, msg.id);
+                    } : null}
+                  >
                     <div 
                       className={`max-w-[85%] sm:max-w-[75%] p-4 rounded-[1.5rem] shadow-sm text-sm font-bold ${
                         msg.senderId === user.uid 
