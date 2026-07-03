@@ -20,6 +20,7 @@ import { useNotifications } from '../hooks/useNotifications'
 import { notifyUser } from '../utils/notifyUser'
 import UserProfileViewer from '../components/UserProfileViewer'
 import NetworkMatch from '../components/NetworkMatch'
+import PostImageViewer from '../components/PostImageViewer'
 
 const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotifications, onLogin }) => {
   const { user } = useAuth();
@@ -42,6 +43,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const [activeTab, setActiveTab] = useState('feed'); // 'feed' or 'matches'
   const [attachedImages, setAttachedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
+  const [viewerState, setViewerState] = useState({ isOpen: false, post: null, initialIndex: 0 });
   const fileInputRef = useRef(null);
 
   const { data: discussions, loading } = useFirestore('discussions', 'createdAt');
@@ -676,13 +678,20 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                     {msg.imageUrls?.length > 0 ? (
                       <div className={`mt-1 mb-1 border-y border-gray-100 dark:border-gray-700 grid gap-0.5 ${msg.imageUrls.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
                         {msg.imageUrls.map((url, i) => (
-                          <div key={i} className={msg.imageUrls.length === 3 && i === 0 ? 'col-span-2' : ''}>
+                          <div 
+                            key={i} 
+                            onClick={() => setViewerState({ isOpen: true, post: msg, initialIndex: i })}
+                            className={`cursor-pointer hover:opacity-90 transition-opacity ${msg.imageUrls.length === 3 && i === 0 ? 'col-span-2' : ''}`}
+                          >
                             <SmartImage src={url} className={`w-full object-cover ${msg.imageUrls.length === 1 ? 'h-[400px] sm:h-[500px]' : 'h-60'}`} />
                           </div>
                         ))}
                       </div>
                     ) : msg.imageUrl ? (
-                      <div className="mt-1 mb-1 border-y border-gray-100 dark:border-gray-700">
+                      <div 
+                        className="mt-1 mb-1 border-y border-gray-100 dark:border-gray-700 cursor-pointer hover:opacity-90 transition-opacity"
+                        onClick={() => setViewerState({ isOpen: true, post: msg, initialIndex: 0 })}
+                      >
                         <SmartImage src={msg.imageUrl} className="w-full h-[400px] sm:h-[500px] object-cover" />
                       </div>
                     ) : null}
@@ -888,13 +897,25 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
 
       <ProfileModal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} />
 
-      {/* User Profile Viewer (avatar click) */}
+      {/* User Profile Viewer */}
       <UserProfileViewer
         userId={viewingUser?.userId}
         isOpen={!!viewingUser}
         onClose={() => setViewingUser(null)}
         initialData={viewingUser ? { displayName: viewingUser.displayName, photoURL: viewingUser.photoURL } : null}
         onMessage={handleStartPrivateChat}
+      />
+
+      {/* Post Image Viewer */}
+      <PostImageViewer
+        isOpen={viewerState.isOpen}
+        onClose={() => setViewerState({ isOpen: false, post: null, initialIndex: 0 })}
+        images={viewerState.post?.imageUrls?.length > 0 ? viewerState.post.imageUrls : (viewerState.post?.imageUrl ? [viewerState.post.imageUrl] : [])}
+        initialIndex={viewerState.initialIndex}
+        post={viewerState.post}
+        onLogin={onLogin}
+        onToggleLike={handleToggleLike}
+        currentUserId={user?.uid}
       />
     </div>
   );
