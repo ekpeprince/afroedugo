@@ -158,7 +158,12 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     }
   };
 
-  const startRecording = async () => {
+  const toggleRecording = async () => {
+    if (isRecording) {
+      stopRecording();
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaRecorderRef.current = new MediaRecorder(stream);
@@ -379,18 +384,16 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
               </button>
               <button 
                 type="button"
-                onPointerDown={startRecording}
-                onPointerUp={stopRecording}
-                onPointerLeave={() => { if (isRecording) stopRecording(); }}
+                onClick={toggleRecording}
                 className={`w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center transition-all ${
                   isRecording 
                     ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40 scale-110' 
                     : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
                 }`}
                 disabled={isUploading}
-                title="Hold to record audio"
+                title={isRecording ? "Tap to stop & send" : "Tap to record audio"}
               >
-                🎙️
+                {isRecording ? '⏹️' : '🎙️'}
               </button>
             </>
           )}
