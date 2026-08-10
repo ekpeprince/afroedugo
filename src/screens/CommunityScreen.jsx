@@ -865,6 +865,10 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                         {/* Reactions */}
                         <div className="relative group">
                           <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleToggleReaction(msg.id, msg.reactions || {}, msg.userId, msg.text, '❤️');
+                            }}
                             className="flex items-center gap-1.5 transition-colors text-gray-500 dark:text-gray-400 hover:text-red-500"
                           >
                             <div className="p-1.5 rounded-full group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
