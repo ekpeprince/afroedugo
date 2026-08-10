@@ -62,7 +62,6 @@ function GlobalModalsContainer({ children }) {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', setOffline);
-      setOffline();
     };
   }, [user]);
 
