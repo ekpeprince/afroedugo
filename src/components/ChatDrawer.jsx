@@ -21,6 +21,7 @@ const formatMessageDate = (timestamp) => {
 const SwipeableMessage = ({ onReply, onLongPress, children }) => {
   const [offsetX, setOffsetX] = useState(0);
   const startXRef = useRef(null);
+  const startYRef = useRef(null);
   const isDraggingRef = useRef(false);
   const longPressTimerRef = useRef(null);
   const hasLongPressedRef = useRef(false);
@@ -45,24 +46,29 @@ const SwipeableMessage = ({ onReply, onLongPress, children }) => {
   const handlePointerDown = (e) => {
     isDraggingRef.current = true;
     startXRef.current = e.clientX || (e.touches && e.touches[0].clientX);
+    startYRef.current = e.clientY || (e.touches && e.touches[0].clientY);
     startLongPress();
   };
 
   const handlePointerMove = (e) => {
-    if (!isDraggingRef.current || startXRef.current === null) return;
+    if (!isDraggingRef.current || startXRef.current === null || startYRef.current === null) return;
     const currentX = e.clientX || (e.touches && e.touches[0].clientX);
-    const diff = currentX - startXRef.current;
+    const currentY = e.clientY || (e.touches && e.touches[0].clientY);
+    const diffX = currentX - startXRef.current;
+    const diffY = currentY - startYRef.current;
     
-    // If moved, cancel long press
-    if (Math.abs(diff) > 10) {
+    // If moved horizontally or vertically, cancel long press
+    if (Math.abs(diffX) > 10 || Math.abs(diffY) > 10) {
       cancelLongPress();
     }
     
-    // Only allow swipe right for reply (positive X)
-    if (diff > 0 && diff < 80) {
-      setOffsetX(diff);
-    } else if (diff >= 80) {
-      setOffsetX(80);
+    // Only allow swipe right for reply (positive X) if primarily swiping horizontally
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+      if (diffX > 0 && diffX < 80) {
+        setOffsetX(diffX);
+      } else if (diffX >= 80) {
+        setOffsetX(80);
+      }
     }
   };
 
