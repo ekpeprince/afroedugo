@@ -144,7 +144,7 @@ export const useChat = (conversationId = null) => {
     return unsub;
   }, [conversationId, user]);
 
-  const sendMessage = async (convId, text, imageUrl = null, audioUrl = null, replyTo = null) => {
+  const sendMessage = async (convId, text, imageUrl = null, audioUrl = null, replyTo = null, audioDuration = null) => {
     if (!user || (!text.trim() && !imageUrl && !audioUrl)) return;
 
     try {
@@ -153,6 +153,7 @@ export const useChat = (conversationId = null) => {
         text,
         imageUrl,
         audioUrl,
+        audioDuration,
         senderId: user.uid,
         read: false,
         createdAt: serverTimestamp()

@@ -115,6 +115,83 @@ const SwipeableMessage = ({ onReply, onLongPress, children }) => {
   );
 };
 
+const CustomAudioPlayer = ({ src, duration }) => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const audioRef = useRef(null);
+
+  const togglePlay = () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play();
+    }
+    setIsPlaying(!isPlaying);
+  };
+
+  const onTimeUpdate = () => {
+    if (!audioRef.current) return;
+    const current = audioRef.current.currentTime;
+    const total = audioRef.current.duration === Infinity || isNaN(audioRef.current.duration) ? (duration || 1) : audioRef.current.duration;
+    setProgress((current / total) * 100);
+  };
+
+  const onEnded = () => {
+    setIsPlaying(false);
+    setProgress(0);
+  };
+
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  return (
+    <div className="flex items-center gap-3 w-[200px] sm:w-[240px] pt-1 pb-1">
+      <button 
+        type="button"
+        onClick={togglePlay}
+        className="w-8 h-8 flex items-center justify-center text-gray-500 dark:text-gray-400 hover:text-primary transition-colors flex-shrink-0"
+      >
+        {isPlaying ? (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="4" width="4" height="16" />
+            <rect x="14" y="4" width="4" height="16" />
+          </svg>
+        ) : (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+        )}
+      </button>
+
+      <div className="flex-grow flex flex-col justify-center">
+        <div className="w-full h-1.5 bg-black/10 dark:bg-white/10 rounded-full relative overflow-hidden">
+          <div 
+            className="absolute top-0 left-0 h-full bg-[#00a884] rounded-full transition-all duration-100 ease-linear"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+      
+      <div className="text-[11px] text-gray-500 dark:text-gray-400 font-medium min-w-[35px] text-right flex-shrink-0">
+        {isPlaying ? formatTime(audioRef.current?.currentTime) : formatTime(duration)}
+      </div>
+
+      <audio 
+        ref={audioRef} 
+        src={src} 
+        onTimeUpdate={onTimeUpdate}
+        onEnded={onEnded}
+        className="hidden" 
+      />
+    </div>
+  );
+};
+
 const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const { user } = useAuth();
 
@@ -131,6 +208,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [finalRecordingTime, setFinalRecordingTime] = useState(0);
   
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -400,6 +478,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     
     mediaRecorderRef.current.stop();
     setIsRecording(false);
+    setFinalRecordingTime(recordingTime);
     setRecordingTime(0);
   };
 
@@ -420,7 +499,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
         },
         async () => {
           const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-          await sendMessage(stableConvId.current, '', null, downloadURL, replyingTo);
+          await sendMessage(stableConvId.current, '', null, downloadURL, replyingTo, finalRecordingTime);
           setIsUploading(false);
           setPreviewAudioBlob(null);
           setPreviewAudioUrl(null);
@@ -568,8 +647,8 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                         />
                       )}
                       {msg.audioUrl && (
-                        <div className="mb-1 mt-1 w-48 sm:w-64">
-                          <audio controls src={msg.audioUrl} className="w-full h-10" />
+                        <div className="mb-1 mt-1">
+                          <CustomAudioPlayer src={msg.audioUrl} duration={msg.audioDuration} />
                         </div>
                       )}
                       {msg.text && (
@@ -649,7 +728,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                 </svg>
               </button>
 
-              <audio controls src={previewAudioUrl} className="h-8 w-full max-w-[200px]" />
+              <CustomAudioPlayer src={previewAudioUrl} duration={finalRecordingTime} />
             </div>
           ) : isRecording ? (
             <div className="flex-grow flex items-center justify-between bg-white dark:bg-gray-800 h-12 px-4 rounded-full shadow-sm animate-in fade-in slide-in-from-right-4 transition-all">
