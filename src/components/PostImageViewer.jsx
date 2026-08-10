@@ -11,6 +11,7 @@ const PostImageViewer = ({
   post,
   onLogin,
   onToggleReaction,
+  currentUserId,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [showComments, setShowComments] = useState(false);
@@ -175,23 +176,44 @@ const PostImageViewer = ({
           {/* Action Row */}
           <div className="flex items-center gap-6 py-3 border-y border-gray-100 dark:border-gray-800 mb-2">
             <div className="relative group">
-              <button
-                className={`flex items-center gap-2 font-bold transition-colors ${
-                  hasReacted ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
-                }`}
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill={hasReacted ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2.5">
-                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-                </svg>
-                <span className="flex items-center gap-1">
-                  {Object.values(post.reactions || {}).reduce((sum, arr) => sum + arr.length, 0) + (post.likes?.length || 0)}
-                  <span className="flex -space-x-1 ml-1 text-xs">
-                    {(post.likes?.length > 0 ? ['❤️'] : []).concat(Object.keys(post.reactions || {})).slice(0, 3).map((e, i) => (
-                      <span key={i} className="bg-white dark:bg-gray-800 rounded-full">{e}</span>
-                    ))}
-                  </span>
-                </span>
-              </button>
+              {(() => {
+                const myReaction = Object.keys(post.reactions || {}).find(emoji => post.reactions[emoji].includes(currentUserId));
+                const reactionColors = { '👍': 'text-blue-500', '❤️': 'text-red-500', '🤣': 'text-yellow-500', '😮': 'text-yellow-500', '🙏': 'text-yellow-500' };
+                const colorClass = myReaction ? (reactionColors[myReaction] || 'text-primary') : 'text-gray-500 hover:text-red-500';
+                
+                return (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleReaction(post.id, post.reactions || {}, post.userId, post.text, myReaction || '👍');
+                    }}
+                    className={`flex items-center gap-2 font-bold transition-colors ${colorClass} hover:opacity-80`}
+                  >
+                    <div className="p-1 rounded-full group-hover:bg-gray-100 dark:group-hover:bg-gray-800 transition-colors flex items-center justify-center">
+                      {myReaction ? (
+                        <span className="text-xl leading-none">{myReaction}</span>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                        </svg>
+                      )}
+                    </div>
+                    <span className="flex items-center gap-1">
+                      {!myReaction && <span className="hidden sm:inline">Like</span>}
+                      {Object.values(post.reactions || {}).reduce((sum, arr) => sum + arr.length, 0) > 0 && (
+                        <span className="ml-1 flex -space-x-1 items-center bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-full text-gray-600 dark:text-gray-300 font-semibold text-sm">
+                          <span className="flex -space-x-1 text-xs mr-1.5">
+                            {Object.keys(post.reactions || {}).slice(0, 3).map((e, i) => (
+                              <span key={i} className="bg-white dark:bg-gray-900 rounded-full border border-gray-50 dark:border-gray-800 relative z-[1]">{e}</span>
+                            ))}
+                          </span>
+                          {Object.values(post.reactions || {}).reduce((sum, arr) => sum + arr.length, 0)}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                );
+              })()}
               
               {/* Hoverable Emoji Picker */}
               <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl rounded-full p-2 gap-2 animate-in slide-in-from-bottom-2 duration-200 z-10">
