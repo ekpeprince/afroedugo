@@ -104,15 +104,19 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
     const updatedReactions = { ...reactions };
     
     if (userReactedWithEmoji) {
-      // Remove the user from this emoji's array
+      // Remove the user from this emoji's array (Toggle off)
       updatedReactions[emoji] = updatedReactions[emoji].filter(uid => uid !== user.uid);
       if (updatedReactions[emoji].length === 0) {
         delete updatedReactions[emoji];
       }
     } else {
-      // Optional: if users can only have ONE reaction per post, 
-      // we could remove them from all other emoji arrays here.
-      // But usually multiple emoji reactions are allowed per user.
+      // Enforce ONE reaction per user per post (Facebook style)
+      Object.keys(updatedReactions).forEach(key => {
+        updatedReactions[key] = updatedReactions[key].filter(uid => uid !== user.uid);
+        if (updatedReactions[key].length === 0) {
+          delete updatedReactions[key];
+        }
+      });
       if (!updatedReactions[emoji]) {
         updatedReactions[emoji] = [];
       }
@@ -864,27 +868,44 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
 
                         {/* Reactions */}
                         <div className="relative group">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleReaction(msg.id, msg.reactions || {}, msg.userId, msg.text, '❤️');
-                            }}
-                            className="flex items-center gap-1.5 transition-colors text-gray-500 dark:text-gray-400 hover:text-red-500"
-                          >
-                            <div className="p-1.5 rounded-full group-hover:bg-red-50 dark:group-hover:bg-red-900/20 transition-colors">
-                              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                              </svg>
-                            </div>
-                            <span className="text-sm font-semibold flex items-center gap-1">
-                              {Object.values(msg.reactions || {}).reduce((sum, arr) => sum + arr.length, 0) + (msg.likes?.length || 0)}
-                              <span className="flex -space-x-1 ml-1 text-xs">
-                                {(msg.likes?.length > 0 ? ['❤️'] : []).concat(Object.keys(msg.reactions || {})).slice(0, 3).map((e, i) => (
-                                  <span key={i} className="bg-white dark:bg-gray-800 rounded-full">{e}</span>
-                                ))}
-                              </span>
-                            </span>
-                          </button>
+                          {(() => {
+                            const myReaction = Object.keys(msg.reactions || {}).find(emoji => msg.reactions[emoji].includes(user?.uid));
+                            const reactionColors = { '👍': 'text-blue-500', '❤️': 'text-red-500', '🤣': 'text-yellow-500', '😮': 'text-yellow-500', '🙏': 'text-yellow-500' };
+                            const colorClass = myReaction ? (reactionColors[myReaction] || 'text-primary') : 'text-gray-500 dark:text-gray-400';
+                            
+                            return (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleToggleReaction(msg.id, msg.reactions || {}, msg.userId, msg.text, myReaction || '👍');
+                                }}
+                                className={`flex items-center gap-1.5 transition-colors ${colorClass} hover:opacity-80`}
+                              >
+                                <div className="p-1.5 rounded-full group-hover:bg-gray-100 dark:group-hover:bg-gray-800 transition-colors flex items-center justify-center">
+                                  {myReaction ? (
+                                    <span className="text-lg leading-none">{myReaction}</span>
+                                  ) : (
+                                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                      <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                                    </svg>
+                                  )}
+                                </div>
+                                <span className="text-sm font-semibold flex items-center gap-1">
+                                  {!myReaction && <span className="hidden sm:inline">Like</span>}
+                                  {Object.values(msg.reactions || {}).reduce((sum, arr) => sum + arr.length, 0) > 0 && (
+                                    <span className="ml-1 flex -space-x-1 items-center bg-gray-50 dark:bg-gray-800 px-2 py-0.5 rounded-full text-gray-600 dark:text-gray-300">
+                                      <span className="flex -space-x-1 text-xs mr-1.5">
+                                        {Object.keys(msg.reactions || {}).slice(0, 3).map((e, i) => (
+                                          <span key={i} className="bg-white dark:bg-gray-900 rounded-full border border-gray-50 dark:border-gray-800 relative z-[1]">{e}</span>
+                                        ))}
+                                      </span>
+                                      {Object.values(msg.reactions || {}).reduce((sum, arr) => sum + arr.length, 0)}
+                                    </span>
+                                  )}
+                                </span>
+                              </button>
+                            );
+                          })()}
                           
                           {/* Hoverable Emoji Picker */}
                           <div className="absolute bottom-full left-0 mb-2 hidden group-hover:flex bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl rounded-full p-2 gap-2 animate-in slide-in-from-bottom-2 duration-200 z-10">
