@@ -57,7 +57,13 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
 
   if (!isOpen) return null;
 
-  const isOnline = profile?.status === 'online';
+  const isOnline = (() => {
+    if (profile?.status !== 'online') return false;
+    if (!profile?.lastOnline) return true; // Pending local write
+    const lastOnlineTime = profile.lastOnline.toMillis ? profile.lastOnline.toMillis() : new Date(profile.lastOnline).getTime();
+    if (isNaN(lastOnlineTime)) return true;
+    return (Date.now() - lastOnlineTime) < 30 * 60 * 1000;
+  })();
 
   const name    = profile?.displayName || profile?.email?.split('@')[0] || 'Unknown User';
   const photo   = profile?.photoURL || null;

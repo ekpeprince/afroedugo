@@ -93,7 +93,13 @@ export const useChat = (conversationId = null) => {
         participantId: otherUid,
         participantName: profile?.displayName || conv.participantName || otherUid.slice(0, 6),
         participantAvatar: profile?.photoURL || profile?.photoUrl || conv.participantAvatar || '👤',
-        participantStatus: profile?.status === 'online' ? 'online' : 'offline',
+        participantStatus: (() => {
+          if (profile?.status !== 'online') return 'offline';
+          if (!profile?.lastOnline) return 'online'; // Pending local write
+          const lastOnlineTime = profile.lastOnline.toMillis ? profile.lastOnline.toMillis() : new Date(profile.lastOnline).getTime();
+          if (isNaN(lastOnlineTime)) return 'online';
+          return (Date.now() - lastOnlineTime) < 30 * 60 * 1000 ? 'online' : 'offline';
+        })(),
         participantLastOnline: profile?.lastOnline || null
       };
     });
