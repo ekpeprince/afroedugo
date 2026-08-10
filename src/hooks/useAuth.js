@@ -21,43 +21,7 @@ export const useAuth = () => {
     return unsubscribe;
   }, []);
 
-  // Manage user presence status (online/offline)
-  useEffect(() => {
-    if (!user) return;
-
-    const userRef = doc(db, 'users', user.uid);
-    
-    const setOnline = () => {
-      setDoc(userRef, { status: 'online', lastOnline: serverTimestamp() }, { merge: true })
-        .catch(err => console.error("Error setting presence to online:", err));
-    };
-
-    const setOffline = () => {
-      setDoc(userRef, { status: 'offline', lastOnline: serverTimestamp() }, { merge: true })
-        .catch(err => console.error("Error setting presence to offline:", err));
-    };
-
-    // Set to online on mount
-    setOnline();
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        setOnline();
-      } else {
-        setOffline();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', setOffline);
-    
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', setOffline);
-      // Mark as offline when unmounting or changing user
-      setOffline();
-    };
-  }, [user]);
+  // Presence tracking has been moved to ClientWrapper.jsx to prevent race conditions
 
 
   const login = async (email, password) => {

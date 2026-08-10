@@ -10,6 +10,8 @@ import InstallPromptModal from './InstallPromptModal';
 import { useAuth } from '../hooks/useAuth';
 import NotificationManager from './NotificationManager';
 import { usePushNotifications } from '../hooks/usePushNotifications';
+import { db } from '../firebase/config';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 function GlobalModalsContainer({ children }) {
   const { user } = useAuth();
@@ -27,6 +29,42 @@ function GlobalModalsContainer({ children }) {
 
   // Register device for FCM push notifications (background alerts)
   const { triggerRequest } = usePushNotifications();
+
+  // Manage User Presence
+  useEffect(() => {
+    if (!user) return;
+
+    const userRef = doc(db, 'users', user.uid);
+    
+    const setOnline = () => {
+      setDoc(userRef, { status: 'online', lastOnline: serverTimestamp() }, { merge: true })
+        .catch(err => console.error("Error setting presence to online:", err));
+    };
+
+    const setOffline = () => {
+      setDoc(userRef, { status: 'offline', lastOnline: serverTimestamp() }, { merge: true })
+        .catch(err => console.error("Error setting presence to offline:", err));
+    };
+
+    setOnline();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setOnline();
+      } else {
+        setOffline();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', setOffline);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', setOffline);
+      setOffline();
+    };
+  }, [user]);
 
   // PWA Install Prompt Effect
   useEffect(() => {
