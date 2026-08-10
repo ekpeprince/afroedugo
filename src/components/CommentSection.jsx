@@ -127,7 +127,7 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
             title: '💬 New Reply to Comment!',
             message: `${senderName} replied to your comment: "${preview}..."`,
             type: 'reply',
-            link: 'community',
+            link: `community?postId=${postId}`,
             read: false,
             createdAt: serverTimestamp()
           });
@@ -144,7 +144,7 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
           title: '💬 New Reply!',
           message: `${senderName} replied to your post: "${postTitle}"`,
           type: 'reply',
-          link: 'community',
+          link: `community?postId=${postId}`,
           read: false,
           createdAt: serverTimestamp()
         });
@@ -163,11 +163,11 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
           senderName,
           senderPhotoURL: profile?.photoURL || user?.photoURL || null,
           postId,
-          commentId: commentData.id,
+          commentId: commentRef.id,
           title: '📢 You were mentioned!',
           message: `${senderName} mentioned you in a comment.`,
           type: 'mention',
-          link: 'community',
+          link: `community?postId=${postId}`,
           read: false,
           createdAt: serverTimestamp()
         });

@@ -3,7 +3,7 @@ import { useFirestore } from '../hooks/useFirestore'
 import { db, storage, auth } from '../firebase/config'
 import {
   collection, addDoc, serverTimestamp, doc, updateDoc,
-  arrayUnion, arrayRemove, deleteDoc
+  arrayUnion, arrayRemove, deleteDoc, getDoc
 } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
 import { useAuth } from '../hooks/useAuth'
@@ -65,6 +65,32 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, [openMenuId]);
+
+  // ── Handle Post ID from URL Notifications ─────────────────────────────────
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlPostId = searchParams.get('postId');
+      if (urlPostId) {
+        const fetchPost = async () => {
+          try {
+            const docRef = doc(db, 'discussions', urlPostId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+              setExpandedPost({ id: docSnap.id, ...docSnap.data() });
+            }
+          } catch (error) {
+            console.error("Error fetching post from URL:", error);
+          }
+        };
+        fetchPost();
+        
+        // Clean up the URL so it doesn't stay there indefinitely
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  }, []);
 
   // ── Categories ───────────────────────────────────────────────────────────
   const categories = [
@@ -139,7 +165,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
           title: `${emoji} New Reaction!`,
           message: `${senderName} reacted to your post: "${snippet}..."`,
           type: 'like',
-          link: 'community',
+          link: `community?postId=${postId}`,
           read: false,
           createdAt: serverTimestamp()
         });

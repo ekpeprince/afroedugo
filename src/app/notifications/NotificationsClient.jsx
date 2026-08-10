@@ -141,7 +141,7 @@ export default function NotificationsClient() {
             title: '💬 New Reply!',
             message: `${senderName} replied back to your comment: "${preview}..."`,
             type: 'reply',
-            link: 'community',
+            link: `community?postId=${n.postId}`,
             read: false,
             createdAt: serverTimestamp()
           });
