@@ -243,12 +243,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const participantAvatar = currentConv?.participantAvatar || '👤';
   const isParticipantTyping = currentConv?.typing?.[participantId];
 
-  const isParticipantOnline = (() => {
-    if (participantStatus !== 'online') return false;
-    if (!participantLastOnline) return false;
-    const lastOnlineTime = participantLastOnline.toMillis ? participantLastOnline.toMillis() : new Date(participantLastOnline).getTime();
-    return (Date.now() - lastOnlineTime) < 30 * 60 * 1000;
-  })();
+  const isParticipantOnline = participantStatus === 'online';
 
   useEffect(() => {
     const participantId = currentConv?.participantId;

@@ -57,12 +57,7 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
 
   if (!isOpen) return null;
 
-  const isOnline = (() => {
-    if (profile?.status !== 'online') return false;
-    if (!profile?.lastOnline) return false;
-    const lastOnlineTime = profile.lastOnline.toMillis ? profile.lastOnline.toMillis() : new Date(profile.lastOnline).getTime();
-    return (Date.now() - lastOnlineTime) < 30 * 60 * 1000;
-  })();
+  const isOnline = profile?.status === 'online';
 
   const name    = profile?.displayName || profile?.email?.split('@')[0] || 'Unknown User';
   const photo   = profile?.photoURL || null;
