@@ -247,7 +247,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     if (participantStatus !== 'online') return false;
     if (!participantLastOnline) return false;
     const lastOnlineTime = participantLastOnline.toMillis ? participantLastOnline.toMillis() : new Date(participantLastOnline).getTime();
-    return (Date.now() - lastOnlineTime) < 5 * 60 * 1000;
+    return (Date.now() - lastOnlineTime) < 30 * 60 * 1000;
   })();
 
   useEffect(() => {

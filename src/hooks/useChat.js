@@ -97,8 +97,8 @@ export const useChat = (conversationId = null) => {
           if (profile?.status !== 'online') return 'offline';
           if (!profile?.lastOnline) return 'offline';
           const lastOnlineTime = profile.lastOnline.toMillis ? profile.lastOnline.toMillis() : new Date(profile.lastOnline).getTime();
-          const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-          return lastOnlineTime > fiveMinutesAgo ? 'online' : 'offline';
+          const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
+          return lastOnlineTime > thirtyMinutesAgo ? 'online' : 'offline';
         })(),
         participantLastOnline: profile?.lastOnline || null
       };
