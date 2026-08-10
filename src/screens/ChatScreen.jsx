@@ -57,9 +57,7 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
                         conv.participantAvatar || '👤'
                       )}
                     </div>
-                    {conv.participantStatus === 'online' && (
-                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#25D366] border-2 border-white dark:border-[#111b21] rounded-full"></span>
-                    )}
+                    <span className={`absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-white dark:border-[#111b21] rounded-full ${conv.participantStatus === 'online' ? 'bg-[#25D366]' : 'bg-gray-400 dark:bg-gray-600'}`}></span>
                   </div>
                   <div className="flex flex-col flex-grow border-b border-gray-100 dark:border-gray-800 pb-4 pt-1">
                     <div className="flex items-center justify-between mb-1">

@@ -27,22 +27,35 @@ export const useAuth = () => {
 
     const userRef = doc(db, 'users', user.uid);
     
-    // Set to online on mount/auth change
-    setDoc(userRef, { status: 'online', lastOnline: serverTimestamp() }, { merge: true })
-      .catch(err => console.error("Error setting presence to online:", err));
-
-    const handlePresenceOffline = () => {
-      setDoc(userRef, { status: 'offline', lastOnline: serverTimestamp() }, { merge: true })
-        .catch(err => console.error("Error setting presence to offline on unload:", err));
+    const setOnline = () => {
+      setDoc(userRef, { status: 'online', lastOnline: serverTimestamp() }, { merge: true })
+        .catch(err => console.error("Error setting presence to online:", err));
     };
 
-    window.addEventListener('beforeunload', handlePresenceOffline);
+    const setOffline = () => {
+      setDoc(userRef, { status: 'offline', lastOnline: serverTimestamp() }, { merge: true })
+        .catch(err => console.error("Error setting presence to offline:", err));
+    };
+
+    // Set to online on mount
+    setOnline();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        setOnline();
+      } else {
+        setOffline();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', setOffline);
     
     return () => {
-      window.removeEventListener('beforeunload', handlePresenceOffline);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', setOffline);
       // Mark as offline when unmounting or changing user
-      setDoc(userRef, { status: 'offline', lastOnline: serverTimestamp() }, { merge: true })
-        .catch(err => console.error("Error setting presence to offline on cleanup:", err));
+      setOffline();
     };
   }, [user]);
 
