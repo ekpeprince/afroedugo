@@ -435,8 +435,8 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
           <div className="absolute -right-20 -bottom-20 text-[200px] opacity-5 select-none pointer-events-none">🌍</div>
         </div>
 
-        {/* Sticky Filters Wrapper */}
-        <div className="sticky top-0 z-40 space-y-4 bg-gray-50/95 backdrop-blur-md py-3 -mx-2 px-2">
+        {/* Filters Wrapper */}
+        <div className="relative z-10 space-y-4 py-3 -mx-2 px-2">
           {/* Explore Opportunities (Pill Filters) */}
           <div className="bg-white p-4 rounded-[2rem] border border-gray-100 shadow-sm text-center">
             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Let's explore the opportunities</h3>
