@@ -243,6 +243,13 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const participantAvatar = currentConv?.participantAvatar || '👤';
   const isParticipantTyping = currentConv?.typing?.[participantId];
 
+  const isParticipantOnline = (() => {
+    if (participantStatus !== 'online') return false;
+    if (!participantLastOnline) return false;
+    const lastOnlineTime = participantLastOnline.toMillis ? participantLastOnline.toMillis() : new Date(participantLastOnline).getTime();
+    return (Date.now() - lastOnlineTime) < 5 * 60 * 1000;
+  })();
+
   useEffect(() => {
     const participantId = currentConv?.participantId;
     if (!isOpen || !participantId) return;
@@ -539,7 +546,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
           </div>
           <div className="flex flex-col flex-grow">
             <h4 className="font-semibold text-white leading-tight">{participantName}</h4>
-            {participantStatus === 'online' ? (
+            {isParticipantOnline ? (
               <p className="text-xs text-white/90">online</p>
             ) : (
               <p className="text-xs text-white/70">

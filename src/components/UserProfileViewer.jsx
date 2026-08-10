@@ -57,6 +57,13 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
 
   if (!isOpen) return null;
 
+  const isOnline = (() => {
+    if (profile?.status !== 'online') return false;
+    if (!profile?.lastOnline) return false;
+    const lastOnlineTime = profile.lastOnline.toMillis ? profile.lastOnline.toMillis() : new Date(profile.lastOnline).getTime();
+    return (Date.now() - lastOnlineTime) < 5 * 60 * 1000;
+  })();
+
   const name    = profile?.displayName || profile?.email?.split('@')[0] || 'Unknown User';
   const photo   = profile?.photoURL || null;
   const bio     = profile?.bio || null;
@@ -138,12 +145,12 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
               {/* Online/Offline Status Indicator */}
               <div className="flex items-center gap-1.5 mt-2 bg-slate-50 dark:bg-slate-800/40 px-3 py-1 rounded-full border border-slate-100 dark:border-slate-800/30 shadow-sm animate-in fade-in duration-200">
                 <span className={`w-2 h-2 rounded-full ${
-                  profile?.status === 'online' ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-slate-400'
+                  isOnline ? 'bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]' : 'bg-slate-400'
                 }`} />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                  {profile?.status === 'online' ? 'Online' : 'Offline'}
+                  {isOnline ? 'Online' : 'Offline'}
                 </span>
-                {profile?.status !== 'online' && profile?.lastOnline && (
+                {!isOnline && profile?.lastOnline && (
                   <span className="text-[9px] text-slate-400 dark:text-slate-500 normal-case font-medium">
                     • Active {formatLastOnline(profile.lastOnline)}
                   </span>
