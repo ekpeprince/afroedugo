@@ -442,29 +442,36 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   return (
     <div className={`fixed inset-0 z-[100] flex flex-col bg-white transition-transform duration-500 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
       {/* Chat Header */}
-      <header className="p-6 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 flex items-center gap-4 sticky top-0 z-20 transition-colors duration-300">
-        <button onClick={onClose} className="text-2xl hover:text-primary dark:text-gray-300 transition-colors">←</button>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center text-gray-500 font-black shadow-inner overflow-hidden border border-gray-200 dark:border-gray-700">
+      <header className="p-3 sm:p-4 bg-[#008069] dark:bg-[#202c33] text-white flex items-center gap-4 sticky top-0 z-20 shadow-sm transition-colors duration-300">
+        <button onClick={onClose} className="text-2xl hover:text-gray-200 transition-colors flex items-center">←</button>
+        <div className="flex items-center gap-3 cursor-pointer w-full">
+          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-500 font-black overflow-hidden">
             {participantAvatar.startsWith('http') ? (
               <img src={participantAvatar} alt="avatar" className="w-full h-full object-cover" />
             ) : (
               participantAvatar
             )}
           </div>
-          <div>
-            <h4 className="font-black text-gray-900 dark:text-white leading-none">{participantName}</h4>
+          <div className="flex flex-col flex-grow">
+            <h4 className="font-semibold text-white leading-tight">{participantName}</h4>
             {participantStatus === 'online' ? (
-              <p className="text-[10px] font-black uppercase tracking-widest text-green-500 flex items-center gap-1 mt-1">
-                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                Online
-              </p>
+              <p className="text-xs text-white/90">online</p>
             ) : (
-              <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500 flex items-center gap-1 mt-1">
-                <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-650 rounded-full"></span>
-                Offline{participantLastOnline ? ` • Active ${formatLastOnline(participantLastOnline)}` : ''}
+              <p className="text-xs text-white/70">
+                {participantLastOnline ? `last seen ${formatLastOnline(participantLastOnline)}` : 'offline'}
               </p>
             )}
+          </div>
+          <div className="flex items-center gap-4 ml-auto">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+            </svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+            </svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle>
+            </svg>
           </div>
         </div>
       </header>
@@ -478,10 +485,12 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-grow overflow-y-auto p-6 space-y-4 bg-gray-50/50 dark:bg-gray-800 transition-colors duration-300">
+      <div className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-3 bg-[url('https://web.whatsapp.com/img/bg-chat-tile-light_686b98c9fdffbc366fc8f1df86f1e775.png')] dark:bg-[url('https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png')] bg-[#efeae2] dark:bg-[#0b141a] transition-colors duration-300">
         {messages.length === 0 ? (
-          <div className="py-20 text-center text-gray-400 dark:text-gray-500 font-medium">
-            No messages yet. Break the ice! 🧊
+          <div className="py-20 text-center flex flex-col items-center">
+            <div className="bg-[#ffeecd] dark:bg-[#182229] text-gray-700 dark:text-[#8696a0] text-sm px-4 py-2 rounded-lg shadow-sm">
+              No messages yet. Send a message to start! 💬
+            </div>
           </div>
         ) : (
           messages.map((msg, index) => {
@@ -493,19 +502,19 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
               <React.Fragment key={msg.id}>
                 {showDateHeader && (
                   <div className="flex justify-center my-4">
-                    <span className="bg-gray-200/50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full">
+                    <span className="bg-white dark:bg-[#182229] text-gray-500 dark:text-[#8696a0] text-xs font-medium px-3 py-1 rounded-lg shadow-sm">
                       {currentDate}
                     </span>
                   </div>
                 )}
-                <div id={`msg-${msg.id}`} className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'} group relative overflow-hidden`}>
+                <div id={`msg-${msg.id}`} className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'} group relative overflow-visible`}>
                   
                   {msg.senderId === user.uid && (
-                    <div className="opacity-0 group-hover:opacity-100 absolute -left-16 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity z-10 hidden sm:flex">
+                    <div className="opacity-0 group-hover:opacity-100 absolute -left-12 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity z-10 hidden sm:flex">
                       {msg.text && (
                         <button 
                           onClick={() => handleEditClick(msg)}
-                          className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"
+                          className="p-1 text-gray-400 hover:text-blue-500 bg-white/80 dark:bg-black/50 rounded-full shadow-sm"
                           title="Edit message"
                         >
                           ✏️
@@ -513,7 +522,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                       )}
                       <button 
                         onClick={() => { if(window.confirm('Delete this message?')) deleteMessage(stableConvId.current, msg.id) }}
-                        className="p-1.5 text-gray-400 hover:text-red-600 transition-colors"
+                        className="p-1 text-gray-400 hover:text-red-500 bg-white/80 dark:bg-black/50 rounded-full shadow-sm"
                         title="Delete message"
                       >
                         🗑️
@@ -528,49 +537,68 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                     } : null}
                   >
                     <div 
-                      className={`max-w-[85%] sm:max-w-[75%] p-4 rounded-[1.5rem] shadow-sm text-sm font-bold ${
+                      className={`relative max-w-[85%] sm:max-w-[75%] px-3 py-1.5 rounded-lg shadow-sm text-[15px] font-normal leading-[1.3] ${
                         msg.senderId === user.uid 
-                          ? 'bg-primary text-white rounded-br-none ml-auto' 
-                          : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-none border border-gray-100 dark:border-gray-600'
+                          ? 'bg-[#dcf8c6] dark:bg-[#005c4b] text-gray-900 dark:text-[#e9edef] rounded-tr-none ml-auto' 
+                          : 'bg-white dark:bg-[#202c33] text-gray-900 dark:text-[#e9edef] rounded-tl-none'
                       }`}
                     >
+                      {/* WhatsApp Tail */}
+                      <span className={`absolute top-0 w-3 h-3 ${msg.senderId === user.uid ? '-right-2 text-[#dcf8c6] dark:text-[#005c4b]' : '-left-2 text-white dark:text-[#202c33]'}`}>
+                        <svg viewBox="0 0 8 13" width="8" height="13" fill="currentColor">
+                          {msg.senderId === user.uid ? (
+                            <path d="M5.188 1H0v11.193l6.467-8.625C7.526 2.156 6.958 1 5.188 1z"></path>
+                          ) : (
+                            <path d="M1.533 3.568L8 12.193V1H2.812C1.042 1 .474 2.156 1.533 3.568z"></path>
+                          )}
+                        </svg>
+                      </span>
+
                       {msg.replyToMessageId && (
                         <div 
-                          className={`rounded-lg p-2 mb-2 border-l-4 text-xs overflow-hidden cursor-pointer ${
-                            msg.senderId === user.uid ? 'bg-black/20 border-white/50 text-white/90' : 'bg-gray-100 dark:bg-gray-800 border-primary/50 text-gray-600 dark:text-gray-300'
+                          className={`rounded-md p-2 mb-1 mt-1 border-l-[3px] text-xs overflow-hidden cursor-pointer ${
+                            msg.senderId === user.uid ? 'bg-[#c5e6b1] dark:bg-[#025143] border-[#06cf9c] text-gray-700 dark:text-[#e9edef]' : 'bg-[#f0f2f5] dark:bg-[#111b21] border-[#06cf9c] text-gray-700 dark:text-[#e9edef]'
                           }`}
                           onClick={() => {
                             const el = document.getElementById(`msg-${msg.replyToMessageId}`);
                             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
                           }}
                         >
-                          <div className={`font-black mb-1 ${msg.senderId === user.uid ? 'text-white' : 'text-primary'}`}>
+                          <div className="font-semibold text-[#06cf9c] mb-0.5">
                             {msg.replyToSenderId === user.uid ? 'You' : participantName}
                           </div>
-                          <div className="truncate opacity-90">{msg.replyToText}</div>
+                          <div className="truncate opacity-80">{msg.replyToText}</div>
                         </div>
                       )}
                       {msg.imageUrl && (
                         <img 
                           src={msg.imageUrl} 
                           alt="Chat attachment" 
-                          className="rounded-xl mb-2 max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity" 
+                          className="rounded-md mb-1 mt-1 max-w-full h-auto cursor-pointer hover:opacity-90 transition-opacity" 
                           onClick={() => setFullScreenImage(msg.imageUrl)}
                         />
                       )}
                       {msg.audioUrl && (
-                        <div className="mb-2 w-48 sm:w-64">
+                        <div className="mb-1 mt-1 w-48 sm:w-64">
                           <audio controls src={msg.audioUrl} className="w-full h-10" />
                         </div>
                       )}
-                      {msg.text && <p className="whitespace-pre-wrap break-words">{msg.text}</p>}
-                      <div className={`flex items-center gap-1 text-[9px] mt-1 opacity-60 ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'}`}>
-                        {msg.isEdited && <span className="mr-1 italic">(edited)</span>}
+                      {msg.text && (
+                        <span className="whitespace-pre-wrap break-words pr-12 inline-block relative">
+                          {msg.text}
+                          <span className="inline-block w-12"></span> {/* Spacer for timestamp overlay */}
+                        </span>
+                      )}
+                      
+                      {/* Timestamp & Read Receipts */}
+                      <div className={`flex items-center gap-1 text-[11px] float-right mt-1 ml-2 ${msg.senderId === user.uid ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400 dark:text-gray-400'} ${msg.text ? 'absolute bottom-1 right-2' : ''}`}>
+                        {msg.isEdited && <span className="mr-0.5 italic text-[10px]">edited</span>}
                         {msg.createdAt?.toDate ? msg.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
                         {msg.senderId === user.uid && (
-                          <span className="ml-1 font-black tracking-tighter">
-                            {msg.read ? '✓✓' : '✓'}
-                          </span>
+                          <svg width="16" height="15" viewBox="0 0 16 15" fill="none" className="ml-0.5">
+                            <path d="M15.01 3.316l-8.658 9.222a1.053 1.053 0 0 1-1.54 0L2.115 9.66" stroke={msg.read ? "#53bdeb" : "currentColor"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M10.99 3.316l-8.658 9.222a1.053 1.053 0 0 1-1.54 0" stroke={msg.read ? "#53bdeb" : "currentColor"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
                         )}
                       </div>
                     </div>
@@ -583,10 +611,8 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
         
         {isParticipantTyping && (
           <div className="flex justify-start">
-            <div className="bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 px-4 py-3 rounded-[1.5rem] rounded-bl-none flex gap-1 items-center">
-              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-              <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+            <div className="bg-white dark:bg-[#202c33] text-gray-500 dark:text-[#8696a0] px-4 py-2 rounded-lg rounded-tl-none shadow-sm flex gap-1 items-center">
+              <span className="text-sm font-medium italic">typing...</span>
             </div>
           </div>
         )}

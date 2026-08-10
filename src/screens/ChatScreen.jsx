@@ -15,74 +15,83 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="p-8 bg-white border-b border-gray-100 flex items-center justify-between sticky top-0 z-20">
+    <div className="min-h-screen bg-white dark:bg-[#111b21] flex flex-col">
+      <header className="p-4 bg-[#008069] dark:bg-[#202c33] text-white flex items-center justify-between sticky top-0 z-20 shadow-md">
         <div className="flex items-center gap-4">
-          <button onClick={onBack} className="text-2xl hover:text-primary transition-colors">←</button>
-          <h1 className="text-3xl font-black tracking-tight text-gray-900">Messages</h1>
+          <button onClick={onBack} className="text-2xl hover:text-gray-200 transition-colors">←</button>
+          <h1 className="text-xl font-semibold tracking-tight">WhatsApp</h1>
         </div>
-        <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary font-black shadow-inner">
-          {conversations.length}
+        <div className="flex items-center gap-4">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle>
+          </svg>
         </div>
       </header>
 
-      <div className="flex-grow p-6 space-y-4">
+      <div className="flex-grow flex flex-col">
         {conversations.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-12 space-y-4">
-            <div className="w-24 h-24 bg-gray-100 rounded-[2.5rem] flex items-center justify-center text-4xl">💬</div>
-            <h3 className="text-xl font-black text-gray-900">No conversations yet</h3>
-            <p className="text-gray-400 font-medium max-w-xs">Start a chat with a housing provider or a fellow student to see it here.</p>
+            <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center text-4xl">💬</div>
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white">No chats</h3>
+            <p className="text-gray-500 dark:text-gray-400 font-medium max-w-xs">Start a chat with a housing provider or a fellow student.</p>
           </div>
         ) : (
           conversations.map((conv) => (
             <div 
               key={conv.id}
-              className="relative group w-full bg-white rounded-[2rem] shadow-xl shadow-gray-200 border border-gray-100 flex items-center justify-between hover:scale-[1.02] transition-all"
+              className="relative group w-full bg-white dark:bg-[#111b21] hover:bg-gray-50 dark:hover:bg-[#202c33] transition-colors flex items-center justify-between"
             >
               <button
                 onClick={() => onOpenChat(conv.id)}
-                className="flex-grow p-6 flex items-center justify-between text-left"
+                className="w-full pl-4 pr-4 py-3 flex items-center justify-between text-left"
               >
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="w-14 h-14 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-500 font-black shadow-lg overflow-hidden border border-gray-200">
-                    {conv.participantAvatar && conv.participantAvatar.startsWith('http') ? (
-                      <img src={conv.participantAvatar} alt="avatar" className="w-full h-full object-cover" />
-                    ) : (
-                      conv.participantAvatar || '👤'
+                <div className="flex items-center gap-4 w-full">
+                  <div className="relative flex-shrink-0">
+                    <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-500 font-black overflow-hidden">
+                      {conv.participantAvatar && conv.participantAvatar.startsWith('http') ? (
+                        <img src={conv.participantAvatar} alt="avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        conv.participantAvatar || '👤'
+                      )}
+                    </div>
+                    {conv.participantStatus === 'online' && (
+                      <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-[#25D366] border-2 border-white dark:border-[#111b21] rounded-full"></span>
                     )}
                   </div>
-                  {conv.participantStatus === 'online' && (
-                    <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white rounded-full animate-pulse shadow-md"></span>
-                  )}
+                  <div className="flex flex-col flex-grow border-b border-gray-100 dark:border-gray-800 pb-4 pt-1">
+                    <div className="flex items-center justify-between mb-1">
+                      <h4 className="font-semibold text-gray-900 dark:text-[#e9edef] text-base leading-none">
+                        {conv.participantName || 'Fellow Student'}
+                      </h4>
+                      <span className={`text-xs font-medium ${conv.unreadBy?.includes(user.uid) ? 'text-[#25D366]' : 'text-gray-500 dark:text-gray-400'}`}>
+                        {conv.updatedAt?.toDate ? conv.updatedAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-gray-500 dark:text-[#8696a0] text-sm line-clamp-1 flex-grow pr-4">
+                        {conv.lastMessage || 'Start the conversation...'}
+                      </p>
+                      {conv.unreadBy?.includes(user.uid) && (
+                        <div className="w-5 h-5 bg-[#25D366] text-white text-[10px] font-bold rounded-full flex items-center justify-center flex-shrink-0">
+                          1
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-left">
-                  <h4 className="font-black text-gray-900 text-lg leading-none mb-1">
-                    {conv.participantName || 'Fellow Student'}
-                  </h4>
-                  <p className="text-gray-400 text-sm font-medium line-clamp-1">
-                    {conv.lastMessage || 'Start the conversation...'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-col items-end gap-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">
-                  {conv.updatedAt?.toDate ? conv.updatedAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
-                </span>
-                {conv.unreadBy?.includes(user.uid) && (
-                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                )}
-              </div>
               </button>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   deleteConversation(conv.id);
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-3 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
-                title="Delete Conversation"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
+                title="Delete Chat"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M3 6h18" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                 </svg>
               </button>
