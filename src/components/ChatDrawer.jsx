@@ -577,7 +577,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                 )}
                 <div id={`msg-${msg.id}`} className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'} group relative overflow-visible`}>
                   
-                  {msg.senderId === user.uid && (
+                  {msg.senderId === user.uid && !msg.deleted && (
                     <div className="opacity-0 group-hover:opacity-100 absolute -left-12 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity z-10 hidden sm:flex">
                       {msg.text && (
                         <button 
@@ -589,7 +589,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                         </button>
                       )}
                       <button 
-                        onClick={() => { if(window.confirm('Delete this message?')) deleteMessage(stableConvId.current, msg.id) }}
+                        onClick={() => { if(window.confirm('Delete this message for everyone?')) deleteMessage(stableConvId.current, msg.id) }}
                         className="p-1 text-gray-400 hover:text-red-500 bg-white/80 dark:bg-black/50 rounded-full shadow-sm"
                         title="Delete message"
                       >
@@ -599,9 +599,9 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                   )}
 
                   <SwipeableMessage 
-                    onReply={() => setReplyingTo(msg)}
-                    onLongPress={msg.senderId === user.uid ? () => {
-                      if(window.confirm('Delete this message?')) deleteMessage(stableConvId.current, msg.id);
+                    onReply={!msg.deleted ? () => setReplyingTo(msg) : null}
+                    onLongPress={msg.senderId === user.uid && !msg.deleted ? () => {
+                      if(window.confirm('Delete this message for everyone?')) deleteMessage(stableConvId.current, msg.id);
                     } : null}
                   >
                     <div 
@@ -622,7 +622,17 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                         </svg>
                       </span>
 
-                      {msg.replyToMessageId && (
+                      {msg.deleted ? (
+                        <div className="flex items-center gap-1.5 text-gray-500 dark:text-gray-400/80 italic py-0.5 pr-12">
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                          </svg>
+                          <span className="text-[13px]">{msg.senderId === user.uid ? 'You deleted this message' : 'This message was deleted'}</span>
+                        </div>
+                      ) : (
+                        <>
+                          {msg.replyToMessageId && (
                         <div 
                           className={`rounded-md p-2 mb-1 mt-1 border-l-[3px] text-xs overflow-hidden cursor-pointer ${
                             msg.senderId === user.uid ? 'bg-[#c5e6b1] dark:bg-[#025143] border-[#06cf9c] text-gray-700 dark:text-[#e9edef]' : 'bg-[#f0f2f5] dark:bg-[#111b21] border-[#06cf9c] text-gray-700 dark:text-[#e9edef]'
@@ -656,6 +666,8 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                           {msg.text}
                           <span className="inline-block w-12"></span> {/* Spacer for timestamp overlay */}
                         </span>
+                      )}
+                        </>
                       )}
                       
                       {/* Timestamp & Read Receipts */}

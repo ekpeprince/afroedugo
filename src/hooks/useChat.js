@@ -237,7 +237,14 @@ export const useChat = (conversationId = null) => {
   const deleteMessage = async (convId, msgId) => {
     if (!user) return;
     try {
-      await deleteDoc(doc(db, 'conversations', convId, 'messages', msgId));
+      await updateDoc(doc(db, 'conversations', convId, 'messages', msgId), {
+        deleted: true,
+        text: null,
+        imageUrl: null,
+        audioUrl: null,
+        audioDuration: null,
+        replyToMessageId: null
+      });
     } catch (err) {
       console.error('Error deleting message:', err);
     }
