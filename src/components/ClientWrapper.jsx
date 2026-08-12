@@ -56,10 +56,18 @@ function GlobalModalsContainer({ children }) {
       }
     };
 
+    // Heartbeat interval every 3 minutes
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setOnline();
+      }
+    }, 3 * 60 * 1000);
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', setOffline);
     
     return () => {
+      clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', setOffline);
     };
