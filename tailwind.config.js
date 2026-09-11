@@ -12,24 +12,18 @@ export default {
       },
       colors: {
         primary: {
-          DEFAULT: "#133E33", // Deep Eucalyptus Pine (Academic, Earthy, Trust)
-          dark: "#0B2720",
-          light: "#1C5446",
-          subtle: "#EBF3F0",
-        },
-        terracotta: {
-          DEFAULT: "#D96B43", // Warm Terracotta Clay (Warmth, Energy, Heritage)
-          dark: "#BF5630",
-          light: "#E88562",
-          subtle: "#FBF0EB",
+          DEFAULT: "#065F46", // Forest Emerald
+          dark: "#044E39",
+          light: "#0D7A5C",
+          subtle: "#E6F4F0",
         },
         secondary: {
-          DEFAULT: "#D96B43", // Map secondary to Terracotta for seamless consistency
-          dark: "#BF5630",
-          light: "#E88562",
+          DEFAULT: "#0D7A5C",
+          dark: "#044E39",
+          light: "#065F46",
         },
         sand: "#F4EFE6",
-        linen: "#FAF8F5", // Clean porcelain linen surface
+        linen: "#FAF8F5",
         surface: {
           DEFAULT: "#FFFFFF",
           card: "#FFFFFF",
@@ -38,9 +32,8 @@ export default {
         }
       },
       backgroundImage: {
-        'brand-gradient': "linear-gradient(135deg, #133E33 0%, #1C5446 100%)",
-        'terracotta-gradient': "linear-gradient(135deg, #D96B43 0%, #BF5630 100%)",
-        'warm-subtle': "radial-gradient(circle at 50% 0%, rgba(19, 62, 51, 0.04) 0%, transparent 70%)",
+        'brand-gradient': "linear-gradient(135deg, #065F46 0%, #0D7A5C 100%)",
+        'warm-subtle': "radial-gradient(circle at 50% 0%, rgba(6, 95, 70, 0.04) 0%, transparent 70%)",
       }
     },
   },

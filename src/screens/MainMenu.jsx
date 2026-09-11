@@ -92,8 +92,8 @@ const MainMenu = ({ onNavigate }) => {
       id: 'community',
       label: 'Community',
       sub: 'Connect with students',
-      color: 'bg-terracotta text-white',
-      shadow: 'shadow-terracotta/25',
+      color: 'bg-primary-light text-white',
+      shadow: 'shadow-primary/20',
       icon: (
         <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
@@ -245,7 +245,7 @@ const MainMenu = ({ onNavigate }) => {
             <div className="flex items-center gap-2 mb-1 w-full flex-wrap">
               <h3 className="text-lg font-black text-gray-900 dark:text-white leading-tight">{item.label}</h3>
               {item.comingSoon && (
-                <span className="bg-terracotta text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm">
+                <span className="bg-primary text-white text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full shadow-sm">
                   Soon
                 </span>
               )}
@@ -256,14 +256,14 @@ const MainMenu = ({ onNavigate }) => {
       </div>
 
       {/* Promo Banner */}
-      <div className="mt-auto bg-[#0D1C17] border border-primary/20 rounded-[2.5rem] p-8 relative overflow-hidden group shadow-xl">
+      <div className="mt-auto bg-[#071F17] border border-primary/20 rounded-[2.5rem] p-8 relative overflow-hidden group shadow-xl">
         <div className="relative z-10">
           <h4 className="text-white text-xl font-black mb-2 leading-none">Need Visa Help?</h4>
           <p className="text-gray-300 text-xs font-bold leading-relaxed mb-6">Our experts are waiting to help you relocate smoothly.</p>
           <button
             onClick={handleTalkToExpert}
             disabled={loadingExpert}
-            className="inline-flex items-center gap-2 bg-terracotta hover:bg-terracotta-dark text-white px-6 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-terracotta/25 hover:scale-105 active:scale-95 transition-all"
+            className="inline-flex items-center gap-2 button-primary px-6 py-3.5 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg shadow-primary/25 hover:scale-105 active:scale-95 transition-all"
           >
             {loadingExpert ? (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>

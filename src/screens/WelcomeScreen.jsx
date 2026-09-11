@@ -42,7 +42,7 @@ const WelcomeScreen = ({ onStart }) => {
           <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Lithuania (More Soon)</span>
         </div>
         <div className="badge bg-white dark:bg-gray-800 px-4 py-2 rounded-full border border-primary/10 shadow-sm">
-          <span className="text-terracotta text-base font-bold">✓</span>
+          <span className="text-primary text-base font-bold">✓</span>
           <span className="text-xs font-bold text-gray-700 dark:text-gray-300">Verified Direct Admissions</span>
         </div>
       </div>

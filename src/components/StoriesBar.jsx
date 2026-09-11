@@ -354,7 +354,7 @@ export default function StoriesBar({ onLogin }) {
                 onClick={() => setViewerIndex(getStartIndex(gi))}
                 className="flex flex-col items-center gap-1.5 shrink-0 group"
               >
-                <div className={`w-14 h-14 rounded-full p-0.5 ${isMe ? 'bg-gradient-to-br from-primary via-primary-light to-terracotta' : 'bg-gradient-to-br from-terracotta via-amber-500 to-primary-light'} shadow-md group-hover:scale-105 transition-transform`}>
+                <div className={`w-14 h-14 rounded-full p-0.5 ${isMe ? 'bg-gradient-to-br from-primary via-primary-light to-emerald-400' : 'bg-gradient-to-br from-primary-light via-emerald-500 to-primary'} shadow-md group-hover:scale-105 transition-transform`}>
                   <div className="w-full h-full rounded-full bg-white dark:bg-gray-800 p-0.5 overflow-hidden flex items-center justify-center">
                     {group.userPhotoURL ? (
                       <img src={group.userPhotoURL} className="w-full h-full object-cover rounded-full" alt="" />

@@ -64,7 +64,7 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
                       <h4 className="font-semibold text-gray-900 dark:text-[#e9edef] text-base leading-none">
                         {conv.participantName || 'Fellow Student'}
                       </h4>
-                      <span className={`text-xs font-medium ${conv.unreadBy?.includes(user.uid) ? 'text-terracotta font-bold' : 'text-gray-500 dark:text-gray-400'}`}>
+                      <span className={`text-xs font-medium ${conv.unreadBy?.includes(user.uid) ? 'text-primary font-bold' : 'text-gray-500 dark:text-gray-400'}`}>
                         {conv.updatedAt?.toDate ? conv.updatedAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
                       </span>
                     </div>
@@ -73,7 +73,7 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
                         {conv.lastMessage || 'Start the conversation...'}
                       </p>
                       {conv.unreadBy?.includes(user.uid) && (
-                        <div className="w-5 h-5 bg-terracotta text-white text-[10px] font-bold rounded-full flex items-center justify-center flex-shrink-0 shadow-sm shadow-terracotta/30">
+                        <div className="w-5 h-5 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center flex-shrink-0 shadow-sm shadow-primary/30">
                           1
                         </div>
                       )}

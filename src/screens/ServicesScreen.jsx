@@ -38,9 +38,9 @@ const ServicesScreen = ({ onBack, onLogin }) => {
 
   const categories = [
     { id: 'all', label: 'All', icon: '🌟', color: 'bg-primary/10', textColor: 'text-primary' },
-    { id: 'visa', label: 'Visa Support', icon: '📄', color: 'bg-terracotta/10', textColor: 'text-terracotta' },
-    { id: 'insurance', label: 'Student Insurance', icon: '🛡️', color: 'bg-primary-light/10', textColor: 'text-primary-light' },
-    { id: 'translation', label: 'Translation', icon: '🔤', color: 'bg-sand', textColor: 'text-primary-dark' }
+    { id: 'visa', label: 'Visa Support', icon: '📄', color: 'bg-primary/15', textColor: 'text-primary' },
+    { id: 'insurance', label: 'Student Insurance', icon: '🛡️', color: 'bg-primary/10', textColor: 'text-primary' },
+    { id: 'translation', label: 'Translation', icon: '🔤', color: 'bg-primary/10', textColor: 'text-primary' }
   ];
 
   const filteredServices = useMemo(() => {

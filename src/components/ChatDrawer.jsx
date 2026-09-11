@@ -852,7 +852,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
             <button 
               type="button"
               onClick={stopRecording}
-              className="w-12 h-12 flex-shrink-0 bg-terracotta hover:bg-terracotta-dark text-white rounded-full flex items-center justify-center shadow-md shadow-terracotta/25 transition-all scale-100"
+              className="w-12 h-12 flex-shrink-0 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md shadow-red-500/25 transition-all scale-100 animate-pulse"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="6" y="6" width="12" height="12" rx="2" ry="2"/>
