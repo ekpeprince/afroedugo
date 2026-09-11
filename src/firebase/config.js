@@ -5,12 +5,12 @@ import { getAuth } from "firebase/auth";
 import { getAnalytics, isSupported as isAnalyticsSupported } from "firebase/analytics";
 import { getMessaging, isSupported as isMessagingSupported } from "firebase/messaging";
 
-// Determine authDomain dynamically: use custom domain on afroedugo.com to eliminate default firebase URL
+// Determine authDomain dynamically: use current hostname (www.afroedugo.com or afroedugo.com)
 const getAuthDomain = () => {
-  if (typeof window !== "undefined" && window.location.hostname.endsWith("afroedugo.com")) {
-    return "afroedugo.com";
+  if (typeof window !== "undefined" && window.location.hostname.includes("afroedugo.com")) {
+    return window.location.hostname;
   }
-  return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "afroedugo.com";
+  return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "www.afroedugo.com";
 };
 
 // Your web app's Firebase configuration
