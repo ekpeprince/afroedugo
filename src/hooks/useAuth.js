@@ -96,7 +96,14 @@ export const useAuth = () => {
       await syncUserProfile(result.user);
       return result.user;
     } catch (err) {
-      setError(err.message);
+      let msg = err.message;
+      if (err.code === 'auth/unauthorized-domain') {
+        const domain = typeof window !== 'undefined' ? window.location.hostname : 'afroedugo.com';
+        msg = `Domain "${domain}" is not authorized in Firebase Console. Please add "${domain}" under Firebase > Authentication > Settings > Authorized domains.`;
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        msg = null;
+      }
+      setError(msg);
       throw err;
     } finally {
       setLoading(false);

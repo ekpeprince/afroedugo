@@ -36,6 +36,27 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setLocalError('');
+    setLocalSuccess('');
+    try {
+      await loginWithGoogle();
+      onAuthSuccess?.();
+    } catch (err) {
+      console.error(err);
+      if (err.code === 'auth/unauthorized-domain') {
+        const domain = typeof window !== 'undefined' ? window.location.hostname : 'afroedugo.com';
+        setLocalError(`Domain "${domain}" is not authorized for Google Sign-In in Firebase Console. Please add "${domain}" to Firebase Authentication > Settings > Authorized domains.`);
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        // User voluntarily closed the popup, no error needed
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        // Popup request cancelled
+      } else {
+        setLocalError(err.message ? err.message.replace('Firebase: ', '') : 'Google sign in failed.');
+      }
+    }
+  };
+
   const handleForgotPassword = async () => {
     setLocalError('');
     setLocalSuccess('');
@@ -165,14 +186,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
         <div className="flex flex-col gap-4">
           <button 
             type="button"
-            onClick={async () => {
-              try {
-                await loginWithGoogle();
-                onAuthSuccess?.();
-              } catch (err) {
-                setLocalError(err.message);
-              }
-            }}
+            onClick={handleGoogleLogin}
             className="flex items-center justify-center gap-3 bg-white py-5 px-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-100 hover:bg-gray-50 active:scale-95 transition-all group w-full"
           >
             <svg width="20" height="20" viewBox="0 0 24 24">
