@@ -198,6 +198,17 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
             <span className="font-black text-xs uppercase tracking-widest text-gray-700">Continue with Google</span>
           </button>
         </div>
+
+        <p className="text-center text-[11px] text-gray-400 font-medium mt-6">
+          By continuing, you agree to AfroEduGo&apos;s{' '}
+          <a href="/terms" className="text-gray-700 underline font-bold hover:text-primary">
+            Terms of Service
+          </a>{' '}
+          and{' '}
+          <a href="/privacy" className="text-gray-700 underline font-bold hover:text-primary">
+            Privacy Policy
+          </a>.
+        </p>
       </form>
 
       <footer className="mt-auto py-8 text-center">
@@ -210,6 +221,12 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
         >
           {isLogin ? 'Sign Up Instead' : 'Login Instead'}
         </button>
+
+        <div className="mt-6 flex items-center justify-center gap-3 text-[11px] text-gray-400 font-bold">
+          <a href="/privacy" className="hover:underline hover:text-gray-700">Privacy Policy</a>
+          <span>•</span>
+          <a href="/terms" className="hover:underline hover:text-gray-700">Terms of Service</a>
+        </div>
       </footer>
     </div>
   )

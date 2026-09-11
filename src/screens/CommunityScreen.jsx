@@ -1080,8 +1080,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
             <div className="text-xs text-gray-400 font-medium px-2">
               <p>© 2026 AfroEdugo. All rights reserved.</p>
               <div className="flex gap-3 mt-1">
-                <a href="#" className="hover:underline">Privacy</a>
-                <a href="#" className="hover:underline">Terms</a>
+                <a href="/privacy" className="hover:underline hover:text-gray-600">Privacy</a>
+                <a href="/terms" className="hover:underline hover:text-gray-600">Terms</a>
               </div>
             </div>
           </div>
