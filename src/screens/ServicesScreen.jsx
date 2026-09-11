@@ -37,10 +37,10 @@ const ServicesScreen = ({ onBack, onLogin }) => {
   const { data: services, loading, error } = useFirestore('services');
 
   const categories = [
-    { id: 'all', label: 'All', icon: '🌟', color: 'bg-indigo-50', textColor: 'text-indigo-600' },
-    { id: 'visa', label: 'Visa Support', icon: '📄', color: 'bg-amber-50', textColor: 'text-amber-600' },
-    { id: 'insurance', label: 'Student Insurance', icon: '🛡️', color: 'bg-blue-50', textColor: 'text-blue-600' },
-    { id: 'translation', label: 'Translation', icon: '🔤', color: 'bg-emerald-50', textColor: 'text-emerald-600' }
+    { id: 'all', label: 'All', icon: '🌟', color: 'bg-primary/10', textColor: 'text-primary' },
+    { id: 'visa', label: 'Visa Support', icon: '📄', color: 'bg-terracotta/10', textColor: 'text-terracotta' },
+    { id: 'insurance', label: 'Student Insurance', icon: '🛡️', color: 'bg-primary-light/10', textColor: 'text-primary-light' },
+    { id: 'translation', label: 'Translation', icon: '🔤', color: 'bg-sand', textColor: 'text-primary-dark' }
   ];
 
   const filteredServices = useMemo(() => {
@@ -80,19 +80,30 @@ const ServicesScreen = ({ onBack, onLogin }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
+        <div className="text-4xl mb-4">⚠️</div>
+        <h3 className="text-lg font-bold text-gray-900 mb-2">Error loading services</h3>
+        <p className="text-gray-500 text-sm max-w-xs">{error.message || 'Please check your connection.'}</p>
+        <button onClick={onBack} className="mt-6 px-6 py-2 bg-gray-100 rounded-xl font-bold text-sm">Go Back</button>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50/50 pb-20 max-w-5xl mx-auto">
+    <div className="min-h-screen bg-transparent pb-20 max-w-5xl mx-auto">
       {/* Hero Header */}
-      <header className="px-6 pt-10 pb-8 bg-white border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <header className="px-6 pt-10 pb-8 bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex flex-col">
-          <button onClick={onBack} className="w-10 h-10 bg-gray-50 rounded-full flex items-center justify-center text-xl hover:bg-gray-100 transition-colors mb-4 text-gray-600">←</button>
-          <h2 className="text-4xl font-black tracking-tight text-gray-900 mb-2">Student Services</h2>
+          <button onClick={onBack} className="w-10 h-10 bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors mb-4 text-gray-600 dark:text-gray-300">←</button>
+          <h2 className="text-4xl font-black tracking-tight text-gray-900 dark:text-white mb-2">Student Services</h2>
           <p className="text-gray-400 font-bold text-sm">Essential support for your study abroad journey.</p>
         </div>
         {isAdmin && (
@@ -101,7 +112,7 @@ const ServicesScreen = ({ onBack, onLogin }) => {
               if (!user && onLogin) return onLogin();
               setShowAddModal(true);
             }}
-            className="self-start sm:self-center bg-primary text-white px-6 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-95 transition-all whitespace-nowrap hover:bg-primary/90"
+            className="self-start sm:self-center button-primary px-6 py-3 rounded-xl text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20 active:scale-95 transition-all whitespace-nowrap"
           >
             + Offer Service
           </button>
@@ -116,8 +127,8 @@ const ServicesScreen = ({ onBack, onLogin }) => {
             onClick={() => setSelectedCategory(cat.id)}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-full whitespace-nowrap transition-all font-black text-[11px] uppercase tracking-wider ${
               selectedCategory === cat.id 
-                ? 'bg-gray-900 text-white shadow-xl shadow-gray-200 scale-105' 
-                : 'bg-white text-gray-500 hover:bg-gray-100 hover:scale-105 border border-gray-100'
+                ? 'bg-primary text-white shadow-lg shadow-primary/20 scale-105' 
+                : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-primary/5 hover:scale-105 border border-primary/10'
             }`}
           >
             <span className="text-sm">{cat.icon}</span>
@@ -136,13 +147,13 @@ const ServicesScreen = ({ onBack, onLogin }) => {
           filteredServices.map((service) => {
             const catInfo = categories.find(c => c.id === service.category) || categories[1];
             return (
-              <div key={service.id} className="bg-white rounded-[2rem] p-6 shadow-xl shadow-gray-200/50 border border-gray-100 flex flex-col h-full group transition-all hover:border-primary/30 hover:shadow-2xl">
+              <div key={service.id} className="bg-white dark:bg-gray-800 rounded-[2rem] p-6 shadow-xl shadow-gray-100 dark:shadow-none border border-primary/10 dark:border-gray-700 flex flex-col h-full group transition-all hover:border-primary/30 hover:shadow-2xl">
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <span className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest mb-3 ${catInfo.color} ${catInfo.textColor}`}>
                       {catInfo.label}
                     </span>
-                    <h3 className="text-xl font-black text-gray-900 leading-tight line-clamp-2">{service.name}</h3>
+                    <h3 className="text-xl font-black text-gray-900 dark:text-white leading-tight line-clamp-2">{service.name}</h3>
                   </div>
                   {service.isVerified && (
                     <div className="bg-primary/10 p-2 rounded-xl text-primary">
@@ -153,7 +164,7 @@ const ServicesScreen = ({ onBack, onLogin }) => {
                   )}
                 </div>
 
-                <p className="text-gray-500 font-medium mb-6 text-sm leading-relaxed flex-grow">
+                <p className="text-gray-600 dark:text-gray-300 font-medium mb-6 text-sm leading-relaxed flex-grow">
                   {service.description}
                 </p>
 

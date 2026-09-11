@@ -364,11 +364,11 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
 
       {/* Main Content Area */}
       <div className="p-4 md:p-6 space-y-6 pt-4 md:pt-6 max-w-7xl mx-auto w-full">
-        {/* studyin.lt Style Hero Section */}
-        <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 rounded-[2rem] p-6 md:p-10 text-center text-white relative overflow-hidden shadow-xl">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_50%)]"></div>
+        {/* Brand Study in Europe Hero Section */}
+        <div className="bg-gradient-to-br from-[#0D241E] via-primary to-[#081814] rounded-[2rem] p-6 md:p-10 text-center text-white relative overflow-hidden shadow-2xl border border-primary-light/20">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(217,107,67,0.08),transparent_60%)]"></div>
           <div className="relative z-10 max-w-3xl mx-auto">
-            <span className="bg-primary/20 text-primary-300 border border-primary/30 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 inline-block">
+            <span className="bg-terracotta/20 text-[#F6A588] border border-terracotta/30 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 inline-block shadow-sm">
               Study in Europe
             </span>
             <h1 className="text-2xl md:text-5xl font-black tracking-tight leading-tight mb-3">

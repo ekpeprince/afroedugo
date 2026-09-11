@@ -3,12 +3,22 @@
 @tailwind utilities;
 
 :root {
-  --primary: #065F46; 
-  --primary-dark: #064E3B;
-  --secondary: #F59E0B;
-  --text-dark: #111827;
-  --text-gray: #6B7280;
-  --bg-soft: #FDFCFB; 
+  --primary: #133E33; 
+  --primary-light: #1C5446;
+  --primary-dark: #0B2720;
+  --secondary: #D96B43;
+  --terracotta: #D96B43;
+  --text-dark: #121826;
+  --text-gray: #64748B;
+  --bg-soft: #FAF8F5; 
+  --border-subtle: rgba(19, 62, 51, 0.08);
+}
+
+.dark {
+  --bg-soft: #0D1613;
+  --text-dark: #F8FAFC;
+  --text-gray: #94A3B8;
+  --border-subtle: rgba(255, 255, 255, 0.08);
 }
 
 body {
@@ -18,30 +28,42 @@ body {
   font-family: 'Bricolage Grotesque', 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-soft);
   background-image: 
-    radial-gradient(at 0% 0%, rgba(6, 95, 70, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(6, 95, 70, 0.05) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(245, 158, 11, 0.05) 0px, transparent 50%);
+    radial-gradient(ellipse at 50% -10%, rgba(19, 62, 51, 0.04) 0%, transparent 65%),
+    radial-gradient(ellipse at 100% 100%, rgba(217, 107, 67, 0.025) 0%, transparent 50%);
   color: var(--text-dark);
   background-attachment: fixed;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.012em;
 }
 
 .icon-box {
-  background: var(--primary);
-  border-radius: 2rem;
-  box-shadow: 0 10px 25px -5px rgba(6, 95, 70, 0.2);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  border-radius: 1.75rem;
+  box-shadow: 0 12px 28px -6px rgba(19, 62, 51, 0.28);
 }
 
 .button-primary {
-  background: var(--primary);
-  color: white;
-  transition: all 0.2s ease;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: #FFFFFF;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px -2px rgba(19, 62, 51, 0.25);
 }
 
 .button-primary:hover {
   background: var(--primary-dark);
-  transform: translateY(-2px);
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 20px -3px rgba(19, 62, 51, 0.35);
+}
+
+.button-accent {
+  background: linear-gradient(135deg, var(--terracotta) 0%, #BF5630 100%);
+  color: #FFFFFF;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 14px -2px rgba(217, 107, 67, 0.25);
+}
+
+.button-accent:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 20px -3px rgba(217, 107, 67, 0.35);
 }
 
 .badge {
@@ -49,8 +71,17 @@ body {
   align-items: center;
   gap: 0.5rem;
   color: var(--text-gray);
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.875rem;
+}
+
+/* Custom smooth scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 

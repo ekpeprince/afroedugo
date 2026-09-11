@@ -16,10 +16,10 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-[#111b21] flex flex-col">
-      <header className="p-4 bg-[#008069] dark:bg-[#202c33] text-white flex items-center justify-between sticky top-0 z-20 shadow-md">
+      <header className="p-4 bg-primary dark:bg-[#15221E] text-white flex items-center justify-between sticky top-0 z-20 shadow-md">
         <div className="flex items-center gap-4">
           <button onClick={onBack} className="text-2xl hover:text-gray-200 transition-colors">←</button>
-          <h1 className="text-xl font-semibold tracking-tight">WhatsApp</h1>
+          <h1 className="text-xl font-semibold tracking-tight">Messages</h1>
         </div>
         <div className="flex items-center gap-4">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -64,7 +64,7 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
                       <h4 className="font-semibold text-gray-900 dark:text-[#e9edef] text-base leading-none">
                         {conv.participantName || 'Fellow Student'}
                       </h4>
-                      <span className={`text-xs font-medium ${conv.unreadBy?.includes(user.uid) ? 'text-[#25D366]' : 'text-gray-500 dark:text-gray-400'}`}>
+                      <span className={`text-xs font-medium ${conv.unreadBy?.includes(user.uid) ? 'text-terracotta font-bold' : 'text-gray-500 dark:text-gray-400'}`}>
                         {conv.updatedAt?.toDate ? conv.updatedAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Now'}
                       </span>
                     </div>
@@ -73,7 +73,7 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
                         {conv.lastMessage || 'Start the conversation...'}
                       </p>
                       {conv.unreadBy?.includes(user.uid) && (
-                        <div className="w-5 h-5 bg-[#25D366] text-white text-[10px] font-bold rounded-full flex items-center justify-center flex-shrink-0">
+                        <div className="w-5 h-5 bg-terracotta text-white text-[10px] font-bold rounded-full flex items-center justify-center flex-shrink-0 shadow-sm shadow-terracotta/30">
                           1
                         </div>
                       )}

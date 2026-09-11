@@ -11,12 +11,36 @@ export default {
         sans: ['"Bricolage Grotesque"', '"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       colors: {
-        primary: "#065F46", // Forest Emerald (Academic & Trust)
-        secondary: "#F59E0B", // Saffron Gold (Social & Optimism)
-        pearl: "#FDFCFB", // Warm Surface
+        primary: {
+          DEFAULT: "#133E33", // Deep Eucalyptus Pine (Academic, Earthy, Trust)
+          dark: "#0B2720",
+          light: "#1C5446",
+          subtle: "#EBF3F0",
+        },
+        terracotta: {
+          DEFAULT: "#D96B43", // Warm Terracotta Clay (Warmth, Energy, Heritage)
+          dark: "#BF5630",
+          light: "#E88562",
+          subtle: "#FBF0EB",
+        },
+        secondary: {
+          DEFAULT: "#D96B43", // Map secondary to Terracotta for seamless consistency
+          dark: "#BF5630",
+          light: "#E88562",
+        },
+        sand: "#F4EFE6",
+        linen: "#FAF8F5", // Clean porcelain linen surface
+        surface: {
+          DEFAULT: "#FFFFFF",
+          card: "#FFFFFF",
+          dark: "#0D1613",
+          cardDark: "#14211D",
+        }
       },
       backgroundImage: {
-        'saffron-gradient': "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)",
+        'brand-gradient': "linear-gradient(135deg, #133E33 0%, #1C5446 100%)",
+        'terracotta-gradient': "linear-gradient(135deg, #D96B43 0%, #BF5630 100%)",
+        'warm-subtle': "radial-gradient(circle at 50% 0%, rgba(19, 62, 51, 0.04) 0%, transparent 70%)",
       }
     },
   },

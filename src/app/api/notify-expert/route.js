@@ -27,13 +27,13 @@ export async function POST(request) {
       text: `You have a new support request from ${senderName || 'a user'} (${senderEmail || 'No email provided'}).\n\nMessage Preview:\n"${messagePreview}"\n\nGo to the AfroEduGo Admin Dashboard to reply: https://afroedugo.com/admin`,
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-          <h2 style="color: #065F46;">New Support Request</h2>
+          <h2 style="color: #133E33;">New Support Request</h2>
           <p><strong>From:</strong> ${senderName || 'A user'} (${senderEmail || 'No email provided'})</p>
-          <div style="background: #f9fafb; padding: 15px; border-radius: 8px; border-left: 4px solid #065F46; margin: 20px 0;">
+          <div style="background: #FAF8F5; padding: 15px; border-radius: 8px; border-left: 4px solid #133E33; margin: 20px 0;">
             <p style="margin: 0; color: #374151;">"${messagePreview}"</p>
           </div>
           <p>Open the Admin Control Room to view the full conversation and reply.</p>
-          <a href="https://afroedugo.com/admin" style="display: inline-block; background: #065F46; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px;">Open Admin Dashboard</a>
+          <a href="https://afroedugo.com/admin" style="display: inline-block; background: #133E33; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px;">Open Admin Dashboard</a>
         </div>
       `,
     };
