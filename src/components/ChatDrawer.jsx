@@ -5,10 +5,19 @@ import { storage, db } from '../firebase/config';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { usePresenceStatus, formatLastOnline } from '../utils/presence';
+import UserProfileViewer from './UserProfileViewer';
+
+const getTimestampDate = (timestamp) => {
+  if (!timestamp) return new Date();
+  if (typeof timestamp.toDate === 'function') return timestamp.toDate();
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+  if (timestamp instanceof Date) return timestamp;
+  return new Date(timestamp);
+};
 
 const formatMessageDate = (timestamp) => {
   if (!timestamp) return 'Today';
-  const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+  const date = getTimestampDate(timestamp);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
@@ -17,6 +26,29 @@ const formatMessageDate = (timestamp) => {
   if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
   
   return date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+};
+
+const renderMessageText = (text) => {
+  if (!text) return null;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map((part, i) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a 
+          key={i} 
+          href={part} 
+          target="_blank" 
+          rel="noopener noreferrer" 
+          className="text-blue-600 dark:text-blue-400 underline hover:opacity-80 break-all font-medium"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
 };
 
 const SwipeableMessage = ({ onReply, onLongPress, children }) => {
@@ -133,6 +165,10 @@ const CustomAudioPlayer = ({ src, duration }) => {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
+      // Pause any other playing audio on the page
+      document.querySelectorAll('audio').forEach(a => {
+        if (a !== audioRef.current) a.pause();
+      });
       const playPromise = audioRef.current.play();
       if (playPromise !== undefined) {
         playPromise
@@ -159,6 +195,16 @@ const CustomAudioPlayer = ({ src, duration }) => {
     setProgress(0);
   };
 
+  const handleSeek = (e) => {
+    if (!audioRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const newPercent = Math.max(0, Math.min(1, clickX / rect.width));
+    const total = audioRef.current.duration === Infinity || isNaN(audioRef.current.duration) ? (duration || 1) : audioRef.current.duration;
+    audioRef.current.currentTime = newPercent * total;
+    setProgress(newPercent * 100);
+  };
+
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
     const m = Math.floor(seconds / 60);
@@ -167,7 +213,7 @@ const CustomAudioPlayer = ({ src, duration }) => {
   };
 
   return (
-    <div className="flex items-center gap-3 w-[200px] sm:w-[240px] pt-1 pb-1">
+    <div className="flex items-center gap-3 w-[200px] sm:w-[240px] pt-1 pb-1 select-none">
       <button 
         type="button"
         onClick={togglePlay}
@@ -185,7 +231,11 @@ const CustomAudioPlayer = ({ src, duration }) => {
         )}
       </button>
 
-      <div className="flex-grow flex flex-col justify-center">
+      <div 
+        className="flex-grow flex flex-col justify-center cursor-pointer py-2"
+        onClick={handleSeek}
+        title="Click to seek"
+      >
         <div className="w-full h-1.5 bg-black/10 dark:bg-white/10 rounded-full relative overflow-hidden">
           <div 
             className="absolute top-0 left-0 h-full bg-[#00a884] rounded-full transition-all duration-100 ease-linear"
@@ -203,6 +253,7 @@ const CustomAudioPlayer = ({ src, duration }) => {
         src={src} 
         onTimeUpdate={onTimeUpdate}
         onEnded={onEnded}
+        onPause={() => setIsPlaying(false)}
         className="hidden" 
       />
     </div>
@@ -227,8 +278,14 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const [fullScreenImage, setFullScreenImage] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [finalRecordingTime, setFinalRecordingTime] = useState(0);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [isSafetyWarningDismissed, setIsSafetyWarningDismissed] = useState(false);
+  const [showScrollBottomBtn, setShowScrollBottomBtn] = useState(false);
+  const [liveParticipantData, setLiveParticipantData] = useState(null);
   
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
+  const isNearBottomRef = useRef(true);
   const fileInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const mediaRecorderRef = useRef(null);
@@ -246,25 +303,36 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const handleScroll = () => {
+    if (!messagesContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const distFromBottom = scrollHeight - scrollTop - clientHeight;
+    const nearBottom = distFromBottom < 120;
+    isNearBottomRef.current = nearBottom;
+    setShowScrollBottomBtn(!nearBottom);
+  };
+
   const [participantStatus, setParticipantStatus] = useState('offline');
   const [participantLastOnline, setParticipantLastOnline] = useState(null);
 
-  const currentConv = conversations?.find(c => c.id === conversationId);
+  // Derive conversation using fallback to stableConvId so name/avatar does not flicker while sliding closed
+  const currentConv = conversations?.find(c => c.id === (conversationId || stableConvId.current));
   const participantId = currentConv?.participantId;
-  const participantName = currentConv?.participantName || 'Fellow Student';
-  const participantAvatar = currentConv?.participantAvatar || '👤';
+  const participantName = liveParticipantData?.displayName || currentConv?.participantName || 'Fellow Student';
+  const participantAvatar = liveParticipantData?.photoURL || liveParticipantData?.photoUrl || currentConv?.participantAvatar || '👤';
   const isParticipantTyping = currentConv?.typing?.[participantId];
 
   // Real-time reactive presence status with 15s refresh tick
   const { isOnline: isParticipantOnline, lastSeenText } = usePresenceStatus(participantStatus, participantLastOnline, 15000);
 
   useEffect(() => {
-    const participantId = currentConv?.participantId;
-    if (!isOpen || !participantId) return;
+    const pId = currentConv?.participantId;
+    if (!isOpen || !pId) return;
 
-    const unsub = onSnapshot(doc(db, 'users', participantId), (snap) => {
+    const unsub = onSnapshot(doc(db, 'users', pId), (snap) => {
       if (snap.exists()) {
         const data = snap.data();
+        setLiveParticipantData(data);
         setParticipantStatus(data.status || 'offline');
         setParticipantLastOnline(data.lastOnline || null);
       }
@@ -275,8 +343,60 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
     return () => unsub();
   }, [isOpen, currentConv?.participantId]);
 
+  // Reset draft/reply/edit state when switching conversations
   useEffect(() => {
-    scrollToBottom();
+    setInputText('');
+    setEditingMessageId(null);
+    setReplyingTo(null);
+    setActiveMessageAction(null);
+    if (previewAudioUrl) {
+      URL.revokeObjectURL(previewAudioUrl);
+      setPreviewAudioBlob(null);
+      setPreviewAudioUrl(null);
+    }
+  }, [conversationId]);
+
+  // Clean up recording and modals when drawer is closed
+  useEffect(() => {
+    if (!isOpen) {
+      if (isRecording) cancelRecording();
+      if (previewAudioUrl) {
+        URL.revokeObjectURL(previewAudioUrl);
+        setPreviewAudioBlob(null);
+        setPreviewAudioUrl(null);
+      }
+      setActiveMessageAction(null);
+      setShowProfileModal(false);
+    }
+  }, [isOpen]);
+
+  // Keyboard shortcut: Escape to close modals or drawer
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        if (fullScreenImage) {
+          setFullScreenImage(null);
+        } else if (showProfileModal) {
+          setShowProfileModal(false);
+        } else if (activeMessageAction) {
+          setActiveMessageAction(null);
+        } else if (replyingTo) {
+          setReplyingTo(null);
+        } else if (editingMessageId) {
+          cancelEdit();
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, fullScreenImage, showProfileModal, activeMessageAction, replyingTo, editingMessageId, onClose]);
+
+  useEffect(() => {
+    if (isNearBottomRef.current) {
+      scrollToBottom();
+    }
   }, [messages, isOpen]);
 
   // Never had a conversation opened yet — nothing to render
@@ -284,13 +404,15 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
 
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!inputText.trim() && !isUploading) return;
+    const textToSend = inputText.trim();
+    if (!textToSend && !isUploading) return;
     
     if (editingMessageId) {
-      await editMessage(stableConvId.current, editingMessageId, inputText);
+      await editMessage(stableConvId.current, editingMessageId, textToSend);
       setEditingMessageId(null);
+      setInputText('');
     } else {
-      await sendMessage(stableConvId.current, inputText.trim(), null, null, replyingTo);
+      await sendMessage(stableConvId.current, textToSend, null, null, replyingTo);
       setInputText('');
       setReplyingTo(null);
       scrollToBottom();
@@ -300,6 +422,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
 
   const handleEditClick = (msg) => {
     if (!msg.text) return; // Can only edit text messages
+    setReplyingTo(null);
     setEditingMessageId(msg.id);
     setInputText(msg.text);
     // Focus the input
@@ -318,13 +441,19 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   };
 
   const handleInputChange = (e) => {
-    setInputText(e.target.value);
-    setTypingStatus(stableConvId.current, true);
+    const val = e.target.value;
+    setInputText(val);
     
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
+    if (val.trim()) {
+      setTypingStatus(stableConvId.current, true);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        setTypingStatus(stableConvId.current, false);
+      }, 2000);
+    } else {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
       setTypingStatus(stableConvId.current, false);
-    }, 2000);
+    }
   };
 
   const handleImageUpload = async (e) => {
@@ -540,10 +669,14 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
       {/* Responsive Slide-out Drawer */}
       <div className={`fixed inset-0 sm:left-auto sm:right-0 sm:w-[450px] z-[100] flex flex-col bg-white dark:bg-[#111b21] sm:border-l sm:border-gray-200 dark:sm:border-gray-800 sm:shadow-2xl transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         {/* Chat Header */}
-        <header className="p-3 sm:p-4 bg-primary dark:bg-[#15221E] text-white flex items-center gap-4 sticky top-0 z-20 shadow-sm transition-colors duration-300">
-          <button onClick={onClose} className="text-2xl hover:text-gray-200 transition-colors flex items-center">←</button>
-          <div className="flex items-center gap-3 cursor-pointer w-full">
-            <div className="relative">
+        <header className="p-3 sm:p-4 bg-primary dark:bg-[#15221E] text-white flex items-center gap-3 sticky top-0 z-20 shadow-sm transition-colors duration-300">
+          <button onClick={onClose} className="text-2xl hover:text-gray-200 transition-colors flex items-center p-1" aria-label="Back">←</button>
+          <div 
+            onClick={() => participantId && setShowProfileModal(true)}
+            className="flex items-center gap-3 cursor-pointer flex-grow min-w-0 hover:opacity-90 transition-opacity"
+            title="View student profile"
+          >
+            <div className="relative flex-shrink-0">
               <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-500 font-black overflow-hidden">
                 {participantAvatar.startsWith('http') ? (
                   <img src={participantAvatar} alt="avatar" className="w-full h-full object-cover" />
@@ -555,25 +688,43 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                 <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-primary dark:border-[#15221E] rounded-full" />
               )}
             </div>
-            <div className="flex flex-col flex-grow">
-              <h4 className="font-semibold text-white leading-tight">{participantName}</h4>
-              <p className={`text-xs ${isParticipantOnline ? 'text-emerald-300 font-medium' : 'text-white/70'}`}>
+            <div className="flex flex-col flex-grow min-w-0">
+              <h4 className="font-semibold text-white leading-tight truncate">{participantName}</h4>
+              <p className={`text-xs truncate ${isParticipantOnline ? 'text-emerald-300 font-medium' : 'text-white/70'}`}>
                 {lastSeenText}
               </p>
+            </div>
+            <div className="text-[11px] font-semibold text-white/70 bg-white/10 hover:bg-white/20 px-2 py-1 rounded-lg transition-colors flex-shrink-0">
+              Info
             </div>
           </div>
         </header>
 
       {/* Safety Warning Banner */}
-      <div className="bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800/50 p-3 flex items-start gap-3 shadow-sm z-10 transition-colors duration-300">
-        <span className="text-amber-500 text-lg">⚠️</span>
-        <p className="text-xs font-medium text-amber-800 dark:text-amber-200 leading-tight">
-          <strong>Safety Warning:</strong> Never transfer money or pay a deposit before viewing a property in person and verifying the landlord's identity.
-        </p>
-      </div>
+      {!isSafetyWarningDismissed && (
+        <div className="bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800/50 p-2.5 sm:p-3 flex items-start justify-between gap-3 shadow-sm z-10 transition-colors duration-300 animate-in fade-in">
+          <div className="flex items-start gap-2.5 min-w-0">
+            <span className="text-amber-500 text-base flex-shrink-0">⚠️</span>
+            <p className="text-[11px] sm:text-xs font-medium text-amber-800 dark:text-amber-200 leading-tight">
+              <strong>Safety:</strong> Never transfer money or pay a deposit before viewing a property in person and verifying identity.
+            </p>
+          </div>
+          <button 
+            onClick={() => setIsSafetyWarningDismissed(true)} 
+            className="text-amber-600 dark:text-amber-400 hover:text-amber-900 dark:hover:text-white text-sm p-1 rounded-md transition-colors flex-shrink-0"
+            title="Dismiss warning"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Messages Area */}
-      <div className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-3 bg-[url('https://web.whatsapp.com/img/bg-chat-tile-light_686b98c9fdffbc366fc8f1df86f1e775.png')] dark:bg-[url('https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png')] bg-[#efeae2] dark:bg-[#0b141a] transition-colors duration-300">
+      <div 
+        ref={messagesContainerRef}
+        onScroll={handleScroll}
+        className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-3 bg-[url('https://web.whatsapp.com/img/bg-chat-tile-light_686b98c9fdffbc366fc8f1df86f1e775.png')] dark:bg-[url('https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png')] bg-[#efeae2] dark:bg-[#0b141a] transition-colors duration-300"
+      >
         {messages.length === 0 ? (
           <div className="py-20 text-center flex flex-col items-center">
             <div className="bg-[#ffeecd] dark:bg-[#182229] text-gray-700 dark:text-[#8696a0] text-sm px-4 py-2 rounded-lg shadow-sm">
@@ -663,7 +814,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                       )}
                       {msg.text && (
                         <span className="whitespace-pre-wrap break-words pr-12 inline-block relative">
-                          {msg.text}
+                          {renderMessageText(msg.text)}
                           <span className="inline-block w-12"></span> {/* Spacer for timestamp overlay */}
                         </span>
                       )}
@@ -697,11 +848,25 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
           </div>
         )}
 
+        {/* Floating Scroll to Bottom Button */}
+        {showScrollBottomBtn && (
+          <button
+            type="button"
+            onClick={scrollToBottom}
+            className="fixed sm:absolute bottom-20 right-6 sm:right-6 w-9 h-9 bg-white dark:bg-[#202c33] text-gray-700 dark:text-gray-200 rounded-full shadow-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center hover:scale-105 active:scale-95 transition-all z-20"
+            title="Scroll to latest"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}
-      <div className="p-2 sm:p-4 bg-[url('https://web.whatsapp.com/img/bg-chat-tile-dark_a4be512e7195b6b733d9110b408f075d.png')] bg-gray-100 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 sticky bottom-0 transition-colors duration-300">
+      <div className="p-2 sm:p-4 bg-gray-50 dark:bg-[#182229] border-t border-gray-200 dark:border-gray-800 sticky bottom-0 transition-colors duration-300">
         {replyingTo && !editingMessageId && (
           <div className="flex items-center justify-between mb-2 px-4 py-3 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl text-sm border-l-4 border-primary shadow-sm animate-in fade-in slide-in-from-bottom-2">
             <div className="flex flex-col overflow-hidden">
@@ -963,6 +1128,19 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
           <button className="absolute top-6 right-6 text-white bg-black/50 hover:bg-black w-12 h-12 rounded-full font-bold flex items-center justify-center transition-colors">✕</button>
           <img src={fullScreenImage} alt="Full screen" className="max-w-full max-h-full object-contain rounded-lg" onClick={e => e.stopPropagation()} />
         </div>
+      )}
+
+      {/* Contact Public Profile Viewer Modal */}
+      {participantId && (
+        <UserProfileViewer
+          userId={participantId}
+          isOpen={showProfileModal}
+          onClose={() => setShowProfileModal(false)}
+          initialData={{
+            displayName: participantName,
+            photoURL: participantAvatar.startsWith('http') ? participantAvatar : null
+          }}
+        />
       )}
       </div>
     </>

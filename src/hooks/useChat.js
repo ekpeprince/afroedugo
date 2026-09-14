@@ -16,7 +16,8 @@ import {
   limit,
   arrayUnion,
   arrayRemove,
-  deleteDoc
+  deleteDoc,
+  writeBatch
 } from 'firebase/firestore';
 import { useAuth } from './useAuth';
 import { notifyUser } from '../utils/notifyUser';
@@ -104,12 +105,12 @@ export const useChat = (conversationId = null) => {
         ...conv,
         participantId: otherUid,
         participantName: profile?.displayName || conv.participantName || otherUid.slice(0, 6),
+        participantAvatar: profile?.photoURL || profile?.photoUrl || conv.participantAvatar || '👤',
         participantStatus: isUserOnline(profile?.status, profile?.lastOnline) ? 'online' : 'offline',
         participantLastOnline: profile?.lastOnline || null
       };
     });
   }, [rawConversations, participantProfiles, user?.uid, presenceTicker]);
-
 
   // Subscribe to messages in a specific conversation
   useEffect(() => {
@@ -140,20 +141,18 @@ export const useChat = (conversationId = null) => {
       }));
       setMessages(msgs);
       
-      // Auto-mark as read if they are from the other person and unread
-      let hasIncomingUnread = false;
-      msgs.forEach(async (m) => {
-        if (m.senderId !== user.uid && !m.read) {
-          hasIncomingUnread = true;
-          try {
-            await setDoc(doc(db, 'conversations', conversationId, 'messages', m.id), {
+      // Auto-mark as read in a single atomic batch if incoming messages are unread
+      const unreadIncoming = msgs.filter(m => m.senderId !== user.uid && !m.read);
+      if (unreadIncoming.length > 0) {
+        try {
+          const batch = writeBatch(db);
+          unreadIncoming.forEach((m) => {
+            batch.update(doc(db, 'conversations', conversationId, 'messages', m.id), {
               read: true
-            }, { merge: true });
-          } catch(e) {}
-        }
-      });
-
-      if (hasIncomingUnread) {
+            });
+          });
+          batch.commit().catch(err => console.warn('Batch mark read error:', err));
+        } catch(e) {}
         clearUnreadStatus();
       }
     }, (err) => {
@@ -164,15 +163,16 @@ export const useChat = (conversationId = null) => {
   }, [conversationId, user]);
 
   const sendMessage = async (convId, text, imageUrl = null, audioUrl = null, replyTo = null, audioDuration = null) => {
-    if (!user || (!text.trim() && !imageUrl && !audioUrl)) return;
+    const trimmedText = text ? text.trim() : '';
+    if (!user || (!trimmedText && !imageUrl && !audioUrl)) return;
 
     try {
       const messagesRef = collection(db, 'conversations', convId, 'messages');
       const msgData = {
-        text,
-        imageUrl,
-        audioUrl,
-        audioDuration,
+        text: trimmedText || null,
+        imageUrl: imageUrl || null,
+        audioUrl: audioUrl || null,
+        audioDuration: audioDuration || null,
         senderId: user.uid,
         read: false,
         createdAt: serverTimestamp()
@@ -190,17 +190,28 @@ export const useChat = (conversationId = null) => {
       const convRef = doc(db, 'conversations', convId);
       
       let recipientId = null;
-      try {
-        const convSnap = await getDoc(convRef);
-        const participants = convSnap.data()?.participants || [];
-        recipientId = participants.find(id => id !== user.uid);
-      } catch (_) {}
+      // Fast check in existing in-memory conversations
+      const existingConv = rawConversations.find(c => c.id === convId);
+      if (existingConv?.participants) {
+        recipientId = existingConv.participants.find(id => id !== user.uid);
+      }
+      if (!recipientId) {
+        try {
+          const convSnap = await getDoc(convRef);
+          const participants = convSnap.data()?.participants || [];
+          recipientId = participants.find(id => id !== user.uid);
+        } catch (_) {}
+      }
 
-      await setDoc(convRef, {
-        lastMessage: audioUrl ? '🎤 Voice Message' : (imageUrl ? '📷 Image' : text),
-        updatedAt: serverTimestamp(),
-        unreadBy: recipientId ? arrayUnion(recipientId) : []
-      }, { merge: true });
+      const updatePayload = {
+        lastMessage: audioUrl ? '🎤 Voice Message' : (imageUrl ? '📷 Image' : trimmedText),
+        updatedAt: serverTimestamp()
+      };
+      if (recipientId) {
+        updatePayload.unreadBy = arrayUnion(recipientId);
+      }
+
+      await setDoc(convRef, updatePayload, { merge: true });
 
       // Push notification to the other participant
       if (recipientId) {
@@ -210,7 +221,7 @@ export const useChat = (conversationId = null) => {
           const senderData = senderSnap.data();
           const senderName = senderData?.displayName || user.displayName || user.email?.split('@')[0] || 'Someone';
           const senderPhotoURL = senderData?.photoURL || senderData?.photoUrl || user.photoURL || null;
-          const preview = audioUrl ? '🎤 Sent a voice message' : (imageUrl ? '📷 Sent a photo' : text.slice(0, 60));
+          const preview = audioUrl ? '🎤 Sent a voice message' : (imageUrl ? '📷 Sent a photo' : trimmedText.slice(0, 60));
 
           // 1. Create a Firestore notification document so it displays in the Feed!
           await addDoc(collection(db, 'notifications'), {
@@ -264,20 +275,44 @@ export const useChat = (conversationId = null) => {
         audioDuration: null,
         replyToMessageId: null
       });
+
+      // If the deleted message was the lastMessage, soften it
+      try {
+        const convRef = doc(db, 'conversations', convId);
+        const convSnap = await getDoc(convRef);
+        if (convSnap.exists()) {
+          const cData = convSnap.data();
+          const targetMsg = messages.find(m => m.id === msgId);
+          if (targetMsg && (cData.lastMessage === targetMsg.text || cData.lastMessage === '🎤 Voice Message' || cData.lastMessage === '📷 Image')) {
+            await updateDoc(convRef, { lastMessage: '🚫 Message deleted' });
+          }
+        }
+      } catch (_) {}
     } catch (err) {
       console.error('Error deleting message:', err);
     }
   };
 
   const editMessage = async (convId, msgId, newText) => {
-    if (!user || !newText.trim()) return;
+    const trimmed = newText ? newText.trim() : '';
+    if (!user || !trimmed) return;
     try {
       await updateDoc(doc(db, 'conversations', convId, 'messages', msgId), {
-        text: newText,
+        text: trimmed,
         isEdited: true
       });
-      // Optionally update the parent conversation's lastMessage if it's the last one,
-      // but that requires knowing if it's the last. We can just skip updating lastMessage for edits for simplicity.
+
+      // Update parent conversation lastMessage if this was the last message
+      try {
+        const convRef = doc(db, 'conversations', convId);
+        const convSnap = await getDoc(convRef);
+        if (convSnap.exists()) {
+          const oldMsg = messages.find(m => m.id === msgId);
+          if (oldMsg && convSnap.data()?.lastMessage === oldMsg.text) {
+            await updateDoc(convRef, { lastMessage: trimmed });
+          }
+        }
+      } catch (_) {}
     } catch (err) {
       console.error('Error editing message:', err);
     }
@@ -310,21 +345,31 @@ export const useChat = (conversationId = null) => {
 
     const chatType = metadata.type || 'direct';
 
-    // Check for existing direct chat between these two with the same type
+    // 1. Check in-memory state first for instant response
+    const existingInState = rawConversations.find(c => 
+      c.participants?.includes(user.uid) && 
+      c.participants?.includes(participantId) &&
+      (!chatType || c.type === chatType)
+    );
+    if (existingInState) return existingInState.id;
+
+    // 2. Query Firestore without multi-field composite index constraint
     const q = query(
       collection(db, 'conversations'),
-      where('participants', 'array-contains', user.uid),
-      where('type', '==', chatType)
+      where('participants', 'array-contains', user.uid)
     );
 
     const snapshot = await getDocs(q);
-    const existing = snapshot.docs.find(doc => doc.data().participants.includes(participantId));
+    const existing = snapshot.docs.find(d => {
+      const data = d.data();
+      return data.participants?.includes(participantId) && (!chatType || data.type === chatType);
+    });
 
     if (existing) {
       return existing.id;
     }
 
-    // Create new conversation
+    // 3. Create new conversation
     const newConv = await addDoc(collection(db, 'conversations'), {
       participants: [user.uid, participantId],
       type: chatType,
@@ -347,11 +392,11 @@ export const useChat = (conversationId = null) => {
     messages, 
     loading, 
     sendMessage, 
-    editMessage,
-    deleteMessage,
-    deleteConversation,
-    setTypingStatus,
-    getOrCreateConversation,
-    unreadDMsCount
+    editMessage, 
+    deleteMessage, 
+    deleteConversation, 
+    setTypingStatus, 
+    getOrCreateConversation, 
+    unreadDMsCount 
   };
 };

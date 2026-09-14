@@ -10,7 +10,7 @@ export default function ChatPage() {
   const { openChat } = useGlobalState();
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans selection:bg-pink-100">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#111b21] font-sans selection:bg-pink-100">
       <ChatScreen 
         onBack={() => router.push('/')} 
         onOpenChat={openChat}

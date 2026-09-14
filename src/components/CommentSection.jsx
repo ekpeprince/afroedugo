@@ -6,6 +6,8 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
+import { useChat } from '../hooks/useChat';
+import { useGlobalState } from '../context/GlobalStateContext';
 import { notifyUser } from '../utils/notifyUser';
 import UserProfileViewer from './UserProfileViewer';
 import MentionDropdown from './MentionDropdown';
@@ -14,6 +16,8 @@ import PostText from './PostText';
 const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { openChat } = useGlobalState();
+  const { getOrCreateConversation } = useChat();
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [loading, setLoading] = useState(true);
@@ -461,6 +465,19 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
         isOpen={!!viewingUser}
         onClose={() => setViewingUser(null)}
         initialData={viewingUser ? { displayName: viewingUser.displayName, photoURL: viewingUser.photoURL } : null}
+        onMessage={async (targetUserId) => {
+          if (!user) { onLogin?.(); return; }
+          if (targetUserId === user.uid) return;
+          try {
+            const convId = await getOrCreateConversation(targetUserId, { type: 'student-to-student' });
+            if (convId && openChat) {
+              openChat(convId);
+              setViewingUser(null);
+            }
+          } catch (e) {
+            console.warn('Error initiating chat with commenter:', e);
+          }
+        }}
       />
     </div>
   );
