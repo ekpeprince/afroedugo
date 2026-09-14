@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useNotifications } from '../hooks/useNotifications';
 import { useAuth } from '../hooks/useAuth';
+import { useGlobalState } from '../context/GlobalStateContext';
 import { useRouter } from 'next/navigation';
 import { db, messaging } from '../firebase/config';
 import { doc, updateDoc } from 'firebase/firestore';
@@ -46,6 +47,7 @@ const playChime = () => {
 export default function NotificationManager() {
   const { user } = useAuth();
   const { notifications } = useNotifications();
+  const { openChat } = useGlobalState();
   const router = useRouter();
   const initialized = useRef(false);
   const previousNotificationsCount = useRef(0);
@@ -138,8 +140,16 @@ export default function NotificationManager() {
 
             systemNotification.onclick = () => {
               window.focus();
-              if (n.link) {
-                router.push('/' + n.link);
+              if (n.type === 'chat' || n.conversationId) {
+                if (n.conversationId && openChat) {
+                  openChat(n.conversationId);
+                } else {
+                  router.push(n.link ? (n.link.startsWith('/') ? n.link : '/' + n.link) : '/chat');
+                }
+              } else if (n.postId) {
+                router.push(`/community?postId=${n.postId}${n.commentId ? `&commentId=${n.commentId}` : ''}`);
+              } else if (n.link) {
+                router.push(n.link.startsWith('/') ? n.link : '/' + n.link);
               } else {
                 router.push('/profile');
               }
@@ -153,7 +163,7 @@ export default function NotificationManager() {
     }
 
     previousNotificationsCount.current = notifications.length;
-  }, [notifications, user, router]);
+  }, [notifications, user, router, openChat]);
 
   return null;
 }

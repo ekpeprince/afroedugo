@@ -11,11 +11,13 @@ import {
 } from 'firebase/firestore';
 import { notifyUser } from '../../utils/notifyUser';
 import UserProfileViewer from '../../components/UserProfileViewer';
+import { useGlobalState } from '../../context/GlobalStateContext';
 
 export default function NotificationsClient() {
   const router = useRouter();
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { openChat } = useGlobalState();
   const { 
     notifications, 
     unreadCount, 
@@ -25,7 +27,7 @@ export default function NotificationsClient() {
     markAllAsRead 
   } = useNotifications();
 
-  // Inline replies state management
+  const [filter, setFilter] = useState('all');
   const [replyingToId, setReplyingToId] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [sendingReplies, setSendingReplies] = useState({});
@@ -39,7 +41,24 @@ export default function NotificationsClient() {
       await markAsRead(n.id);
     }
     
-    // Router redirect based on notification's link value
+    // 1. Direct message notification: open exact conversation drawer
+    if (n.type === 'chat' || n.conversationId) {
+      if (n.conversationId && openChat) {
+        openChat(n.conversationId);
+      } else {
+        router.push('/chat');
+      }
+      return;
+    }
+
+    // 2. Community post/comment notification: route to exact post & comment
+    if (n.postId) {
+      const commentParam = n.commentId ? `&commentId=${n.commentId}` : '';
+      router.push(`/community?postId=${n.postId}${commentParam}`);
+      return;
+    }
+
+    // 3. Fallback router redirect based on notification's link value
     if (n.link) {
       const destination = n.link.startsWith('/') ? n.link : `/${n.link}`;
       router.push(destination);

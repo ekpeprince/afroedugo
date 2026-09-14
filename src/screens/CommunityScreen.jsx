@@ -85,13 +85,30 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
           }
         };
         fetchPost();
-        
-        // Clean up the URL so it doesn't stay there indefinitely
-        const newUrl = window.location.pathname;
-        window.history.replaceState({}, '', newUrl);
+
+        // Smoothly scroll to the target post once mounted in the DOM
+        const scrollToTargetPost = () => {
+          const el = document.getElementById(`post-${urlPostId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('ring-4', 'ring-primary/40', 'shadow-xl');
+            setTimeout(() => {
+              el.classList.remove('ring-4', 'ring-primary/40', 'shadow-xl');
+            }, 3000);
+            return true;
+          }
+          return false;
+        };
+
+        if (!scrollToTargetPost()) {
+          const t1 = setTimeout(scrollToTargetPost, 350);
+          const t2 = setTimeout(scrollToTargetPost, 800);
+          const t3 = setTimeout(scrollToTargetPost, 1400);
+          return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+        }
       }
     }
-  }, []);
+  }, [discussions, deepLinkedPost]);
 
   // ── Categories ───────────────────────────────────────────────────────────
   const categories = [
@@ -307,7 +324,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
           postText: newMessage.substring(0, 50) + '...',
           createdAt: serverTimestamp(),
           read: false,
-          link: 'community'
+          link: `community?postId=${postRef.id}`
         }).catch(err => console.warn('Failed to send mention notification:', err));
       }
 
@@ -325,7 +342,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
               broadcast: true,
               title: `New Post in ${postCategory}`,
               body: `${profile?.displayName || user.displayName || user.email.split('@')[0]} just posted: "${newMessage.slice(0, 50)}${newMessage.length > 50 ? '...' : ''}"`,
-              link: 'community',
+              link: `community?postId=${postRef.id}`,
               icon: profile?.photoURL || user?.photoURL || null,
               image: imageUrls[0] || null
             })
@@ -752,7 +769,11 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                 const isSaved = savedPosts.includes(msg.id);
 
                 return (
-                  <article key={msg.id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-colors duration-300">
+                  <article 
+                    id={`post-${msg.id}`}
+                    key={msg.id} 
+                    className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-300"
+                  >
                     {/* Post header */}
                     <div className="p-4 sm:p-5 flex justify-between items-start gap-3">
                       <div className="flex items-center gap-3 min-w-0">

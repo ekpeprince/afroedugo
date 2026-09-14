@@ -39,6 +39,32 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
     return () => unsubscribe();
   }, [postId]);
 
+  // Scroll to targeted comment if opened from notification
+  useEffect(() => {
+    if (typeof window !== 'undefined' && comments.length > 0) {
+      const searchParams = new URLSearchParams(window.location.search);
+      const targetCommentId = searchParams.get('commentId');
+      if (targetCommentId) {
+        const scrollToTargetComment = () => {
+          const el = document.getElementById(`comment-${targetCommentId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            el.classList.add('ring-2', 'ring-primary', 'bg-primary/5', 'rounded-2xl');
+            setTimeout(() => {
+              el.classList.remove('ring-2', 'ring-primary', 'bg-primary/5');
+            }, 3000);
+            return true;
+          }
+          return false;
+        };
+        if (!scrollToTargetComment()) {
+          const t = setTimeout(scrollToTargetComment, 400);
+          return () => clearTimeout(t);
+        }
+      }
+    }
+  }, [comments]);
+
   // Group and sort comments hierarchically
   const topLevelComments = useMemo(() => {
     return comments.filter(c => !c.parentId);
@@ -123,11 +149,11 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
             senderName,
             senderPhotoURL: profile?.photoURL || user?.photoURL || null,
             postId,
-            commentId: replyingTo.commentId,
+            commentId: commentRef.id,
             title: '💬 New Reply to Comment!',
             message: `${senderName} replied to your comment: "${preview}..."`,
             type: 'reply',
-            link: `community?postId=${postId}`,
+            link: `community?postId=${postId}&commentId=${commentRef.id}`,
             read: false,
             createdAt: serverTimestamp()
           });
@@ -141,10 +167,11 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
           senderName,
           senderPhotoURL: profile?.photoURL || user?.photoURL || null,
           postId,
+          commentId: commentRef.id,
           title: '💬 New Reply!',
           message: `${senderName} replied to your post: "${postTitle}"`,
           type: 'reply',
-          link: `community?postId=${postId}`,
+          link: `community?postId=${postId}&commentId=${commentRef.id}`,
           read: false,
           createdAt: serverTimestamp()
         });
@@ -167,7 +194,7 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
           title: '📢 You were mentioned!',
           message: `${senderName} mentioned you in a comment.`,
           type: 'mention',
-          link: `community?postId=${postId}`,
+          link: `community?postId=${postId}&commentId=${commentRef.id}`,
           read: false,
           createdAt: serverTimestamp()
         });
@@ -227,7 +254,11 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
     const isLiked = user && comment.likes?.includes(user.uid);
     
     return (
-      <div key={comment.id} className={`flex gap-3 ${isReply ? 'mt-3 pl-8 relative before:absolute before:left-3 before:top-0 before:bottom-4 before:w-0.5 before:bg-gray-200 dark:before:bg-gray-700 before:content-[""] after:absolute after:left-3 after:top-4 after:w-4 after:h-0.5 after:bg-gray-200 dark:after:bg-gray-700 after:content-[""]' : ''}`}>
+      <div 
+        key={comment.id} 
+        id={`comment-${comment.id}`}
+        className={`flex gap-3 transition-all duration-300 ${isReply ? 'mt-3 pl-8 relative before:absolute before:left-3 before:top-0 before:bottom-4 before:w-0.5 before:bg-gray-200 dark:before:bg-gray-700 before:content-[""] after:absolute after:left-3 after:top-4 after:w-4 after:h-0.5 after:bg-gray-200 dark:after:bg-gray-700 after:content-[""]' : ''}`}
+      >
         {/* Avatar — clickable to view profile */}
         <button
           type="button"

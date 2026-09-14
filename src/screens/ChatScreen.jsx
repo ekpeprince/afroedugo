@@ -6,6 +6,20 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
   const { user } = useAuth();
   const { conversations, loading, deleteConversation } = useChat();
 
+  // Auto-open specific chat if convId query param is present
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const targetConvId = searchParams.get('convId') || searchParams.get('id');
+      if (targetConvId && onOpenChat) {
+        onOpenChat(targetConvId);
+        // Clean query parameter from URL
+        const cleanUrl = window.location.pathname;
+        window.history.replaceState({}, '', cleanUrl);
+      }
+    }
+  }, [onOpenChat]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">

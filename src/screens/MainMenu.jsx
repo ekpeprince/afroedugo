@@ -157,7 +157,21 @@ const MainMenu = ({ onNavigate }) => {
                     ) : notifications.map(n => (
                       <button
                         key={n.id}
-                        onClick={() => { markAsRead(n.id); if (n.link) onNavigate(n.link); setIsTrayOpen(false); }}
+                        onClick={() => {
+                          markAsRead(n.id);
+                          if (n.type === 'chat' || n.conversationId) {
+                            if (n.conversationId) {
+                              openChat(n.conversationId);
+                            } else {
+                              onNavigate('chat');
+                            }
+                          } else if (n.postId) {
+                            onNavigate(`community?postId=${n.postId}${n.commentId ? `&commentId=${n.commentId}` : ''}`);
+                          } else if (n.link) {
+                            onNavigate(n.link);
+                          }
+                          setIsTrayOpen(false);
+                        }}
                         className={`w-full text-left p-4 rounded-2xl border transition-all ${n.read ? 'bg-gray-50 dark:bg-gray-900 border-transparent opacity-60' : 'bg-white dark:bg-gray-800 border-primary/10 shadow-md ring-1 ring-primary/5'}`}
                       >
                         <h5 className="font-bold text-gray-900 dark:text-white text-sm mb-1">{n.title}</h5>
