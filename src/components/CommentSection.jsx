@@ -103,7 +103,7 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
       };
 
       // 1. Add the comment/reply
-      await addDoc(collection(db, 'comments'), commentData);
+      const commentRef = await addDoc(collection(db, 'comments'), commentData);
 
       // Update the comment count on the discussion post
       await updateDoc(doc(db, 'discussions', postId), {

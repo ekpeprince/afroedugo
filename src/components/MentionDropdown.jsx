@@ -28,7 +28,7 @@ export default function MentionDropdown({ searchQuery, onSelect, position = 'bot
             className="w-full px-4 py-2 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
           >
             <img 
-              src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}`} 
+              src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'User')}`} 
               alt="" 
               className="w-8 h-8 rounded-full object-cover shrink-0" 
             />

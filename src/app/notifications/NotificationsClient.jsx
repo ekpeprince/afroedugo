@@ -40,18 +40,9 @@ export default function NotificationsClient() {
     }
     
     // Router redirect based on notification's link value
-    if (n.link === 'community') {
-      router.push('/community');
-    } else if (n.link === 'profile') {
-      router.push('/profile');
-    } else if (n.link === 'housing') {
-      router.push('/housing');
-    } else if (n.link === 'schools') {
-      router.push('/schools');
-    } else if (n.link === 'services') {
-      router.push('/services');
-    } else if (n.link === 'chat') {
-      router.push('/chat');
+    if (n.link) {
+      const destination = n.link.startsWith('/') ? n.link : `/${n.link}`;
+      router.push(destination);
     }
   };
 

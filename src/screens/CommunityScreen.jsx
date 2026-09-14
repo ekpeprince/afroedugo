@@ -13,7 +13,6 @@ import { compressImage } from '../utils/imageCompressor'
 import CommentSection from '../components/CommentSection'
 import SmartImage from '../components/SmartImage'
 import ProfileModal from '../components/ProfileModal'
-import NotificationsDropdown from '../components/NotificationsDropdown'
 import PostText from '../components/PostText'
 import StoriesBar from '../components/StoriesBar'
 import MentionDropdown from '../components/MentionDropdown'
@@ -29,7 +28,6 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const { profile } = useProfile();
   const { unreadCount } = useNotifications();
 
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [savedView, setSavedView] = useState(false);
   const [savedPosts, setSavedPosts] = useState([]);
@@ -38,9 +36,11 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const [openMenuId, setOpenMenuId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [composerCategory, setComposerCategory] = useState('general');
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [expandedPost, setExpandedPost] = useState(null);
+  const [deepLinkedPost, setDeepLinkedPost] = useState(null);
   const [activeTab, setActiveTab] = useState('feed'); // 'feed' or 'matches'
   const [attachedImages, setAttachedImages] = useState([]);
   const [imagePreviews, setImagePreviews] = useState([]);
@@ -72,12 +72,13 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
       const searchParams = new URLSearchParams(window.location.search);
       const urlPostId = searchParams.get('postId');
       if (urlPostId) {
+        setExpandedPost(urlPostId);
         const fetchPost = async () => {
           try {
             const docRef = doc(db, 'discussions', urlPostId);
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) {
-              setExpandedPost({ id: docSnap.id, ...docSnap.data() });
+              setDeepLinkedPost({ id: docSnap.id, ...docSnap.data() });
             }
           } catch (error) {
             console.error("Error fetching post from URL:", error);
@@ -272,7 +273,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         const snap = await uploadBytes(ref(storage, `community/${user.uid}_${Date.now()}_${safeName}`), file, metadata);
         imageUrls.push(await getDownloadURL(snap.ref));
       }
-      const postCategory = selectedCategory === 'all' ? 'general' : selectedCategory;
+      const postCategory = composerCategory || (selectedCategory === 'all' ? 'general' : selectedCategory);
       const postRef = await addDoc(collection(db, 'discussions'), {
         text: newMessage,
         category: postCategory,
@@ -359,13 +360,17 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
 
   // ── Derived data ─────────────────────────────────────────────────────────
   const filteredDiscussions = useMemo(() => {
-    let posts = discussions.filter(d =>
+    let posts = [...discussions];
+    if (deepLinkedPost && !posts.some(p => p.id === deepLinkedPost.id)) {
+      posts.unshift(deepLinkedPost);
+    }
+    posts = posts.filter(d =>
       (selectedCategory === 'all' || d.category === selectedCategory) &&
       ((d.text || '').toLowerCase().includes(searchTerm.toLowerCase()))
     );
     if (savedView) posts = posts.filter(d => savedPosts.includes(d.id));
     return posts;
-  }, [discussions, selectedCategory, searchTerm, savedView, savedPosts]);
+  }, [discussions, selectedCategory, searchTerm, savedView, savedPosts, deepLinkedPost]);
 
   const trendingTopics = useMemo(() => {
     if (!discussions) return [];
@@ -403,9 +408,19 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   }, [discussions]);
 
   const formatTime = (ts) => {
-    if (!ts?.toDate) return 'Just now';
-    const date = ts.toDate();
-    const diffMs = Date.now() - date;
+    if (!ts) return 'Just now';
+    let date;
+    if (ts.toDate) {
+      date = ts.toDate();
+    } else if (ts instanceof Date) {
+      date = ts;
+    } else if (typeof ts === 'number' || typeof ts === 'string') {
+      date = new Date(ts);
+    } else {
+      return 'Just now';
+    }
+    if (isNaN(date.getTime())) return 'Just now';
+    const diffMs = Date.now() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHrs = Math.floor(diffMs / 3600000);
     if (diffMins < 1) return 'Just now';
@@ -648,18 +663,38 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
               )}
 
               <div className="flex items-center justify-between pt-3 mt-2 border-t border-gray-100 dark:border-gray-700">
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={!user}
-                  className="flex items-center gap-2 text-primary hover:bg-primary/5 px-3 py-1.5 rounded-full transition-colors font-bold text-sm disabled:opacity-40"
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                  </svg>
-                  Photo
-                </button>
-                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" multiple />
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={!user}
+                    className="flex items-center gap-1.5 text-primary hover:bg-primary/5 px-3 py-1.5 rounded-full transition-colors font-bold text-sm disabled:opacity-40"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                    Photo
+                  </button>
+                  <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" multiple />
+
+                  {/* Category Pill Selector */}
+                  <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700/60 rounded-full px-2.5 py-1 text-xs">
+                    <span className="text-gray-400 font-bold hidden sm:inline">Topic:</span>
+                    <select
+                      value={composerCategory}
+                      onChange={e => setComposerCategory(e.target.value)}
+                      disabled={!user}
+                      className="bg-transparent font-bold text-gray-700 dark:text-gray-200 border-none outline-none cursor-pointer text-xs"
+                      aria-label="Select post category"
+                    >
+                      {categories.filter(c => c.id !== 'all').map(cat => (
+                        <option key={cat.id} value={cat.id} className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
+                          {cat.icon} {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
                 {!user ? (
                   <button type="button" onClick={onLogin} className="bg-primary text-white px-5 py-2 rounded-full font-bold text-sm shadow-sm hover:bg-primary/90 transition-colors">
                     Log in to Post
@@ -959,8 +994,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                             className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors group p-1.5 rounded-full hover:bg-primary/10"
                             title="Send message"
                           >
-                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                             </svg>
                           </button>
                         )}
