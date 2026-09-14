@@ -351,7 +351,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
 
     try {
       setIsUploading(true);
-      const storageRef = ref(storage, `chats/${conversationId}/${user.uid}_${Date.now()}_${file.name}`);
+      const storageRef = ref(storage, `chats/${stableConvId.current}/${user.uid}_${Date.now()}_${file.name}`);
       const uploadTask = uploadBytesResumable(storageRef, file);
 
       uploadTask.on(
@@ -546,30 +546,45 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   };
 
   return (
-    <div className={`fixed inset-0 z-[100] flex flex-col bg-white transition-transform duration-500 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-      {/* Chat Header */}
-      <header className="p-3 sm:p-4 bg-primary dark:bg-[#15221E] text-white flex items-center gap-4 sticky top-0 z-20 shadow-sm transition-colors duration-300">
-        <button onClick={onClose} className="text-2xl hover:text-gray-200 transition-colors flex items-center">←</button>
-        <div className="flex items-center gap-3 cursor-pointer w-full">
-          <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-500 font-black overflow-hidden">
-            {participantAvatar.startsWith('http') ? (
-              <img src={participantAvatar} alt="avatar" className="w-full h-full object-cover" />
-            ) : (
-              participantAvatar
-            )}
+    <>
+      {/* Desktop Backdrop */}
+      <div 
+        className={`fixed inset-0 bg-black/40 backdrop-blur-xs z-[99] transition-opacity duration-300 hidden sm:block ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={onClose}
+      />
+
+      {/* Responsive Slide-out Drawer */}
+      <div className={`fixed inset-0 sm:left-auto sm:right-0 sm:w-[450px] z-[100] flex flex-col bg-white dark:bg-[#111b21] sm:border-l sm:border-gray-200 dark:sm:border-gray-800 sm:shadow-2xl transition-transform duration-300 transform ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        {/* Chat Header */}
+        <header className="p-3 sm:p-4 bg-primary dark:bg-[#15221E] text-white flex items-center gap-4 sticky top-0 z-20 shadow-sm transition-colors duration-300">
+          <button onClick={onClose} className="text-2xl hover:text-gray-200 transition-colors flex items-center">←</button>
+          <div className="flex items-center gap-3 cursor-pointer w-full">
+            <div className="relative">
+              <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center text-gray-500 font-black overflow-hidden">
+                {participantAvatar.startsWith('http') ? (
+                  <img src={participantAvatar} alt="avatar" className="w-full h-full object-cover" />
+                ) : (
+                  participantAvatar
+                )}
+              </div>
+              {isParticipantOnline && (
+                <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-primary dark:border-[#15221E] rounded-full" />
+              )}
+            </div>
+            <div className="flex flex-col flex-grow">
+              <h4 className="font-semibold text-white leading-tight">{participantName}</h4>
+              {isParticipantOnline ? (
+                <p className="text-xs text-white/90">online</p>
+              ) : (
+                <p className="text-xs text-white/70">
+                  {participantLastOnline ? `last seen ${formatLastOnline(participantLastOnline)}` : 'offline'}
+                </p>
+              )}
+            </div>
           </div>
-          <div className="flex flex-col flex-grow">
-            <h4 className="font-semibold text-white leading-tight">{participantName}</h4>
-            {isParticipantOnline ? (
-              <p className="text-xs text-white/90">online</p>
-            ) : (
-              <p className="text-xs text-white/70">
-                {participantLastOnline ? `last seen ${formatLastOnline(participantLastOnline)}` : 'offline'}
-              </p>
-            )}
-          </div>
-        </div>
-      </header>
+        </header>
 
       {/* Safety Warning Banner */}
       <div className="bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800/50 p-3 flex items-start gap-3 shadow-sm z-10 transition-colors duration-300">
@@ -911,7 +926,8 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
           <img src={fullScreenImage} alt="Full screen" className="max-w-full max-h-full object-contain rounded-lg" onClick={e => e.stopPropagation()} />
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

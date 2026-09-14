@@ -73,6 +73,8 @@ export const useChat = (conversationId = null) => {
             [uid]: { ...snap.data(), uid: snap.id }
           }));
         }
+      }, (err) => {
+        console.warn('Participant profile sync error:', err);
       });
     });
 
@@ -108,7 +110,7 @@ export const useChat = (conversationId = null) => {
 
   // Subscribe to messages in a specific conversation
   useEffect(() => {
-    if (!conversationId) return;
+    if (!conversationId || !user) return;
 
     // Clear unread flag on parent conversation for current user
     const clearUnreadStatus = async () => {
@@ -136,8 +138,10 @@ export const useChat = (conversationId = null) => {
       setMessages(msgs);
       
       // Auto-mark as read if they are from the other person and unread
+      let hasIncomingUnread = false;
       msgs.forEach(async (m) => {
         if (m.senderId !== user.uid && !m.read) {
+          hasIncomingUnread = true;
           try {
             await setDoc(doc(db, 'conversations', conversationId, 'messages', m.id), {
               read: true
@@ -145,6 +149,12 @@ export const useChat = (conversationId = null) => {
           } catch(e) {}
         }
       });
+
+      if (hasIncomingUnread) {
+        clearUnreadStatus();
+      }
+    }, (err) => {
+      console.warn("Messages subscription error:", err);
     });
 
     return unsub;
