@@ -279,18 +279,22 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
       );
       const newFiles = [...attachedImages, ...compressedFiles].slice(0, 4);
       setAttachedImages(newFiles);
+      imagePreviews.forEach(url => URL.revokeObjectURL(url));
       setImagePreviews(newFiles.map(f => URL.createObjectURL(f)));
     } catch (err) {
       console.error('Image compression failed, falling back to original files:', err);
       const newFiles = [...attachedImages, ...files].slice(0, 4);
       setAttachedImages(newFiles);
+      imagePreviews.forEach(url => URL.revokeObjectURL(url));
       setImagePreviews(newFiles.map(f => URL.createObjectURL(f)));
     }
   };
 
   const removeImage = (index) => {
+    if (imagePreviews[index]) URL.revokeObjectURL(imagePreviews[index]);
     setAttachedImages(prev => prev.filter((_, i) => i !== index));
     setImagePreviews(prev => prev.filter((_, i) => i !== index));
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleTextChange = (e, setter, targetName) => {
@@ -397,9 +401,11 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         }
       } catch (notifyErr) {}
 
+      imagePreviews.forEach(url => URL.revokeObjectURL(url));
       setNewMessage('');
       setAttachedImages([]);
       setImagePreviews([]);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
       console.error('Error sending post:', err);
       alert('Failed to publish post. If you attached photos, please make sure they are less than 5MB and try again.');
