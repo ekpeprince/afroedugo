@@ -2,20 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase/config';
 import { doc, onSnapshot } from 'firebase/firestore';
-
-const formatLastOnline = (lastOnline) => {
-  if (!lastOnline) return '';
-  const date = lastOnline.toDate ? lastOnline.toDate() : new Date(lastOnline);
-  const now = new Date();
-  const diffMs = now - date;
-  const diffMins = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  
-  if (diffMins < 1) return 'just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
-  if (diffHours < 24) return `${diffHours}h ago`;
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-};
+import { usePresenceStatus, formatLastOnline } from '../utils/presence';
 
 /**
  * UserProfileViewer
@@ -57,13 +44,7 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
 
   if (!isOpen) return null;
 
-  const isOnline = (() => {
-    if (profile?.status !== 'online') return false;
-    if (!profile?.lastOnline) return true; // Pending local write
-    const lastOnlineTime = profile.lastOnline.toMillis ? profile.lastOnline.toMillis() : new Date(profile.lastOnline).getTime();
-    if (isNaN(lastOnlineTime)) return true;
-    return (Date.now() - lastOnlineTime) < 30 * 60 * 1000;
-  })();
+  const { isOnline } = usePresenceStatus(profile?.status, profile?.lastOnline, 15000);
 
   const name    = profile?.displayName || profile?.email?.split('@')[0] || 'Unknown User';
   const photo   = profile?.photoURL || null;

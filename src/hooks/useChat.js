@@ -20,6 +20,7 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from './useAuth';
 import { notifyUser } from '../utils/notifyUser';
+import { isUserOnline } from '../utils/presence';
 
 export const useChat = (conversationId = null) => {
   const { user } = useAuth();
@@ -27,6 +28,15 @@ export const useChat = (conversationId = null) => {
   const [participantProfiles, setParticipantProfiles] = useState({});
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [presenceTicker, setPresenceTicker] = useState(0);
+
+  // Periodic ticker to refresh presence status (online/offline) in conversation list
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPresenceTicker(t => t + 1);
+    }, 20000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Subscribe to all conversations for the current user
   useEffect(() => {
@@ -94,18 +104,11 @@ export const useChat = (conversationId = null) => {
         ...conv,
         participantId: otherUid,
         participantName: profile?.displayName || conv.participantName || otherUid.slice(0, 6),
-        participantAvatar: profile?.photoURL || profile?.photoUrl || conv.participantAvatar || '👤',
-        participantStatus: (() => {
-          if (profile?.status !== 'online') return 'offline';
-          if (!profile?.lastOnline) return 'online'; // Pending local write
-          const lastOnlineTime = profile.lastOnline.toMillis ? profile.lastOnline.toMillis() : new Date(profile.lastOnline).getTime();
-          if (isNaN(lastOnlineTime)) return 'online';
-          return (Date.now() - lastOnlineTime) < 30 * 60 * 1000 ? 'online' : 'offline';
-        })(),
+        participantStatus: isUserOnline(profile?.status, profile?.lastOnline) ? 'online' : 'offline',
         participantLastOnline: profile?.lastOnline || null
       };
     });
-  }, [rawConversations, participantProfiles, user?.uid]);
+  }, [rawConversations, participantProfiles, user?.uid, presenceTicker]);
 
 
   // Subscribe to messages in a specific conversation

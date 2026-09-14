@@ -4,6 +4,7 @@ import { useChat } from '../hooks/useChat';
 import { storage, db } from '../firebase/config';
 import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { onSnapshot, doc } from 'firebase/firestore';
+import { usePresenceStatus, formatLastOnline } from '../utils/presence';
 
 const formatMessageDate = (timestamp) => {
   if (!timestamp) return 'Today';
@@ -253,13 +254,8 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const participantAvatar = currentConv?.participantAvatar || '👤';
   const isParticipantTyping = currentConv?.typing?.[participantId];
 
-  const isParticipantOnline = (() => {
-    if (participantStatus !== 'online') return false;
-    if (!participantLastOnline) return true; // Pending local write
-    const lastOnlineTime = participantLastOnline.toMillis ? participantLastOnline.toMillis() : new Date(participantLastOnline).getTime();
-    if (isNaN(lastOnlineTime)) return true;
-    return (Date.now() - lastOnlineTime) < 30 * 60 * 1000;
-  })();
+  // Real-time reactive presence status with 15s refresh tick
+  const { isOnline: isParticipantOnline, lastSeenText } = usePresenceStatus(participantStatus, participantLastOnline, 15000);
 
   useEffect(() => {
     const participantId = currentConv?.participantId;
@@ -277,21 +273,6 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
 
     return () => unsub();
   }, [isOpen, currentConv?.participantId]);
-
-  const formatLastOnline = (lastOnline) => {
-    if (!lastOnline) return '';
-    const date = lastOnline.toDate ? lastOnline.toDate() : (lastOnline instanceof Date ? lastOnline : new Date(lastOnline));
-    if (!date || isNaN(date.getTime())) return '';
-    const now = new Date();
-    const diffMs = now - date;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    
-    if (diffMins < 1) return 'just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-  };
 
   useEffect(() => {
     scrollToBottom();
@@ -575,13 +556,9 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
             </div>
             <div className="flex flex-col flex-grow">
               <h4 className="font-semibold text-white leading-tight">{participantName}</h4>
-              {isParticipantOnline ? (
-                <p className="text-xs text-white/90">online</p>
-              ) : (
-                <p className="text-xs text-white/70">
-                  {participantLastOnline ? `last seen ${formatLastOnline(participantLastOnline)}` : 'offline'}
-                </p>
-              )}
+              <p className={`text-xs ${isParticipantOnline ? 'text-emerald-300 font-medium' : 'text-white/70'}`}>
+                {lastSeenText}
+              </p>
             </div>
           </div>
         </header>

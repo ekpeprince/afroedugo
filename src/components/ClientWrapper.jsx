@@ -35,8 +35,13 @@ function GlobalModalsContainer({ children }) {
     if (!user) return;
 
     const userRef = doc(db, 'users', user.uid);
+    let offlineTimeout = null;
     
     const setOnline = () => {
+      if (offlineTimeout) {
+        clearTimeout(offlineTimeout);
+        offlineTimeout = null;
+      }
       setDoc(userRef, { status: 'online', lastOnline: serverTimestamp() }, { merge: true })
         .catch(err => console.error("Error setting presence to online:", err));
     };
@@ -52,24 +57,37 @@ function GlobalModalsContainer({ children }) {
       if (document.visibilityState === 'visible') {
         setOnline();
       } else {
-        setOffline();
+        // Grace period (45s) before marking offline
+        // Prevents rapid status thrashing when switching tabs, answering calls, or picking photos
+        if (offlineTimeout) clearTimeout(offlineTimeout);
+        offlineTimeout = setTimeout(() => {
+          setOffline();
+        }, 45000);
       }
     };
 
-    // Heartbeat interval every 3 minutes
+    // Heartbeat interval every 90 seconds while tab is active
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
         setOnline();
       }
-    }, 3 * 60 * 1000);
+    }, 90 * 1000);
+
+    const handleTermination = () => {
+      if (offlineTimeout) clearTimeout(offlineTimeout);
+      setOffline();
+    };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('beforeunload', setOffline);
+    window.addEventListener('beforeunload', handleTermination);
+    window.addEventListener('pagehide', handleTermination);
     
     return () => {
+      if (offlineTimeout) clearTimeout(offlineTimeout);
       clearInterval(interval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('beforeunload', setOffline);
+      window.removeEventListener('beforeunload', handleTermination);
+      window.removeEventListener('pagehide', handleTermination);
     };
   }, [user]);
 
