@@ -951,6 +951,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                       ) : (
                         <PostText
                           text={msg.text}
+                          expandable={true}
+                          initiallyExpanded={expandedPost === msg.id}
                           onHashtagClick={tag => { setSearchTerm(tag); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                           onMentionClick={(u) => setViewingUser({ userId: u.userId, displayName: u.displayName })}
                         />
