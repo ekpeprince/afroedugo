@@ -188,10 +188,10 @@ const ServicesScreen = ({ onBack, onLogin }) => {
       {/* Add Service Modal */}
       {showAddModal && (
         <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300">
+          <div className="bg-white dark:bg-gray-800 w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl border border-transparent dark:border-gray-700 animate-in slide-in-from-bottom-10 sm:zoom-in-95 duration-300">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-black text-gray-900">Offer a Service</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-900">✕</button>
+              <h3 className="text-2xl font-black text-gray-900 dark:text-white">Offer a Service</h3>
+              <button onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white">✕</button>
             </div>
             
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -202,7 +202,7 @@ const ServicesScreen = ({ onBack, onLogin }) => {
                   type="text"
                   value={formData.name}
                   onChange={e => setFormData({...formData, name: e.target.value})}
-                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1"
+                  className="w-full bg-gray-50 dark:bg-gray-700 dark:text-white p-4 rounded-2xl border-none outline-none font-bold mt-1"
                   placeholder="e.g., Fast Document Translation"
                 />
               </div>
@@ -212,10 +212,10 @@ const ServicesScreen = ({ onBack, onLogin }) => {
                 <select 
                   value={formData.category}
                   onChange={e => setFormData({...formData, category: e.target.value})}
-                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1 appearance-none"
+                  className="w-full bg-gray-50 dark:bg-gray-700 dark:text-white p-4 rounded-2xl border-none outline-none font-bold mt-1 appearance-none"
                 >
                   {categories.filter(c => c.id !== 'all').map(c => (
-                    <option key={c.id} value={c.id}>{c.label}</option>
+                    <option key={c.id} value={c.id} className="dark:bg-gray-800">{c.label}</option>
                   ))}
                 </select>
               </div>
@@ -227,7 +227,7 @@ const ServicesScreen = ({ onBack, onLogin }) => {
                   type="text"
                   value={formData.whatsapp}
                   onChange={e => setFormData({...formData, whatsapp: e.target.value})}
-                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-bold mt-1"
+                  className="w-full bg-gray-50 dark:bg-gray-700 dark:text-white p-4 rounded-2xl border-none outline-none font-bold mt-1"
                   placeholder="e.g., +37063423845"
                 />
               </div>
@@ -239,7 +239,7 @@ const ServicesScreen = ({ onBack, onLogin }) => {
                   rows="3"
                   value={formData.description}
                   onChange={e => setFormData({...formData, description: e.target.value})}
-                  className="w-full bg-gray-50 p-4 rounded-2xl border-none outline-none font-medium mt-1 resize-none"
+                  className="w-full bg-gray-50 dark:bg-gray-700 dark:text-white p-4 rounded-2xl border-none outline-none font-medium mt-1 resize-none"
                   placeholder="Describe your service in detail..."
                 />
               </div>
@@ -248,12 +248,12 @@ const ServicesScreen = ({ onBack, onLogin }) => {
                 <button 
                   type="button" 
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-4 font-black uppercase tracking-widest text-xs text-gray-400 hover:text-gray-900 transition-colors"
+                  className="flex-1 py-4 font-black uppercase tracking-widest text-xs text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
                 <button 
-                  type="submit"
+                  type="submit" 
                   disabled={isSubmitting}
                   className="flex-1 bg-primary text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-primary/30 active:scale-95 transition-all disabled:opacity-50"
                 >

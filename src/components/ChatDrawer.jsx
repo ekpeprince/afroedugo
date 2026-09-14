@@ -130,10 +130,20 @@ const CustomAudioPlayer = ({ src, duration }) => {
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current.play();
+      const playPromise = audioRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => setIsPlaying(true))
+          .catch(err => {
+            console.warn('Audio play error:', err);
+            setIsPlaying(false);
+          });
+      } else {
+        setIsPlaying(true);
+      }
     }
-    setIsPlaying(!isPlaying);
   };
 
   const onTimeUpdate = () => {
@@ -261,6 +271,8 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
         setParticipantStatus(data.status || 'offline');
         setParticipantLastOnline(data.lastOnline || null);
       }
+    }, (err) => {
+      console.warn('Participant presence error:', err);
     });
 
     return () => unsub();

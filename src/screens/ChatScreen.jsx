@@ -100,7 +100,7 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
                   e.stopPropagation();
                   deleteConversation(conv.id);
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
+                className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-full opacity-60 sm:opacity-0 sm:group-hover:opacity-100 transition-all z-10"
                 title="Delete Chat"
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
