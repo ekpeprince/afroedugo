@@ -49,11 +49,48 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const [editPostText, setEditPostText] = useState('');
   const [mentionState, setMentionState] = useState({ isOpen: false, query: '', target: null });
   const [postLimit, setPostLimit] = useState(10);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const fileInputRef = useRef(null);
   const fetchedPostRef = useRef(null);
   const scrolledPostRef = useRef(null);
+  const sentinelRef = useRef(null);
 
   const { data: discussions, loading } = useFirestore('discussions', 'createdAt', postLimit);
+
+  // Determine if there are potentially more posts to fetch
+  const hasMore = discussions && discussions.length >= postLimit;
+
+  // Infinite Scroll IntersectionObserver
+  useEffect(() => {
+    if (!sentinelRef.current || !hasMore || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasMore && !loading && !isLoadingMore) {
+          setIsLoadingMore(true);
+          setPostLimit(prev => prev + 10);
+        }
+      },
+      {
+        root: null,
+        rootMargin: '350px',
+        threshold: 0.1,
+      }
+    );
+
+    const target = sentinelRef.current;
+    observer.observe(target);
+    return () => {
+      if (target) observer.unobserve(target);
+      observer.disconnect();
+    };
+  }, [hasMore, loading, isLoadingMore, postLimit]);
+
+  // Reset loading more lock when discussions array updates
+  useEffect(() => {
+    setIsLoadingMore(false);
+  }, [discussions?.length]);
 
   // ── Load saved posts from user profile ──────────────────────────────────
   useEffect(() => {
@@ -1061,15 +1098,21 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
             )}
           </div>
           
-          {/* Load More Button */}
-          {discussions.length >= postLimit && !loading && (
-            <div className="flex justify-center mt-6 mb-10">
-              <button 
-                onClick={() => setPostLimit(prev => prev + 10)}
-                className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 px-6 py-3 rounded-full font-bold text-sm transition-colors border border-gray-200 dark:border-gray-700"
-              >
-                Load More Posts
-              </button>
+          {/* Infinite Scroll Sentinel & Status Indicator */}
+          {!loading && filteredDiscussions.length > 0 && (
+            <div ref={sentinelRef} className="py-8 flex flex-col items-center justify-center gap-3">
+              {hasMore ? (
+                <div className="flex items-center gap-2.5 px-5 py-2.5 bg-white dark:bg-gray-800 rounded-full shadow-sm border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-600 dark:text-gray-300 animate-pulse">
+                  <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                  <span>Loading more discussions…</span>
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-400 dark:text-gray-500 text-xs font-black uppercase tracking-wider flex items-center gap-3">
+                  <span className="w-12 h-[1px] bg-gray-200 dark:bg-gray-700"></span>
+                  <span>You&apos;re all caught up ✨</span>
+                  <span className="w-12 h-[1px] bg-gray-200 dark:bg-gray-700"></span>
+                </div>
+              )}
             </div>
           )}
             </>
