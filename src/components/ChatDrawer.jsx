@@ -595,34 +595,16 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
                     </span>
                   </div>
                 )}
-                <div id={`msg-${msg.id}`} className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'} group relative overflow-visible`}>
-                  
-                  {msg.senderId === user.uid && !msg.deleted && (
-                    <div className="opacity-0 group-hover:opacity-100 absolute -left-12 top-1/2 -translate-y-1/2 flex items-center gap-1 transition-opacity z-10 hidden sm:flex">
-                      {msg.text && (
-                        <button 
-                          onClick={() => handleEditClick(msg)}
-                          className="p-1 text-gray-400 hover:text-blue-500 bg-white/80 dark:bg-black/50 rounded-full shadow-sm"
-                          title="Edit message"
-                        >
-                          ✏️
-                        </button>
-                      )}
-                      <button 
-                        onClick={() => { if(window.confirm('Delete this message for everyone?')) deleteMessage(stableConvId.current, msg.id) }}
-                        className="p-1 text-gray-400 hover:text-red-500 bg-white/80 dark:bg-black/50 rounded-full shadow-sm"
-                        title="Delete message"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  )}
-
+                <div id={`msg-${msg.id}`} className={`flex ${msg.senderId === user.uid ? 'justify-end' : 'justify-start'} relative overflow-visible`}>
                   <SwipeableMessage 
                     onReply={!msg.deleted ? () => setReplyingTo(msg) : null}
                     onLongPress={!msg.deleted ? () => setActiveMessageAction(msg) : null}
                   >
                     <div 
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        if (!msg.deleted) setActiveMessageAction(msg);
+                      }}
                       className={`relative max-w-[85%] sm:max-w-[75%] px-3 py-1.5 rounded-lg shadow-sm text-[15px] font-normal leading-[1.3] ${
                         msg.senderId === user.uid 
                           ? 'bg-[#dcf8c6] dark:bg-[#005c4b] text-gray-900 dark:text-[#e9edef] rounded-tr-none ml-auto' 
