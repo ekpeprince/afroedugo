@@ -14,12 +14,13 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
     e.preventDefault();
     setLocalError('');
     setLocalSuccess('');
+    const trimmedEmail = email.trim();
     
     try {
       if (isLogin) {
-        await login(email, password);
+        await login(trimmedEmail, password);
       } else {
-        await signup(email, password);
+        await signup(trimmedEmail, password);
       }
       onAuthSuccess?.();
     } catch (err) {
@@ -60,14 +61,15 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
   const handleForgotPassword = async () => {
     setLocalError('');
     setLocalSuccess('');
+    const trimmedEmail = email.trim();
     
-    if (!email) {
+    if (!trimmedEmail) {
       setLocalError('Please enter your email address first.');
       return;
     }
     
     try {
-      await resetPassword(email);
+      await resetPassword(trimmedEmail);
       setLocalSuccess('Password reset email sent! Please check your Spam or Junk folder if you do not see it in your Inbox.');
     } catch (err) {
       console.error(err);
@@ -80,39 +82,41 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col p-8">
-      <header className="mb-12">
-        <button onClick={onBack} className="text-2xl mb-8 hover:text-primary transition-colors">←</button>
-        <h1 className="text-4xl font-black tracking-tight mb-2">
+    <div className="min-h-screen bg-white dark:bg-[#0b141a] text-gray-900 dark:text-white flex flex-col p-6 sm:p-8 transition-colors duration-300">
+      <header className="mb-10">
+        <button onClick={onBack} className="text-2xl mb-8 text-gray-800 dark:text-gray-200 hover:text-primary transition-colors flex items-center gap-2" aria-label="Go back">
+          ←
+        </button>
+        <h1 className="text-3xl sm:text-4xl font-black tracking-tight mb-2 text-gray-900 dark:text-white">
           {isLogin ? 'Welcome Back!' : 'Start Your Journey'}
         </h1>
-        <p className="text-gray-400 font-medium">
+        <p className="text-gray-500 dark:text-gray-400 font-medium text-sm">
           {isLogin 
-            ? 'Login to access your shortlisted schools and housing.' 
-            : 'Join the AfroEduGo community and save your favorites.'}
+            ? 'Login to access your shortlisted schools, chats, and housing.' 
+            : 'Join the AfroEduGo community and connect with fellow scholars.'}
         </p>
       </header>
 
-      <form onSubmit={handleSubmit} className="space-y-6 flex-grow">
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Email Address</label>
+      <form onSubmit={handleSubmit} className="space-y-5 flex-grow max-w-md w-full mx-auto">
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-400 ml-4">Email Address</label>
           <input 
             type="email"
             placeholder="name@example.com"
-            className="w-full bg-gray-50 py-5 px-6 rounded-[2rem] border border-transparent focus:border-primary/20 focus:bg-white outline-none transition-all font-bold text-gray-700"
+            className="w-full bg-gray-50 dark:bg-[#111b21] py-4 sm:py-5 px-6 rounded-[2rem] border border-gray-200 dark:border-gray-700/60 focus:border-primary dark:focus:border-primary focus:bg-white dark:focus:bg-[#182229] outline-none transition-all font-bold text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 text-sm"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 ml-4">Password</label>
+        <div className="space-y-1.5">
+          <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-400 ml-4">Password</label>
           <div className="relative">
             <input 
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
-              className="w-full bg-gray-50 py-5 pl-6 pr-14 rounded-[2rem] border border-transparent focus:border-primary/20 focus:bg-white outline-none transition-all font-bold text-gray-700"
+              className="w-full bg-gray-50 dark:bg-[#111b21] py-4 sm:py-5 pl-6 pr-14 rounded-[2rem] border border-gray-200 dark:border-gray-700/60 focus:border-primary dark:focus:border-primary focus:bg-white dark:focus:bg-[#182229] outline-none transition-all font-bold text-gray-800 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 text-sm"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -120,7 +124,8 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+              className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none transition-colors"
+              aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -134,7 +139,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
             </button>
           </div>
           {isLogin && (
-            <div className="text-right mt-2 mr-4">
+            <div className="text-right mt-1.5 mr-4">
               <button 
                 type="button" 
                 onClick={handleForgotPassword}
@@ -147,16 +152,16 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
         </div>
 
         {(error || localError) && (
-          <div className="bg-red-50 p-4 rounded-2xl border border-red-100 animate-in fade-in zoom-in-95">
-            <p className="text-red-500 text-xs font-bold text-center">
+          <div className="bg-red-50 dark:bg-red-950/40 p-4 rounded-2xl border border-red-100 dark:border-red-900/50 animate-in fade-in zoom-in-95">
+            <p className="text-red-600 dark:text-red-400 text-xs font-bold text-center">
               {localError || error}
             </p>
           </div>
         )}
 
         {localSuccess && (
-          <div className="bg-green-50 p-4 rounded-2xl border border-green-100 animate-in fade-in zoom-in-95">
-            <p className="text-green-600 text-xs font-bold text-center">
+          <div className="bg-green-50 dark:bg-green-950/40 p-4 rounded-2xl border border-green-100 dark:border-green-900/50 animate-in fade-in zoom-in-95">
+            <p className="text-green-600 dark:text-green-400 text-xs font-bold text-center">
               {localSuccess}
             </p>
           </div>
@@ -165,7 +170,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
         <button 
           type="submit"
           disabled={loading}
-          className="w-full bg-gray-900 text-white py-6 rounded-[2rem] font-black text-lg shadow-2xl shadow-gray-200 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+          className="w-full bg-primary hover:bg-primary-dark text-white py-5 rounded-[2rem] font-black text-base shadow-xl shadow-primary/20 hover:scale-[1.01] active:scale-98 transition-all disabled:opacity-50 cursor-pointer"
         >
           {loading ? (
             <div className="flex items-center justify-center gap-2">
@@ -177,17 +182,17 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
           )}
         </button>
 
-        <div className="flex items-center gap-4 my-8">
-          <div className="flex-1 h-[1px] bg-gray-100"></div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-300">OR CONTINUE WITH</span>
-          <div className="flex-1 h-[1px] bg-gray-100"></div>
+        <div className="flex items-center gap-4 my-6">
+          <div className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-800"></div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-gray-400 dark:text-gray-500">OR CONTINUE WITH</span>
+          <div className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-800"></div>
         </div>
 
         <div className="flex flex-col gap-4">
           <button 
             type="button"
             onClick={handleGoogleLogin}
-            className="flex items-center justify-center gap-3 bg-white py-5 px-6 rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-100 hover:bg-gray-50 active:scale-95 transition-all group w-full"
+            className="flex items-center justify-center gap-3 bg-white dark:bg-[#111b21] py-4 sm:py-5 px-6 rounded-[2rem] border border-gray-200 dark:border-gray-700/60 shadow-md shadow-gray-100 dark:shadow-none hover:bg-gray-50 dark:hover:bg-[#182229] active:scale-98 transition-all group w-full cursor-pointer"
           >
             <svg width="20" height="20" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -195,24 +200,24 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
               <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
               <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
             </svg>
-            <span className="font-black text-xs uppercase tracking-widest text-gray-700">Continue with Google</span>
+            <span className="font-black text-xs uppercase tracking-widest text-gray-700 dark:text-gray-200">Continue with Google</span>
           </button>
         </div>
 
-        <p className="text-center text-[11px] text-gray-400 font-medium mt-6">
+        <p className="text-center text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-6">
           By continuing, you agree to AfroEduGo&apos;s{' '}
-          <a href="/terms" className="text-gray-700 underline font-bold hover:text-primary">
+          <a href="/terms" className="text-gray-800 dark:text-gray-200 underline font-bold hover:text-primary">
             Terms of Service
           </a>{' '}
           and{' '}
-          <a href="/privacy" className="text-gray-700 underline font-bold hover:text-primary">
+          <a href="/privacy" className="text-gray-800 dark:text-gray-200 underline font-bold hover:text-primary">
             Privacy Policy
           </a>.
         </p>
       </form>
 
-      <footer className="mt-auto py-8 text-center">
-        <p className="text-gray-400 font-bold mb-4">
+      <footer className="mt-auto py-8 text-center max-w-md w-full mx-auto">
+        <p className="text-gray-500 dark:text-gray-400 font-bold mb-3 text-sm">
           {isLogin ? "Don't have an account?" : "Already have an account?"}
         </p>
         <button 
@@ -222,10 +227,10 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
           {isLogin ? 'Sign Up Instead' : 'Login Instead'}
         </button>
 
-        <div className="mt-6 flex items-center justify-center gap-3 text-[11px] text-gray-400 font-bold">
-          <a href="/privacy" className="hover:underline hover:text-gray-700">Privacy Policy</a>
+        <div className="mt-6 flex items-center justify-center gap-3 text-[11px] text-gray-400 dark:text-gray-500 font-bold">
+          <a href="/privacy" className="hover:underline hover:text-gray-700 dark:hover:text-gray-300">Privacy Policy</a>
           <span>•</span>
-          <a href="/terms" className="hover:underline hover:text-gray-700">Terms of Service</a>
+          <a href="/terms" className="hover:underline hover:text-gray-700 dark:hover:text-gray-300">Terms of Service</a>
         </div>
       </footer>
     </div>

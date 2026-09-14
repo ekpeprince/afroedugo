@@ -344,19 +344,19 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col pb-20">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0b141a] text-gray-900 dark:text-white flex flex-col pb-20 transition-colors duration-300">
       {/* studyin.lt Inspired Sticky Header */}
-      <header className="relative bg-white border-b border-gray-100 flex justify-between items-center py-4 px-6">
+      <header className="relative bg-white dark:bg-[#111b21] border-b border-gray-100 dark:border-gray-800 flex justify-between items-center py-4 px-6 transition-colors duration-300">
         <div className="flex items-center gap-3">
-            <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full text-xl font-bold transition-colors">
+            <button onClick={onBack} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full text-xl font-bold transition-colors">
                 ←
             </button>
-            <h1 className="text-sm font-bold uppercase tracking-wider text-gray-700">Accredited Programmes</h1>
+            <h1 className="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">Accredited Programmes</h1>
         </div>
 
         <button 
             onClick={() => setViewMode(prev => prev === 'list' ? 'map' : 'list')}
-            className="flex items-center gap-2 text-xs font-semibold text-gray-600 border rounded-full px-4 py-2 hover:bg-gray-50 transition-all"
+            className="flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all cursor-pointer"
         >
             <span>{viewMode === 'list' ? '🗺️ Map View' : '📋 List View'}</span>
         </button>
@@ -410,20 +410,20 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
 
               {/* Autocomplete Search Suggestions */}
               {GOOGLE_MAPS_API_KEY !== "YOUR_GOOGLE_MAPS_API_KEY" && googleStatus === "OK" && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden z-30 text-left">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-[#111b21] rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 overflow-hidden z-30 text-left">
                   {googleData.map((suggestion) => (
                     <button
                       key={suggestion.place_id}
                       onClick={() => handleSelect(suggestion)}
-                      className="w-full text-left p-3 hover:bg-primary/5 border-b border-gray-50 last:border-0 transition-colors flex items-start gap-2.5 text-xs"
+                      className="w-full text-left p-3 hover:bg-primary/5 dark:hover:bg-primary/10 border-b border-gray-50 dark:border-gray-800 last:border-0 transition-colors flex items-start gap-2.5 text-xs text-gray-900 dark:text-white"
                     >
-                      <div className="p-1.5 bg-gray-100 rounded-lg text-gray-400 mt-0.5">
+                      <div className="p-1.5 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-400 mt-0.5">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
                         </svg>
                       </div>
                       <div>
-                        <h4 className="font-bold text-gray-900 leading-tight">{suggestion.structured_formatting.main_text}</h4>
+                        <h4 className="font-bold text-gray-900 dark:text-white leading-tight">{suggestion.structured_formatting.main_text}</h4>
                         <p className="text-[10px] text-gray-400 mt-0.5">{suggestion.structured_formatting.secondary_text}</p>
                       </div>
                     </button>
@@ -438,7 +438,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
         {/* Filters Wrapper */}
         <div className="relative z-10 space-y-4 py-3 -mx-2 px-2">
           {/* Explore Opportunities (Pill Filters) */}
-          <div className="bg-white p-4 rounded-[2rem] border border-gray-100 shadow-sm text-center">
+          <div className="bg-white dark:bg-[#111b21] p-4 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm text-center transition-colors">
             <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Let's explore the opportunities</h3>
             <div className="flex flex-wrap justify-center gap-2">
               {[
@@ -453,10 +453,10 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                 <button
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-wider transition-all ${
+                  className={`px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-wider transition-all cursor-pointer ${
                     selectedCategory === cat.id 
                       ? 'bg-primary text-white shadow-lg shadow-primary/10' 
-                      : 'bg-gray-50 text-gray-500 hover:bg-gray-100'
+                      : 'bg-gray-50 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
                   <span className="mr-1">{cat.icon}</span>
@@ -466,18 +466,17 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
             </div>
           </div>
 
-          {/* Country & Budget Filters */}
-          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 bg-white p-3 rounded-[2rem] border border-gray-100 shadow-sm">
+          <div className="flex flex-wrap items-center justify-center gap-4 md:gap-8 bg-white dark:bg-[#111b21] p-3 rounded-[2rem] border border-gray-100 dark:border-gray-800 shadow-sm transition-colors">
             {/* Country Tabs */}
             <div className="flex flex-wrap items-center justify-center gap-1.5 no-scrollbar">
               {countries.map(country => (
                 <button
                   key={country}
                   onClick={() => setSelectedCountry(country)}
-                  className={`px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-wider whitespace-nowrap transition-all ${
+                  className={`px-4 py-2 rounded-full font-black text-[10px] uppercase tracking-wider whitespace-nowrap transition-all cursor-pointer ${
                     selectedCountry === country 
-                      ? 'bg-gray-900 text-white shadow-sm' 
-                      : 'bg-gray-50 text-gray-400 hover:bg-gray-100'
+                      ? 'bg-gray-900 dark:bg-primary text-white shadow-sm' 
+                      : 'bg-gray-50 dark:bg-gray-800 text-gray-400 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
                   {country === 'All' ? '🌐 All Countries' : country}
@@ -491,10 +490,10 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
               <select 
                 value={selectedBudget}
                 onChange={(e) => setSelectedBudget(e.target.value === 'All' ? 'All' : Number(e.target.value))}
-                className="bg-gray-50 border-none outline-none text-[10px] font-black px-3 py-2 rounded-xl text-gray-500 hover:text-primary cursor-pointer transition-colors border border-gray-100"
+                className="bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 outline-none text-[10px] font-black px-3 py-2 rounded-xl text-gray-500 dark:text-gray-300 hover:text-primary cursor-pointer transition-colors"
               >
                 {budgetOptions.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  <option key={opt.value} value={opt.value} className="dark:bg-gray-800 dark:text-white">{opt.label}</option>
                 ))}
               </select>
             </div>
@@ -530,22 +529,22 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
         )}
 
         {/* Listings / Map Render */}
-        {selectedCountry === 'All' && selectedCategory === 'All' && !localSearch.trim() && searchResults.length === 0 ? null : viewMode === 'map' ? (
-          <div className="h-[60vh] w-full rounded-[2rem] overflow-hidden shadow-lg border border-gray-100 animate-in fade-in zoom-in-95 duration-500">
+        {viewMode === 'map' ? (
+          <div className="h-[60vh] w-full rounded-[2rem] overflow-hidden shadow-lg border border-gray-100 dark:border-gray-800 animate-in fade-in zoom-in-95 duration-500">
             <MapContainer items={combinedResults} type="school" />
           </div>
         ) : combinedResults.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-[2rem] border-2 border-dashed border-gray-100 p-8">
-            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
+          <div className="text-center py-16 bg-white dark:bg-[#111b21] rounded-[2rem] border-2 border-dashed border-gray-100 dark:border-gray-800 p-8 transition-colors">
+            <div className="w-16 h-16 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300 dark:text-gray-600">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"/><path d="M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"/><path d="M12 12l0 0"/>
               </svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-900 mb-1">No schools found</h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">No schools found</h3>
             <p className="text-gray-400 font-medium text-xs max-w-xs mx-auto">Try adjusting your filters or search terms to find more options.</p>
             <button 
               onClick={() => {setSelectedCountry('All'); setSelectedBudget('All'); setSelectedCategory('All'); setLocalSearch("");}}
-              className="mt-4 text-primary font-bold text-xs hover:underline"
+              className="mt-4 text-primary font-bold text-xs hover:underline cursor-pointer"
             >
               Reset all filters
             </button>
@@ -557,7 +556,7 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                 <div 
                   key={school.id} 
                   onClick={() => router.push(`/schools/${school.id}`)}
-                  className="bg-white rounded-[2rem] overflow-hidden shadow-lg shadow-gray-200/40 border border-gray-100 group cursor-pointer hover:shadow-xl hover:scale-[1.005] transition-all flex flex-col h-full justify-between"
+                  className="bg-white dark:bg-[#111b21] rounded-[2rem] overflow-hidden shadow-lg shadow-gray-200/40 dark:shadow-none border border-gray-100 dark:border-gray-800 group cursor-pointer hover:shadow-xl hover:scale-[1.005] transition-all flex flex-col h-full justify-between"
                 >
                   <div className="relative overflow-hidden">
                     <SmartImage 
@@ -617,9 +616,9 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                       </div>
                       
                       <Link href={`/schools/${school.id}`} className="hover:text-primary transition-all" onClick={(e) => e.stopPropagation()}>
-                        <h3 className="text-xl font-bold mb-1 text-gray-900 leading-tight">{school.name}</h3>
+                        <h3 className="text-xl font-bold mb-1 text-gray-900 dark:text-white leading-tight">{school.name}</h3>
                       </Link>
-                      <p className="text-gray-500 text-xs mb-3 font-medium flex items-center gap-1">
+                      <p className="text-gray-500 dark:text-gray-400 text-xs mb-3 font-medium flex items-center gap-1">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/>
                         </svg>
@@ -629,12 +628,12 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                       {school.courses && school.courses.length > 0 && (
                         <div className="mb-4">
                           <select 
-                            className="w-full bg-gray-50 border border-gray-100 text-gray-600 text-xs rounded-lg px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary font-medium"
+                            className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-lg px-3 py-2 outline-none focus:border-primary focus:ring-1 focus:ring-primary font-medium"
                             onClick={(e) => e.stopPropagation()}
                           >
                             <option value="">View {school.courses.length} Available Programs</option>
                             {school.courses.map(course => (
-                              <option key={course.name || course} value={course.name || course}>
+                              <option key={course.name || course} value={course.name || course} className="dark:bg-gray-800 dark:text-white">
                                 {course.name || course} {course.tuition ? `- ${course.tuition}` : ''}
                               </option>
                             ))}
@@ -643,10 +642,10 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between gap-4 mt-4 pt-3 border-t border-gray-50">
+                    <div className="flex items-center justify-between gap-4 mt-4 pt-3 border-t border-gray-50 dark:border-gray-800">
                       <div className="flex flex-col">
                         <span className="text-[9px] text-gray-400 font-bold uppercase">Estimated Fee</span>
-                        <span className="text-lg font-black text-gray-900">
+                        <span className="text-lg font-black text-gray-900 dark:text-white">
                           {school.courses && school.courses.length > 0 && school.courses[0].tuition 
                             ? school.courses[0].tuition.replace(' (~Estimated)', '')
                             : school.tuition}
