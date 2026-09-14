@@ -221,6 +221,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
   const { messages, sendMessage, editMessage, deleteMessage, setTypingStatus, conversations } = useChat(stableConvId.current);
   const [inputText, setInputText] = useState('');
   const [editingMessageId, setEditingMessageId] = useState(null);
+  const [activeMessageAction, setActiveMessageAction] = useState(null);
   const [replyingTo, setReplyingTo] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState(null);
@@ -619,9 +620,7 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
 
                   <SwipeableMessage 
                     onReply={!msg.deleted ? () => setReplyingTo(msg) : null}
-                    onLongPress={msg.senderId === user.uid && !msg.deleted ? () => {
-                      if(window.confirm('Delete this message for everyone?')) deleteMessage(stableConvId.current, msg.id);
-                    } : null}
+                    onLongPress={!msg.deleted ? () => setActiveMessageAction(msg) : null}
                   >
                     <div 
                       className={`relative max-w-[85%] sm:max-w-[75%] px-3 py-1.5 rounded-lg shadow-sm text-[15px] font-normal leading-[1.3] ${
@@ -895,6 +894,86 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
           )}
         </form>
       </div>
+
+      {/* Message Action Sheet (Mobile long-press & desktop options) */}
+      {activeMessageAction && (
+        <div 
+          className="fixed inset-0 z-[250] bg-black/50 backdrop-blur-xs flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setActiveMessageAction(null)}
+        >
+          <div 
+            className="bg-white dark:bg-[#202c33] w-full max-w-xs rounded-2xl p-2 shadow-2xl space-y-1 text-sm font-medium text-gray-800 dark:text-gray-200 animate-in slide-in-from-bottom-3 duration-200"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Reply */}
+            <button
+              onClick={() => {
+                setReplyingTo(activeMessageAction);
+                setActiveMessageAction(null);
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-[#111b21] transition-colors"
+            >
+              <span>↩️</span>
+              <span>Reply</span>
+            </button>
+
+            {/* Copy Text */}
+            {activeMessageAction.text && (
+              <button
+                onClick={() => {
+                  navigator.clipboard?.writeText?.(activeMessageAction.text);
+                  setActiveMessageAction(null);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-[#111b21] transition-colors"
+              >
+                <span>📋</span>
+                <span>Copy Text</span>
+              </button>
+            )}
+
+            {/* Edit (only if author and message has text) */}
+            {activeMessageAction.senderId === user.uid && activeMessageAction.text && (
+              <button
+                onClick={() => {
+                  handleEditClick(activeMessageAction);
+                  setActiveMessageAction(null);
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-[#111b21] transition-colors text-blue-600 dark:text-blue-400"
+              >
+                <span>✏️</span>
+                <span>Edit Message</span>
+              </button>
+            )}
+
+            {/* Delete for everyone (only author) */}
+            {activeMessageAction.senderId === user.uid && (
+              <button
+                onClick={() => {
+                  const targetId = activeMessageAction.id;
+                  setActiveMessageAction(null);
+                  if (window.confirm('Delete this message for everyone?')) {
+                    deleteMessage(stableConvId.current, targetId);
+                  }
+                }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors text-red-600 dark:text-red-400 font-semibold"
+              >
+                <span>🗑️</span>
+                <span>Delete for Everyone</span>
+              </button>
+            )}
+
+            {/* Cancel */}
+            <div className="pt-1 border-t border-gray-100 dark:border-gray-700">
+              <button
+                onClick={() => setActiveMessageAction(null)}
+                className="w-full py-2.5 rounded-xl text-center text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#111b21] transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Full Screen Image Viewer Modal */}
       {fullScreenImage && (

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { db } from '../firebase/config';
 import { 
   collection, addDoc, query, where, orderBy, onSnapshot, 
-  serverTimestamp, doc, updateDoc, increment, arrayUnion, arrayRemove 
+  serverTimestamp, doc, updateDoc, increment, arrayUnion, arrayRemove, deleteDoc 
 } from 'firebase/firestore';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
@@ -254,6 +254,19 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
     }
   };
 
+  const handleDeleteComment = async (commentId) => {
+    if (!user) return;
+    if (!window.confirm('Delete this comment? This cannot be undone.')) return;
+    try {
+      await deleteDoc(doc(db, 'comments', commentId));
+      await updateDoc(doc(db, 'discussions', postId), {
+        commentCount: increment(-1)
+      });
+    } catch (err) {
+      console.error("Error deleting comment:", err);
+    }
+  };
+
   // Helper to render a comment item
   const renderComment = (comment, isReply = false) => {
     const isLiked = user && comment.likes?.includes(user.uid);
@@ -321,6 +334,17 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
                 className="text-[10px] font-bold text-gray-400 hover:text-primary transition-colors flex items-center gap-0.5"
               >
                 <span>💬</span> Reply
+              </button>
+            )}
+
+            {/* Delete Comment (Author only) */}
+            {user && comment.userId === user.uid && (
+              <button 
+                onClick={() => handleDeleteComment(comment.id)}
+                className="text-[10px] font-bold text-gray-400 hover:text-red-500 transition-colors flex items-center gap-0.5"
+                title="Delete Comment"
+              >
+                <span>🗑️</span> Delete
               </button>
             )}
 
