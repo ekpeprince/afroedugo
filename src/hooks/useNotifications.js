@@ -28,6 +28,9 @@ export const useNotifications = () => {
       setNotifications(docs);
       setUnreadCount(docs.filter(n => !n.read).length);
       setLoading(false);
+    }, (err) => {
+      console.warn('Notifications subscription error:', err);
+      setLoading(false);
     });
 
     return () => unsubscribe();

@@ -10,10 +10,11 @@ export default function HousingPageClient({ initialHousing }) {
   const { openChat } = useGlobalState();
 
   const handleNavigate = (screen) => {
+    if (!screen) return;
     if (screen === 'add-listing') {
       router.push('/add-listing');
     } else {
-      router.push(`/${screen}`);
+      router.push(screen.startsWith('/') ? screen : `/${screen}`);
     }
   };
 

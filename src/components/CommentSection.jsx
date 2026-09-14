@@ -22,6 +22,7 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
   const [mentionState, setMentionState] = useState({ isOpen: false, query: '' });
   
   const inputRef = useRef(null);
+  const hasScrolledToCommentRef = useRef(false);
 
   // Subscribe to comments for this post
   useEffect(() => {
@@ -34,6 +35,9 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setComments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
+    }, (err) => {
+      console.warn('Comments subscription error:', err);
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -41,13 +45,14 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
 
   // Scroll to targeted comment if opened from notification
   useEffect(() => {
-    if (typeof window !== 'undefined' && comments.length > 0) {
+    if (typeof window !== 'undefined' && comments.length > 0 && !hasScrolledToCommentRef.current) {
       const searchParams = new URLSearchParams(window.location.search);
       const targetCommentId = searchParams.get('commentId');
       if (targetCommentId) {
         const scrollToTargetComment = () => {
           const el = document.getElementById(`comment-${targetCommentId}`);
           if (el) {
+            hasScrolledToCommentRef.current = true;
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
             el.classList.add('ring-2', 'ring-primary', 'bg-primary/5', 'rounded-2xl');
             setTimeout(() => {

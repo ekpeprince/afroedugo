@@ -268,7 +268,8 @@ const ChatDrawer = ({ isOpen, onClose, conversationId }) => {
 
   const formatLastOnline = (lastOnline) => {
     if (!lastOnline) return '';
-    const date = lastOnline.toDate ? lastOnline.toDate() : new Date(lastOnline);
+    const date = lastOnline.toDate ? lastOnline.toDate() : (lastOnline instanceof Date ? lastOnline : new Date(lastOnline));
+    if (!date || isNaN(date.getTime())) return '';
     const now = new Date();
     const diffMs = now - date;
     const diffMins = Math.floor(diffMs / 60000);

@@ -279,6 +279,8 @@ export default function StoriesBar({ onLogin }) {
     );
     const unsub = onSnapshot(q, snap => {
       setStories(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }, err => {
+      console.warn('Stories subscription error:', err);
     });
     return unsub;
   }, []);

@@ -19,7 +19,7 @@ export default function ProfilePage() {
         onBack={() => router.push('/')} 
         onLogout={handleLogout}
         onShowViralModal={() => setShowViralModal(true)}
-        onNavigate={(screen) => router.push(`/${screen}`)}
+        onNavigate={(screen) => router.push(screen.startsWith('/') ? screen : `/${screen}`)}
       />
     </div>
   );

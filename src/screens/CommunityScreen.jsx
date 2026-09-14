@@ -50,6 +50,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const [mentionState, setMentionState] = useState({ isOpen: false, query: '', target: null });
   const [postLimit, setPostLimit] = useState(10);
   const fileInputRef = useRef(null);
+  const fetchedPostRef = useRef(null);
+  const scrolledPostRef = useRef(null);
 
   const { data: discussions, loading } = useFirestore('discussions', 'createdAt', postLimit);
 
@@ -66,47 +68,55 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
     return () => document.removeEventListener('click', handler);
   }, [openMenuId]);
 
-  // ── Handle Post ID from URL Notifications ─────────────────────────────────
+  // ── Fetch Post from URL Notifications (Runs once per target postId) ───────
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const searchParams = new URLSearchParams(window.location.search);
-      const urlPostId = searchParams.get('postId');
-      if (urlPostId) {
-        setExpandedPost(urlPostId);
-        const fetchPost = async () => {
-          try {
-            const docRef = doc(db, 'discussions', urlPostId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-              setDeepLinkedPost({ id: docSnap.id, ...docSnap.data() });
-            }
-          } catch (error) {
-            console.error("Error fetching post from URL:", error);
+    if (typeof window === 'undefined') return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlPostId = searchParams.get('postId');
+    if (urlPostId && fetchedPostRef.current !== urlPostId) {
+      fetchedPostRef.current = urlPostId;
+      setExpandedPost(urlPostId);
+      const fetchPost = async () => {
+        try {
+          const docRef = doc(db, 'discussions', urlPostId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            setDeepLinkedPost({ id: docSnap.id, ...docSnap.data() });
           }
-        };
-        fetchPost();
-
-        // Smoothly scroll to the target post once mounted in the DOM
-        const scrollToTargetPost = () => {
-          const el = document.getElementById(`post-${urlPostId}`);
-          if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.classList.add('ring-4', 'ring-primary/40', 'shadow-xl');
-            setTimeout(() => {
-              el.classList.remove('ring-4', 'ring-primary/40', 'shadow-xl');
-            }, 3000);
-            return true;
-          }
-          return false;
-        };
-
-        if (!scrollToTargetPost()) {
-          const t1 = setTimeout(scrollToTargetPost, 350);
-          const t2 = setTimeout(scrollToTargetPost, 800);
-          const t3 = setTimeout(scrollToTargetPost, 1400);
-          return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+        } catch (error) {
+          console.error("Error fetching post from URL:", error);
         }
+      };
+      fetchPost();
+    }
+  }, []);
+
+  // ── Smooth Scroll & Highlight Target Post Once Rendered in DOM ───────────
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const urlPostId = searchParams.get('postId');
+    if (!urlPostId || scrolledPostRef.current === urlPostId) return;
+
+    const scrollToTargetPost = () => {
+      const el = document.getElementById(`post-${urlPostId}`);
+      if (el) {
+        scrolledPostRef.current = urlPostId;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-4', 'ring-primary/40', 'shadow-xl');
+        setTimeout(() => {
+          el.classList.remove('ring-4', 'ring-primary/40', 'shadow-xl');
+        }, 3000);
+        return true;
       }
+      return false;
+    };
+
+    if (!scrollToTargetPost()) {
+      const t1 = setTimeout(scrollToTargetPost, 350);
+      const t2 = setTimeout(scrollToTargetPost, 800);
+      const t3 = setTimeout(scrollToTargetPost, 1400);
+      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
     }
   }, [discussions, deepLinkedPost]);
 

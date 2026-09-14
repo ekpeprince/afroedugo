@@ -22,11 +22,12 @@ export default function Home() {
   }, [user, authLoading, hasRecoveredSession]);
 
   const handleNavigate = (screen) => {
-    // Map screen strings to paths
+    if (!screen) return;
     if (screen === 'add-listing') {
       router.push('/add-listing');
     } else {
-      router.push(`/${screen}`);
+      const path = screen.startsWith('/') ? screen : `/${screen}`;
+      router.push(path);
     }
   };
 
