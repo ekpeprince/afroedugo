@@ -6,6 +6,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [weeklyUpdates, setWeeklyUpdates] = useState(false);
   const { login, signup, loading, error, loginWithGoogle, resetPassword } = useAuth();
   const [localError, setLocalError] = useState('');
   const [localSuccess, setLocalSuccess] = useState('');
@@ -20,7 +21,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
       if (isLogin) {
         await login(trimmedEmail, password);
       } else {
-        await signup(trimmedEmail, password);
+        await signup(trimmedEmail, password, { weeklyUpdates });
       }
       onAuthSuccess?.();
     } catch (err) {
@@ -41,7 +42,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
     setLocalError('');
     setLocalSuccess('');
     try {
-      await loginWithGoogle();
+      await loginWithGoogle({ weeklyUpdates });
       onAuthSuccess?.();
     } catch (err) {
       console.error(err);
@@ -204,7 +205,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
           </button>
         </div>
 
-        <p className="text-center text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-6">
+        <p className="text-center text-[11px] text-gray-500 dark:text-gray-400 font-medium mt-4">
           By continuing, you agree to AfroEduGo&apos;s{' '}
           <a href="/terms" className="text-gray-800 dark:text-gray-200 underline font-bold hover:text-primary">
             Terms of Service
@@ -214,6 +215,18 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
             Privacy Policy
           </a>.
         </p>
+
+        <label className="flex items-start gap-2.5 cursor-pointer select-none text-left px-2 pt-1">
+          <input 
+            type="checkbox"
+            checked={weeklyUpdates}
+            onChange={(e) => setWeeklyUpdates(e.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary shrink-0"
+          />
+          <span className="text-[11px] sm:text-xs text-gray-600 dark:text-gray-300 font-medium leading-tight">
+            <span className="font-bold text-gray-500 dark:text-gray-400">(Optional)</span> Send me weekly updates on new student jobs, flats, and community posts.
+          </span>
+        </label>
       </form>
 
       <footer className="mt-auto py-8 text-center max-w-md w-full mx-auto">

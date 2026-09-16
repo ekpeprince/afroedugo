@@ -37,12 +37,12 @@ export const useAuth = () => {
     }
   };
 
-  const signup = async (email, password) => {
+  const signup = async (email, password, options = {}) => {
     setLoading(true);
     setError(null);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      await syncUserProfile(userCredential.user);
+      await syncUserProfile(userCredential.user, options);
     } catch (err) {
       setError(err.message);
       throw err;
@@ -51,7 +51,7 @@ export const useAuth = () => {
     }
   };
 
-  const syncUserProfile = async (user) => {
+  const syncUserProfile = async (user, options = {}) => {
     if (!user) return;
     try {
       const userRef = doc(db, 'users', user.uid);
@@ -60,7 +60,7 @@ export const useAuth = () => {
       
       const displayName = user.displayName || user.email?.split('@')[0] || "Scholar";
 
-      await setDoc(userRef, {
+      const profileData = {
         uid: user.uid,
         displayName: displayName,
         photoURL: user.photoURL || `https://ui-avatars.com/api/?name=${displayName}&background=random`,
@@ -68,7 +68,29 @@ export const useAuth = () => {
         lastOnline: serverTimestamp(),
         status: "online",
         ...(isNewUser ? { joinedAt: serverTimestamp() } : {})
-      }, { merge: true });
+      };
+
+      if (options.weeklyUpdates !== undefined) {
+        profileData.weeklyUpdates = !!options.weeklyUpdates;
+        if (options.weeklyUpdates) {
+          profileData.weeklyUpdatesOptInAt = serverTimestamp();
+        }
+      }
+
+      await setDoc(userRef, profileData, { merge: true });
+
+      if (options.weeklyUpdates && user.email) {
+        try {
+          await setDoc(doc(db, 'newsletter_subscribers', user.uid), {
+            email: user.email,
+            displayName: displayName,
+            subscribedAt: serverTimestamp(),
+            source: 'weekly_updates_opt_in'
+          }, { merge: true });
+        } catch (subErr) {
+          console.error("Newsletter subscriber sync error:", subErr);
+        }
+      }
 
       if (isNewUser) {
         // Welcome Bot Post
@@ -87,13 +109,13 @@ export const useAuth = () => {
     }
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (options = {}) => {
     setLoading(true);
     setError(null);
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
-      await syncUserProfile(result.user);
+      await syncUserProfile(result.user, options);
       return result.user;
     } catch (err) {
       let msg = err.message;
