@@ -465,19 +465,6 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
         isOpen={!!viewingUser}
         onClose={() => setViewingUser(null)}
         initialData={viewingUser ? { displayName: viewingUser.displayName, photoURL: viewingUser.photoURL } : null}
-        onMessage={async (targetUserId) => {
-          if (!user) { onLogin?.(); return; }
-          if (targetUserId === user.uid) return;
-          try {
-            const convId = await getOrCreateConversation(targetUserId, { type: 'student-to-student' });
-            if (convId && openChat) {
-              openChat(convId);
-              setViewingUser(null);
-            }
-          } catch (e) {
-            console.warn('Error initiating chat with commenter:', e);
-          }
-        }}
       />
     </div>
   );

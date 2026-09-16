@@ -42,24 +42,8 @@ const MainMenu = ({ onNavigate }) => {
     }
   }, [user]);
 
-  const handleTalkToExpert = async () => {
-    if (!user) {
-      onNavigate('auth');
-      return;
-    }
-    setLoadingExpert(true);
-    try {
-      const convId = await getOrCreateConversation('admin_support', {
-        type: 'support',
-        participantName: 'AfroEduGo Expert',
-        participantAvatar: '👨‍💼'
-      });
-      if (convId) openChat(convId);
-    } catch (err) {
-      console.error('Error starting expert chat:', err);
-    } finally {
-      setLoadingExpert(false);
-    }
+  const handleTalkToExpert = () => {
+    onNavigate('services');
   };
 
   const menuItems = [

@@ -1,20 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import ChatScreen from '../../screens/ChatScreen';
-import { useGlobalState } from '../../context/GlobalStateContext';
 
 export default function ChatPage() {
   const router = useRouter();
-  const { openChat } = useGlobalState();
+
+  useEffect(() => {
+    router.replace('/community');
+  }, [router]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#111b21] font-sans selection:bg-pink-100">
-      <ChatScreen 
-        onBack={() => router.push('/')} 
-        onOpenChat={openChat}
-      />
+    <div className="min-h-screen bg-gray-50 dark:bg-[#111b21] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-primary"></div>
     </div>
   );
 }

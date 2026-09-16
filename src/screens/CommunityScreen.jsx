@@ -627,19 +627,6 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                     )}
                   </button>
                 </li>
-                <li>
-                  <button
-                    onClick={() => { if (!user) { onLogin?.(); return; } onOpenMessages ? onOpenMessages() : onOpenChat?.(); }}
-                    className="w-full flex items-center gap-4 px-6 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-700 dark:text-gray-300 font-semibold border-l-4 border-transparent"
-                  >
-                    <span className="text-xl">✉️</span> Messages
-                    {unreadDMsCount > 0 && (
-                      <span className="ml-auto bg-red-500 text-white text-xs font-black rounded-full px-2 py-0.5 animate-pulse shadow-sm shadow-red-500/20">
-                        {unreadDMsCount}
-                      </span>
-                    )}
-                  </button>
-                </li>
               </ul>
             </nav>
           </div>
@@ -671,7 +658,6 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
           {activeTab === 'matches' ? (
             <div className="mt-4">
               <NetworkMatch 
-                onStartChat={handleStartPrivateChat} 
                 onViewProfile={(u) => setViewingUser({ userId: u.id, displayName: u.displayName, photoURL: u.photoURL })} 
               />
             </div>
@@ -1063,19 +1049,6 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                       </div>
 
                       <div className="flex items-center gap-1">
-                        {/* DM button */}
-                        {user && msg.userId !== user.uid && (
-                          <button
-                            onClick={e => { e.stopPropagation(); handleStartPrivateChat(msg.userId, msg.user); }}
-                            className="text-gray-500 dark:text-gray-400 hover:text-primary transition-colors group p-1.5 rounded-full hover:bg-primary/10"
-                            title="Send message"
-                          >
-                            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                            </svg>
-                          </button>
-                        )}
-
                         {/* Bookmark */}
                         <button
                           onClick={() => handleSavePost(msg.id)}
@@ -1182,10 +1155,10 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                         <span className="text-xs text-gray-400 font-semibold shrink-0">You</span>
                       ) : (
                         <button
-                          onClick={() => handleStartPrivateChat(member.userId, member.name)}
+                          onClick={() => setViewingUser({ userId: member.userId, displayName: member.name, photoURL: member.photoURL })}
                           className="text-xs font-bold text-white bg-primary hover:bg-primary/90 px-3 py-1.5 rounded-full transition-colors shrink-0"
                         >
-                          Connect
+                          View
                         </button>
                       )}
                     </li>
@@ -1235,17 +1208,6 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
               <span className="absolute top-1 right-2 bg-primary text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 shadow-sm">{savedPosts.length}</span>
             )}
           </button>
-
-          <button
-            onClick={() => { if (!user) { onLogin?.(); return; } onOpenMessages ? onOpenMessages() : onOpenChat?.(); }}
-            className={`flex flex-col items-center p-2 min-w-[64px] text-gray-500 dark:text-gray-400 relative`}
-          >
-            <span className="text-xl mb-1">✉️</span>
-            <span className="text-[10px] font-bold">Messages</span>
-            {unreadDMsCount > 0 && (
-              <span className="absolute top-1 right-2 bg-red-500 text-white text-[9px] font-bold rounded-full min-w-[16px] h-4 flex items-center justify-center px-1 animate-pulse shadow-sm">{unreadDMsCount}</span>
-            )}
-          </button>
         </div>
       </div>
 
@@ -1257,7 +1219,6 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         isOpen={!!viewingUser}
         onClose={() => setViewingUser(null)}
         initialData={viewingUser ? { displayName: viewingUser.displayName, photoURL: viewingUser.photoURL } : null}
-        onMessage={handleStartPrivateChat}
       />
 
       {/* Post Image Viewer */}

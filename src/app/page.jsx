@@ -48,14 +48,7 @@ export default function Home() {
           <MainMenu onNavigate={handleNavigate} />
 
           {/* Bottom Profile Anchor (Visible on Menu) */}
-          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-4 z-50">
-            <button 
-              onClick={() => router.push(user ? '/chat' : '/auth')}
-              className="bg-white/80 backdrop-blur-md w-14 h-14 rounded-full shadow-lg border border-gray-100 flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
-            >
-              <span className="text-xl">💬</span>
-            </button>
-            
+          <div className="fixed bottom-8 left-1/2 -translate-x-1/2 flex items-center z-50">
             <button 
               onClick={() => router.push(user ? '/profile' : '/auth')}
               className="bg-white/80 backdrop-blur-md px-6 py-3 rounded-full shadow-lg border border-gray-100 flex items-center gap-3 hover:scale-105 active:scale-95 transition-all"

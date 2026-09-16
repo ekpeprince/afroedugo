@@ -5,7 +5,12 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const hasSession = request.cookies.get('session-auth')?.value === 'true';
 
-  const protectedPaths = ['/profile', '/chat', '/admin', '/add-listing'];
+  // Redirect /chat to community (messaging section paused for future upgrade)
+  if (path.startsWith('/chat')) {
+    return NextResponse.redirect(new URL('/community', request.url));
+  }
+
+  const protectedPaths = ['/profile', '/admin', '/add-listing'];
   const authPaths = ['/auth'];
 
   // 1. Guard protected paths

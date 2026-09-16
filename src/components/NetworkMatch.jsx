@@ -147,10 +147,10 @@ export default function NetworkMatch({ onStartChat, onViewProfile }) {
                   )}
                   
                   <button 
-                    onClick={() => onStartChat(match.id, match.displayName)}
-                    className="w-full mt-4 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-bold text-xs py-2 rounded-xl transition-colors flex justify-center items-center gap-2"
+                    onClick={() => onViewProfile ? onViewProfile(match) : onStartChat?.(match.id, match.displayName)}
+                    className="w-full mt-4 bg-primary/10 hover:bg-primary/20 text-primary dark:bg-primary/20 dark:text-primary-light font-bold text-xs py-2 rounded-xl transition-colors flex justify-center items-center gap-2"
                   >
-                    ✉️ Message
+                    View Profile
                   </button>
                 </div>
               </div>

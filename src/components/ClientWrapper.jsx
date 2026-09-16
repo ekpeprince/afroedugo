@@ -154,12 +154,14 @@ function GlobalModalsContainer({ children }) {
       {/* Real-time OS notifications */}
       <NotificationManager />
 
-      {/* Real-time Chat Drawer */}
+      {/* Real-time Chat Drawer (paused for future upgrade) */}
+      {/* 
       <ChatDrawer 
         isOpen={!!activeConversationId} 
         onClose={() => setActiveConversationId(null)} 
         conversationId={activeConversationId} 
-      />
+      /> 
+      */}
 
       {/* Viral Referral Loop Modal */}
       <ViralJoinModal 
