@@ -27,7 +27,7 @@ export default function ProfileModal({ isOpen, onClose }) {
       setBio(profile.bio || '');
       setMajor(profile.major || '');
       setSchool(profile.school || '');
-      setInterests(profile.interests?.join(', ') || '');
+      setInterests(Array.isArray(profile.interests) ? profile.interests.join(', ') : (profile.interests || ''));
       setCountry(profile.country || '');
       setRole(profile.role || 'incoming');
     }

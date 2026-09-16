@@ -52,10 +52,16 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
   const major   = profile?.major || null;
   const country = profile?.country || null;
   const school  = profile?.school || null;
-  const graduationYear = profile?.graduationYear || null;
-  const instagram = profile?.instagram || null;
-  const linkedin = profile?.linkedin || null;
-  const interests = profile?.interests || [];
+  const rawGradYear = profile?.graduationYear;
+  const graduationYear = rawGradYear ? String(rawGradYear) : null;
+  const instagram = profile?.instagram ? String(profile.instagram).replace(/^@/, '').trim() : null;
+  const linkedin = profile?.linkedin ? (String(profile.linkedin).startsWith('http') ? String(profile.linkedin) : `https://${profile.linkedin}`) : null;
+  const rawInterests = profile?.interests;
+  const interests = Array.isArray(rawInterests)
+    ? rawInterests
+    : (typeof rawInterests === 'string' && rawInterests.trim()
+        ? rawInterests.split(',').map(s => s.trim()).filter(Boolean)
+        : []);
   const role    = profile?.role || 'incoming';
   const initial = name[0]?.toUpperCase() || '?';
 
@@ -198,7 +204,7 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
                       <span>School</span>
                     </div>
                     <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate w-full" title={school}>
-                      {school} {graduationYear && <span className="text-slate-400 ml-1">('{(graduationYear).slice(-2)})</span>}
+                      {school} {graduationYear && <span className="text-slate-400 ml-1">('{graduationYear.length >= 2 ? graduationYear.slice(-2) : graduationYear})</span>}
                     </span>
                   </div>
                 )}
