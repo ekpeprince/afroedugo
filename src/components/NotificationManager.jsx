@@ -146,12 +146,22 @@ export default function NotificationManager() {
                 } else {
                   router.push(n.link ? (n.link.startsWith('/') ? n.link : '/' + n.link) : '/chat');
                 }
-              } else if (n.postId) {
-                router.push(`/community?postId=${n.postId}${n.commentId ? `&commentId=${n.commentId}` : ''}`);
-              } else if (n.link) {
-                router.push(n.link.startsWith('/') ? n.link : '/' + n.link);
               } else {
-                router.push('/profile');
+                let targetPostId = n.postId;
+                let targetCommentId = n.commentId;
+                if (!targetPostId && n.link) {
+                  const matchPost = n.link.match(/postId=([^&#]+)/);
+                  if (matchPost) targetPostId = matchPost[1];
+                  const matchComment = n.link.match(/commentId=([^&#]+)/);
+                  if (matchComment) targetCommentId = matchComment[1];
+                }
+                if (targetPostId) {
+                  router.push(`/community?postId=${targetPostId}${targetCommentId ? `&commentId=${targetCommentId}` : ''}`);
+                } else if (n.link) {
+                  router.push(n.link.startsWith('/') ? n.link : '/' + n.link);
+                } else {
+                  router.push('/profile');
+                }
               }
               systemNotification.close();
             };

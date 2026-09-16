@@ -53,14 +53,25 @@ export default function NotificationsClient() {
       return;
     }
 
-    // 2. Community post/comment notification: route to exact post & comment
-    if (n.postId) {
-      const commentParam = n.commentId ? `&commentId=${n.commentId}` : '';
-      router.push(`/community?postId=${n.postId}${commentParam}`);
+    // 2. Extract postId and commentId from either explicit fields or link
+    let targetPostId = n.postId;
+    let targetCommentId = n.commentId;
+
+    if (!targetPostId && n.link) {
+      const matchPost = n.link.match(/postId=([^&#]+)/);
+      if (matchPost) targetPostId = matchPost[1];
+      const matchComment = n.link.match(/commentId=([^&#]+)/);
+      if (matchComment) targetCommentId = matchComment[1];
+    }
+
+    // 3. Community post/comment notification: route to exact post & comment
+    if (targetPostId) {
+      const commentParam = targetCommentId ? `&commentId=${targetCommentId}` : '';
+      router.push(`/community?postId=${targetPostId}${commentParam}`);
       return;
     }
 
-    // 3. Fallback router redirect based on notification's link value
+    // 4. Fallback router redirect based on notification's link value
     if (n.link) {
       const destination = n.link.startsWith('/') ? n.link : `/${n.link}`;
       router.push(destination);
@@ -143,7 +154,7 @@ export default function NotificationsClient() {
 
         // 4. Send notification back to original action sender (if any)
         if (n.senderId && n.senderId !== user.uid) {
-          const senderName = profile?.displayName || user.displayName || user.email.split('@')[0];
+          const senderName = profile?.displayName || user.displayName || user.email?.split('@')[0] || 'User';
           const preview = replyText.slice(0, 45);
           await addDoc(collection(db, 'notifications'), {
             userId: n.senderId,

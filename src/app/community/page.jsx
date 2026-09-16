@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import CommunityClient from './CommunityClient';
 
 export const metadata = {
@@ -7,5 +7,13 @@ export const metadata = {
 };
 
 export default function CommunityPage() {
-  return <CommunityClient />;
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-primary"></div>
+      </div>
+    }>
+      <CommunityClient />
+    </Suspense>
+  );
 }

@@ -22,11 +22,43 @@ import UserProfileViewer from '../components/UserProfileViewer'
 import NetworkMatch from '../components/NetworkMatch'
 import PostImageViewer from '../components/PostImageViewer'
 
-const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotifications, onLogin }) => {
+const CommunityScreen = ({ 
+  onBack, 
+  onOpenChat, 
+  onOpenMessages, 
+  onOpenNotifications, 
+  onLogin,
+  targetPostId = null,
+  targetCommentId = null
+}) => {
   const { user } = useAuth();
   const { getOrCreateConversation, unreadDMsCount } = useChat();
   const { profile } = useProfile();
   const { unreadCount } = useNotifications();
+
+  // Active target post & comment from props or URL search params
+  const [activePostId, setActivePostId] = useState(targetPostId);
+  const [activeCommentId, setActiveCommentId] = useState(targetCommentId);
+
+  useEffect(() => {
+    if (targetPostId) {
+      setActivePostId(targetPostId);
+    } else if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      const pid = sp.get('postId');
+      if (pid) setActivePostId(pid);
+    }
+  }, [targetPostId]);
+
+  useEffect(() => {
+    if (targetCommentId) {
+      setActiveCommentId(targetCommentId);
+    } else if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      const cid = sp.get('commentId');
+      if (cid) setActiveCommentId(cid);
+    }
+  }, [targetCommentId]);
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [savedView, setSavedView] = useState(false);
@@ -119,57 +151,93 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
     return () => document.removeEventListener('click', handler);
   }, [openMenuId]);
 
-  // ── Fetch Post from URL Notifications (Runs once per target postId) ───────
+  // ── Auto-navigate & load notification target post ───────────────────────
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const searchParams = new URLSearchParams(window.location.search);
-    const urlPostId = searchParams.get('postId');
-    if (urlPostId && fetchedPostRef.current !== urlPostId) {
-      fetchedPostRef.current = urlPostId;
-      setExpandedPost(urlPostId);
-      const fetchPost = async () => {
-        try {
-          const docRef = doc(db, 'discussions', urlPostId);
-          const docSnap = await getDoc(docRef);
-          if (docSnap.exists()) {
-            setDeepLinkedPost({ id: docSnap.id, ...docSnap.data() });
-          }
-        } catch (error) {
-          console.error("Error fetching post from URL:", error);
-        }
-      };
-      fetchPost();
+    if (!activePostId) return;
+
+    // Reset views so target post is unconditionally visible in feed
+    setActiveTab('feed');
+    setSelectedCategory('all');
+    setSavedView(false);
+    setSearchTerm('');
+    setExpandedPost(activePostId);
+
+    // If already in feed list, use it
+    const existing = discussions?.find(d => d.id === activePostId);
+    if (existing) {
+      setDeepLinkedPost(existing);
+      return;
     }
-  }, []);
 
-  // ── Smooth Scroll & Highlight Target Post Once Rendered in DOM ───────────
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const searchParams = new URLSearchParams(window.location.search);
-    const urlPostId = searchParams.get('postId');
-    if (!urlPostId || scrolledPostRef.current === urlPostId) return;
+    if (fetchedPostRef.current === activePostId && deepLinkedPost?.id === activePostId) {
+      return;
+    }
 
-    const scrollToTargetPost = () => {
-      const el = document.getElementById(`post-${urlPostId}`);
-      if (el) {
-        scrolledPostRef.current = urlPostId;
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.classList.add('ring-4', 'ring-primary/40', 'shadow-xl');
-        setTimeout(() => {
-          el.classList.remove('ring-4', 'ring-primary/40', 'shadow-xl');
-        }, 3000);
-        return true;
+    fetchedPostRef.current = activePostId;
+    let isMounted = true;
+
+    const fetchTargetPost = async () => {
+      try {
+        const docRef = doc(db, 'discussions', activePostId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && isMounted) {
+          setDeepLinkedPost({ id: docSnap.id, ...docSnap.data() });
+        }
+      } catch (err) {
+        console.error("Error loading notification target post:", err);
       }
-      return false;
     };
 
-    if (!scrollToTargetPost()) {
-      const t1 = setTimeout(scrollToTargetPost, 350);
-      const t2 = setTimeout(scrollToTargetPost, 800);
-      const t3 = setTimeout(scrollToTargetPost, 1400);
-      return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
-    }
-  }, [discussions, deepLinkedPost]);
+    fetchTargetPost();
+    return () => { isMounted = false; };
+  }, [activePostId, discussions]);
+
+  // ── Smooth Scroll & Spotlight Animation for Target Post / Comment ───────────
+  useEffect(() => {
+    if (!activePostId) return;
+
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 35; // 3.5s retry polling window
+
+    const targetElementId = activeCommentId ? `comment-${activeCommentId}` : `post-${activePostId}`;
+    const fallbackPostId = `post-${activePostId}`;
+
+    const tryScrollAndHighlight = () => {
+      if (cancelled) return;
+
+      const targetEl = document.getElementById(targetElementId);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        targetEl.classList.add('ring-4', 'ring-primary', 'ring-offset-4', 'dark:ring-offset-gray-900', 'shadow-2xl', 'transition-all', 'duration-500');
+        setTimeout(() => {
+          if (!cancelled && targetEl) {
+            targetEl.classList.remove('ring-4', 'ring-primary', 'ring-offset-4', 'dark:ring-offset-gray-900', 'shadow-2xl');
+          }
+        }, 4000);
+        return;
+      }
+
+      // If waiting for comment to render, center parent post in view in the meantime
+      if (activeCommentId && attempts === 4) {
+        const postEl = document.getElementById(fallbackPostId);
+        if (postEl) {
+          postEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(tryScrollAndHighlight, 100);
+      }
+    };
+
+    const initialTimer = setTimeout(tryScrollAndHighlight, 150);
+    return () => {
+      cancelled = true;
+      clearTimeout(initialTimer);
+    };
+  }, [activePostId, activeCommentId, deepLinkedPost, discussions, expandedPost]);
 
   // ── Categories ───────────────────────────────────────────────────────────
   const categories = [
@@ -449,12 +517,16 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
       posts.unshift(deepLinkedPost);
     }
     posts = posts.filter(d =>
-      (selectedCategory === 'all' || d.category === selectedCategory) &&
-      ((d.text || '').toLowerCase().includes(searchTerm.toLowerCase()))
+      (activePostId && d.id === activePostId) || (
+        (selectedCategory === 'all' || d.category === selectedCategory) &&
+        ((d.text || '').toLowerCase().includes(searchTerm.toLowerCase()))
+      )
     );
-    if (savedView) posts = posts.filter(d => savedPosts.includes(d.id));
+    if (savedView) {
+      posts = posts.filter(d => savedPosts.includes(d.id) || (activePostId && d.id === activePostId));
+    }
     return posts;
-  }, [discussions, selectedCategory, searchTerm, savedView, savedPosts, deepLinkedPost]);
+  }, [discussions, selectedCategory, searchTerm, savedView, savedPosts, deepLinkedPost, activePostId]);
 
   const trendingTopics = useMemo(() => {
     if (!discussions) return [];
@@ -1084,6 +1156,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                           postAuthorId={msg.userId}
                           postTitle={(msg.text || '').slice(0, 30) + '...'}
                           onLogin={onLogin}
+                          targetCommentId={msg.id === activePostId ? activeCommentId : null}
                         />
                       </div>
                     )}

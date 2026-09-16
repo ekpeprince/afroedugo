@@ -13,7 +13,7 @@ import UserProfileViewer from './UserProfileViewer';
 import MentionDropdown from './MentionDropdown';
 import PostText from './PostText';
 
-const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
+const CommentSection = ({ postId, postAuthorId, postTitle, onLogin, targetCommentId: propCommentId }) => {
   const { user } = useAuth();
   const { profile } = useProfile();
   const { openChat } = useGlobalState();
@@ -27,6 +27,8 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
   
   const inputRef = useRef(null);
   const hasScrolledToCommentRef = useRef(false);
+
+  const targetCommentId = propCommentId || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('commentId') : null);
 
   // Subscribe to comments for this post
   useEffect(() => {
@@ -49,30 +51,39 @@ const CommentSection = ({ postId, postAuthorId, postTitle, onLogin }) => {
 
   // Scroll to targeted comment if opened from notification
   useEffect(() => {
-    if (typeof window !== 'undefined' && comments.length > 0 && !hasScrolledToCommentRef.current) {
-      const searchParams = new URLSearchParams(window.location.search);
-      const targetCommentId = searchParams.get('commentId');
-      if (targetCommentId) {
-        const scrollToTargetComment = () => {
-          const el = document.getElementById(`comment-${targetCommentId}`);
-          if (el) {
-            hasScrolledToCommentRef.current = true;
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.classList.add('ring-2', 'ring-primary', 'bg-primary/5', 'rounded-2xl');
-            setTimeout(() => {
-              el.classList.remove('ring-2', 'ring-primary', 'bg-primary/5');
-            }, 3000);
-            return true;
+    if (!targetCommentId || comments.length === 0) return;
+
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 25;
+
+    const tryScrollToComment = () => {
+      if (cancelled) return;
+      const el = document.getElementById(`comment-${targetCommentId}`);
+      if (el) {
+        hasScrolledToCommentRef.current = true;
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('ring-4', 'ring-primary', 'ring-offset-2', 'bg-primary/10', 'rounded-2xl', 'transition-all', 'duration-500');
+        setTimeout(() => {
+          if (!cancelled && el) {
+            el.classList.remove('ring-4', 'ring-primary', 'ring-offset-2', 'bg-primary/10');
           }
-          return false;
-        };
-        if (!scrollToTargetComment()) {
-          const t = setTimeout(scrollToTargetComment, 400);
-          return () => clearTimeout(t);
-        }
+        }, 4000);
+        return;
       }
-    }
-  }, [comments]);
+
+      attempts++;
+      if (attempts < maxAttempts) {
+        setTimeout(tryScrollToComment, 120);
+      }
+    };
+
+    const timer = setTimeout(tryScrollToComment, 150);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [comments, targetCommentId]);
 
   // Group and sort comments hierarchically
   const topLevelComments = useMemo(() => {

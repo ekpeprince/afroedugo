@@ -149,10 +149,20 @@ const MainMenu = ({ onNavigate }) => {
                             } else {
                               onNavigate('chat');
                             }
-                          } else if (n.postId) {
-                            onNavigate(`community?postId=${n.postId}${n.commentId ? `&commentId=${n.commentId}` : ''}`);
-                          } else if (n.link) {
-                            onNavigate(n.link);
+                          } else {
+                            let targetPostId = n.postId;
+                            let targetCommentId = n.commentId;
+                            if (!targetPostId && n.link) {
+                              const matchPost = n.link.match(/postId=([^&#]+)/);
+                              if (matchPost) targetPostId = matchPost[1];
+                              const matchComment = n.link.match(/commentId=([^&#]+)/);
+                              if (matchComment) targetCommentId = matchComment[1];
+                            }
+                            if (targetPostId) {
+                              onNavigate(`community?postId=${targetPostId}${targetCommentId ? `&commentId=${targetCommentId}` : ''}`);
+                            } else if (n.link) {
+                              onNavigate(n.link);
+                            }
                           }
                           setIsTrayOpen(false);
                         }}
