@@ -20,6 +20,9 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
   const [loading, setLoading] = useState(false);
   const [imgZoomed, setImgZoomed] = useState(false);
 
+  // Presence hook must run unconditionally on every render before any early return (Rules of Hooks)
+  const { isOnline } = usePresenceStatus(isOpen ? profile?.status : null, isOpen ? profile?.lastOnline : null, 15000);
+
   useEffect(() => {
     if (!isOpen || !userId) return;
     setProfile(null);
@@ -43,8 +46,6 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
   }, [isOpen, userId]);
 
   if (!isOpen) return null;
-
-  const { isOnline } = usePresenceStatus(profile?.status, profile?.lastOnline, 15000);
 
   const name    = profile?.displayName || profile?.email?.split('@')[0] || 'Unknown User';
   const photo   = profile?.photoURL || null;
