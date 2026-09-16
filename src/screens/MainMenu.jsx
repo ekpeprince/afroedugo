@@ -95,6 +95,18 @@ const MainMenu = ({ onNavigate }) => {
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" />
         </svg>
       )
+    },
+    {
+      id: 'guides',
+      label: 'Guides & Blog',
+      sub: 'Work, banks & visas',
+      color: 'bg-primary text-white',
+      shadow: 'shadow-primary/25',
+      icon: (
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+        </svg>
+      )
     }
   ]
 
@@ -234,7 +246,7 @@ const MainMenu = ({ onNavigate }) => {
       </div>
 
       {/* Cards Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-10">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 sm:gap-5 mb-10">
         {menuItems.map((item) => (
           <button
             key={item.id}

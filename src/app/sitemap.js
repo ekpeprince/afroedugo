@@ -1,8 +1,15 @@
-export default function sitemap() {
-  const baseUrl = 'https://afroedugo.vercel.app';
+import { getGuideSlugs } from '../utils/guides';
 
-  // We could fetch dynamic routes (housing, schools) here in the future
-  // For now, we list the core entry points for indexing.
+export default function sitemap() {
+  const baseUrl = 'https://afroedugo.com';
+
+  const guideSlugs = getGuideSlugs();
+  const guideEntries = guideSlugs.map((slug) => ({
+    url: `${baseUrl}/guides/${slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly',
+    priority: 0.8,
+  }));
 
   return [
     {
@@ -12,7 +19,7 @@ export default function sitemap() {
       priority: 1,
     },
     {
-      url: `${baseUrl}/housing`,
+      url: `${baseUrl}/guides`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.9,
@@ -25,6 +32,12 @@ export default function sitemap() {
     },
     {
       url: `${baseUrl}/community`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/housing`,
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.8,
@@ -59,5 +72,6 @@ export default function sitemap() {
       changeFrequency: 'monthly',
       priority: 0.4,
     },
+    ...guideEntries,
   ];
 }
