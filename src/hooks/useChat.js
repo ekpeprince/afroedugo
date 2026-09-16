@@ -71,7 +71,7 @@ export const useChat = (conversationId = null) => {
     const otherUids = [
       ...new Set(
         rawConversations
-          .map(c => c.participants?.find(uid => uid !== user.uid))
+          .map(c => c.participants?.find(uid => uid !== user?.uid))
           .filter(Boolean)
       )
     ];
@@ -97,7 +97,7 @@ export const useChat = (conversationId = null) => {
   // Merge raw conversations with real-time participant profiles
   const conversations = useMemo(() => {
     return rawConversations.map(conv => {
-      const otherUid = conv.participants?.find(uid => uid !== user.uid);
+      const otherUid = conv.participants?.find(uid => uid !== user?.uid);
       if (!otherUid) return conv;
 
       const profile = participantProfiles[otherUid];

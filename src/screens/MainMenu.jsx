@@ -175,7 +175,7 @@ const MainMenu = ({ onNavigate }) => {
               (profile?.photoURL || user.photoURL) ? (
                 <img src={profile?.photoURL || user.photoURL} className="w-full h-full object-cover" alt="Profile" />
               ) : (
-                <span className="font-black text-lg">{user.email[0].toUpperCase()}</span>
+                <span className="font-black text-lg">{user.displayName?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '👤'}</span>
               )
             ) : (
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -216,7 +216,7 @@ const MainMenu = ({ onNavigate }) => {
       {/* Hero Greeting */}
       <div className="mb-10 mt-6 mx-6">
         <h2 className="text-4xl font-black text-gray-900 dark:text-white leading-[1.1] mb-2 transition-colors duration-300">
-          {user ? `Hello, ${profile?.displayName || user.email.split('@')[0]}!` : "Your Future Starts Here."}
+          {user ? `Hello, ${profile?.displayName || user.displayName || user.email?.split('@')[0] || 'Friend'}!` : "Your Future Starts Here."}
         </h2>
         <p className="text-gray-400 font-bold text-sm">
           {user ? "Ready to continue your global search?" : "The easiest way to study and live abroad."}

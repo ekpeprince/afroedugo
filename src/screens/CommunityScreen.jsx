@@ -55,6 +55,20 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
   const scrolledPostRef = useRef(null);
   const sentinelRef = useRef(null);
 
+  const getUserInitial = (u) => {
+    if (!u) return '👤';
+    if (u.displayName && u.displayName.trim()) return u.displayName.trim()[0].toUpperCase();
+    if (u.email && u.email.trim()) return u.email.trim()[0].toUpperCase();
+    return '👤';
+  };
+
+  const getUserHandle = (u, p) => {
+    if (p?.displayName) return p.displayName;
+    if (u?.displayName) return u.displayName;
+    if (u?.email) return u.email.split('@')[0];
+    return 'Member';
+  };
+
   const { data: discussions, loading } = useFirestore('discussions', 'createdAt', postLimit);
 
   // Determine if there are potentially more posts to fetch
@@ -219,7 +233,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         reactions: updatedReactions
       });
       if (!userReactedWithEmoji && postAuthorId && postAuthorId !== user.uid) {
-        const senderName = profile?.displayName || user.displayName || user.email.split('@')[0];
+        const senderName = getUserHandle(user, profile);
         const snippet = (postText || '').slice(0, 40);
         await addDoc(collection(db, 'notifications'), {
           userId: postAuthorId,
@@ -347,8 +361,8 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
         category: postCategory,
         createdAt: serverTimestamp(),
         userId: user.uid,
-        user: profile?.displayName || user.displayName || user.email.split('@')[0],
-        userEmail: user.email,
+        user: getUserHandle(user, profile),
+        userEmail: user.email || '',
         userCountry: profile?.country || '',
         userMajor: profile?.major || '',
         userRole: profile?.role || 'incoming',
@@ -392,7 +406,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
             body: JSON.stringify({
               broadcast: true,
               title: `New Post in ${postCategory}`,
-              body: `${profile?.displayName || user.displayName || user.email.split('@')[0]} just posted: "${newMessage.slice(0, 50)}${newMessage.length > 50 ? '...' : ''}"`,
+              body: `${getUserHandle(user, profile)} just posted: "${newMessage.slice(0, 50)}${newMessage.length > 50 ? '...' : ''}"`,
               link: `community?postId=${postRef.id}`,
               icon: profile?.photoURL || user?.photoURL || null,
               image: imageUrls[0] || null
@@ -552,7 +566,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
           >
             {profile?.photoURL || user?.photoURL ? (
               <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
-            ) : user ? user.email[0].toUpperCase() : '👤'}
+            ) : getUserInitial(user)}
           </div>
         </div>
       </header>
@@ -569,9 +583,9 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                 <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center text-2xl font-bold border-4 border-white dark:border-gray-800 shadow-md mb-3">
                   {profile?.photoURL || user?.photoURL
                     ? <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
-                    : user.email[0].toUpperCase()}
+                    : getUserInitial(user)}
                 </div>
-                <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">{profile?.displayName || user.email.split('@')[0]}</h3>
+                <h3 className="font-bold text-gray-900 dark:text-white text-lg leading-tight">{getUserHandle(user, profile)}</h3>
                 <p className="text-gray-500 dark:text-gray-400 text-sm mb-2">{profile?.major || 'Undecided Major'}</p>
                 <div className="mb-4">
                   <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${profile?.role === 'current' ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}`}>
@@ -681,7 +695,7 @@ const CommunityScreen = ({ onBack, onOpenChat, onOpenMessages, onOpenNotificatio
                 <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center text-gray-500 dark:text-gray-300 font-bold text-sm shrink-0">
                   {profile?.photoURL || user?.photoURL
                     ? <img src={profile?.photoURL || user?.photoURL} alt="" className="w-full h-full object-cover" />
-                    : user ? user.email[0].toUpperCase() : '👤'}
+                    : getUserInitial(user)}
                 </div>
                 <div className="flex-grow relative">
                   <textarea

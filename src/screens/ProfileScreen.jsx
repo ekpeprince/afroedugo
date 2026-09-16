@@ -129,7 +129,7 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
               ) : profile?.photoURL ? (
                 <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover group-hover:brightness-75 transition-all" />
               ) : (
-                <span className="group-hover:opacity-50 transition-all">{profile?.displayName?.[0] || user?.email?.[0]?.toUpperCase()}</span>
+                <span className="group-hover:opacity-50 transition-all">{profile?.displayName?.[0] || user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '👤'}</span>
               )}
               
               {!isUploadingPhoto && (
@@ -147,7 +147,7 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
             />
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h2 className="text-2xl font-black tracking-tight leading-none">{profile?.displayName || user?.email?.split('@')[0]}</h2>
+                <h2 className="text-2xl font-black tracking-tight leading-none">{profile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'User'}</h2>
                 <span className={`px-2.5 py-1 rounded-xl text-[9px] font-black uppercase tracking-wider ${profile?.role === 'current' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
                   {profile?.role === 'current' ? '🎓 Current' : '✈️ Incoming'}
                 </span>

@@ -62,7 +62,7 @@ export default function ProfileModal({ isOpen, onClose }) {
         bio,
         major,
         school,
-        interests: interests.split(',').map(i => i.trim()).filter(i => i),
+        interests: String(interests || '').split(',').map(i => i.trim()).filter(Boolean),
         country,
         role,
         photoURL: finalPhotoUrl

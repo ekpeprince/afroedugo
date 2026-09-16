@@ -58,12 +58,12 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
   const linkedin = profile?.linkedin ? (String(profile.linkedin).startsWith('http') ? String(profile.linkedin) : `https://${profile.linkedin}`) : null;
   const rawInterests = profile?.interests;
   const interests = Array.isArray(rawInterests)
-    ? rawInterests
+    ? rawInterests.map(i => (typeof i === 'object' && i !== null ? (i.name || i.label || JSON.stringify(i)) : String(i || '').trim())).filter(Boolean)
     : (typeof rawInterests === 'string' && rawInterests.trim()
         ? rawInterests.split(',').map(s => s.trim()).filter(Boolean)
         : []);
   const role    = profile?.role || 'incoming';
-  const initial = name[0]?.toUpperCase() || '?';
+  const initial = (name && typeof name === 'string' && name[0]) ? name[0].toUpperCase() : '?';
 
   return (
     <>

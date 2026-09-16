@@ -30,21 +30,32 @@ export default function NetworkMatch({ onStartChat, onViewProfile }) {
   const matches = useMemo(() => {
     if (!profile || !user) return [];
 
-    const myCountry = (profile.country || '').toLowerCase().trim();
-    const mySchool = (profile.school || '').toLowerCase().trim();
-    const myMajor = (profile.major || '').toLowerCase().trim();
-    const myInterests = (profile.interests || []).map(i => i.toLowerCase().trim());
+    const toStr = (val) => {
+      if (val == null) return '';
+      if (typeof val === 'object') return (val.name || val.label || '').toLowerCase().trim();
+      return String(val).toLowerCase().trim();
+    };
+    const toArr = (val) => {
+      if (Array.isArray(val)) return val.map(toStr).filter(Boolean);
+      if (typeof val === 'string' && val.trim()) return val.split(',').map(toStr).filter(Boolean);
+      return [];
+    };
+
+    const myCountry = toStr(profile.country);
+    const mySchool = toStr(profile.school);
+    const myMajor = toStr(profile.major);
+    const myInterests = toArr(profile.interests);
 
     const scoredUsers = users
-      .filter(u => u.id !== user.uid) // Exclude self
+      .filter(u => u && u.id && u.id !== user.uid) // Exclude self
       .map(u => {
         let score = 0;
         let reasons = [];
 
-        const theirCountry = (u.country || '').toLowerCase().trim();
-        const theirSchool = (u.school || '').toLowerCase().trim();
-        const theirMajor = (u.major || '').toLowerCase().trim();
-        const theirInterests = (u.interests || []).map(i => i.toLowerCase().trim());
+        const theirCountry = toStr(u.country);
+        const theirSchool = toStr(u.school);
+        const theirMajor = toStr(u.major);
+        const theirInterests = toArr(u.interests);
 
         if (myCountry && myCountry === theirCountry) {
           score += 20;
