@@ -60,13 +60,23 @@ export const useAuth = () => {
       
       const displayName = user.displayName || user.email?.split('@')[0] || "Scholar";
 
+      const existingData = userSnap.data() || {};
+      const marketingOptIn = options.weeklyUpdates !== undefined 
+        ? !!options.weeklyUpdates 
+        : (existingData.emailPreferences?.marketing ?? existingData.weeklyUpdates ?? true);
+
       const profileData = {
         uid: user.uid,
         displayName: displayName,
         photoURL: user.photoURL || `https://ui-avatars.com/api/?name=${displayName}&background=random`,
         email: user.email,
         lastOnline: serverTimestamp(),
+        lastActiveAt: serverTimestamp(),
         status: "online",
+        emailPreferences: {
+          marketing: marketingOptIn,
+        },
+        reEngagementSentAt: existingData.reEngagementSentAt !== undefined ? existingData.reEngagementSentAt : null,
         ...(isNewUser ? { joinedAt: serverTimestamp() } : {})
       };
 

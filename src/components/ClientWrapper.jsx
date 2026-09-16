@@ -42,7 +42,11 @@ function GlobalModalsContainer({ children }) {
         clearTimeout(offlineTimeout);
         offlineTimeout = null;
       }
-      setDoc(userRef, { status: 'online', lastOnline: serverTimestamp() }, { merge: true })
+      setDoc(userRef, { 
+        status: 'online', 
+        lastOnline: serverTimestamp(),
+        lastActiveAt: serverTimestamp()
+      }, { merge: true })
         .catch(err => console.error("Error setting presence to online:", err));
     };
 
