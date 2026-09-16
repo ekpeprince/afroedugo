@@ -353,13 +353,6 @@ const SchoolFinder = ({ onBack, initialSchools }) => {
             </button>
             <h1 className="text-sm font-bold uppercase tracking-wider text-gray-700 dark:text-gray-300">Accredited Programmes</h1>
         </div>
-
-        <button 
-            onClick={() => setViewMode(prev => prev === 'list' ? 'map' : 'list')}
-            className="flex items-center gap-2 text-xs font-semibold text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 rounded-full px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-800 transition-all cursor-pointer"
-        >
-            <span>{viewMode === 'list' ? '🗺️ Map View' : '📋 List View'}</span>
-        </button>
       </header>
 
       {/* Main Content Area */}
