@@ -48,7 +48,7 @@ export default function UserProfileViewer({ userId, isOpen, onClose, onMessage, 
   if (!isOpen) return null;
 
   const name    = profile?.displayName || profile?.email?.split('@')[0] || 'Unknown User';
-  const photo   = profile?.photoURL || null;
+  const photo   = profile?.photoURL || profile?.photoUrl || null;
   const bio     = profile?.bio || null;
   const major   = profile?.major || null;
   const country = profile?.country || null;

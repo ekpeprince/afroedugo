@@ -126,8 +126,8 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
             >
               {isUploadingPhoto ? (
                 <div className="animate-spin w-6 h-6 border-4 border-primary/30 border-t-primary rounded-full"></div>
-              ) : profile?.photoURL ? (
-                <img src={profile.photoURL} alt="Avatar" className="w-full h-full object-cover group-hover:brightness-75 transition-all" />
+              ) : (profile?.photoURL || profile?.photoUrl || user?.photoURL) ? (
+                <img src={profile?.photoURL || profile?.photoUrl || user?.photoURL} alt="Avatar" className="w-full h-full object-cover group-hover:brightness-75 transition-all" />
               ) : (
                 <span className="group-hover:opacity-50 transition-all">{profile?.displayName?.[0] || user?.displayName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '👤'}</span>
               )}

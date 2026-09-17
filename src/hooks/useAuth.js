@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import { auth, db } from '../firebase/config';
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail } from 'firebase/auth';
+import { 
+  onAuthStateChanged, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  sendPasswordResetEmail,
+  updateProfile as updateAuthProfile
+} from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, getDoc, collection, addDoc } from 'firebase/firestore';
 
 export const useAuth = () => {
@@ -28,7 +37,8 @@ export const useAuth = () => {
     setLoading(true);
     setError(null);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      await syncUserProfile(userCredential.user);
     } catch (err) {
       setError(err.message);
       throw err;
@@ -58,17 +68,23 @@ export const useAuth = () => {
       const userSnap = await getDoc(userRef);
       const isNewUser = !userSnap.exists();
       
-      const displayName = user.displayName || user.email?.split('@')[0] || "Scholar";
-
       const existingData = userSnap.data() || {};
+      const finalDisplayName = existingData.displayName || user.displayName || user.email?.split('@')[0] || "Scholar";
+
+      // CRITICAL: Preserve custom uploaded profile picture!
+      // If user uploaded an avatar (stored in existingData.photoURL or photoUrl),
+      // NEVER overwrite it with the Google account avatar or ui-avatars.
+      const existingPhoto = existingData.photoURL || existingData.photoUrl;
+      const finalPhoto = existingPhoto || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(finalDisplayName)}&background=random`;
+
       const marketingOptIn = options.weeklyUpdates !== undefined 
         ? !!options.weeklyUpdates 
         : (existingData.emailPreferences?.marketing ?? existingData.weeklyUpdates ?? true);
 
       const profileData = {
         uid: user.uid,
-        displayName: displayName,
-        photoURL: user.photoURL || `https://ui-avatars.com/api/?name=${displayName}&background=random`,
+        displayName: finalDisplayName,
+        photoURL: finalPhoto,
         email: user.email,
         lastOnline: serverTimestamp(),
         lastActiveAt: serverTimestamp(),
@@ -89,11 +105,29 @@ export const useAuth = () => {
 
       await setDoc(userRef, profileData, { merge: true });
 
+      // Synchronize photoURL and displayName with Firebase Auth currentUser so auth user state always matches
+      if (auth.currentUser) {
+        try {
+          const authUpdates = {};
+          if (finalPhoto && auth.currentUser.photoURL !== finalPhoto) {
+            authUpdates.photoURL = finalPhoto;
+          }
+          if (finalDisplayName && auth.currentUser.displayName !== finalDisplayName) {
+            authUpdates.displayName = finalDisplayName;
+          }
+          if (Object.keys(authUpdates).length > 0) {
+            await updateAuthProfile(auth.currentUser, authUpdates);
+          }
+        } catch (authSyncErr) {
+          console.warn("Could not sync Firebase Auth user profile:", authSyncErr);
+        }
+      }
+
       if (options.weeklyUpdates && user.email) {
         try {
           await setDoc(doc(db, 'newsletter_subscribers', user.uid), {
             email: user.email,
-            displayName: displayName,
+            displayName: finalDisplayName,
             subscribedAt: serverTimestamp(),
             source: 'weekly_updates_opt_in'
           }, { merge: true });
@@ -105,7 +139,7 @@ export const useAuth = () => {
       if (isNewUser) {
         // Welcome Bot Post
         await addDoc(collection(db, 'discussions'), {
-          text: `👋 Please welcome our newest member, ${displayName}! Say hi and make them feel at home.`,
+          text: `👋 Please welcome our newest member, ${finalDisplayName}! Say hi and make them feel at home.`,
           user: "🤖 Welcome Bot",
           userId: "system_bot",
           category: "General",

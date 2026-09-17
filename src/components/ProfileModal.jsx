@@ -49,7 +49,7 @@ export default function ProfileModal({ isOpen, onClose }) {
     e.preventDefault();
     setIsSaving(true);
     try {
-      let finalPhotoUrl = profile?.photoURL || '';
+      let finalPhotoUrl = profile?.photoURL || profile?.photoUrl || user?.photoURL || '';
 
       if (avatarFile) {
         const imageRef = ref(storage, `avatars/${user.uid}_${Date.now()}`);
@@ -57,16 +57,21 @@ export default function ProfileModal({ isOpen, onClose }) {
         finalPhotoUrl = await getDownloadURL(snapshot.ref);
       }
 
-      await updateProfile({
+      const updateData = {
         displayName,
         bio,
         major,
         school,
         interests: String(interests || '').split(',').map(i => i.trim()).filter(Boolean),
         country,
-        role,
-        photoURL: finalPhotoUrl
-      });
+        role
+      };
+
+      if (finalPhotoUrl) {
+        updateData.photoURL = finalPhotoUrl;
+      }
+
+      await updateProfile(updateData);
 
       onClose();
     } catch (error) {
@@ -95,8 +100,8 @@ export default function ProfileModal({ isOpen, onClose }) {
               <div className="w-24 h-24 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center text-3xl font-bold text-gray-400 border-4 border-white shadow-md transition-all group-hover:ring-4 ring-primary/30">
                 {avatarPreview ? (
                   <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
-                ) : profile?.photoURL || user?.photoURL ? (
-                  <img src={profile?.photoURL || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
+                ) : (profile?.photoURL || profile?.photoUrl || user?.photoURL) ? (
+                  <img src={profile?.photoURL || profile?.photoUrl || user?.photoURL} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   user?.email?.[0]?.toUpperCase() || '👤'
                 )}

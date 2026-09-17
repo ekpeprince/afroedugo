@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import WelcomeScreen from '../screens/WelcomeScreen';
 import MainMenu from '../screens/MainMenu';
 import { useAuth } from '../hooks/useAuth';
+import { useProfile } from '../hooks/useProfile';
 import { useGlobalState } from '../context/GlobalStateContext';
 
 export default function Home() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { profile } = useProfile();
   const [showMenu, setShowMenu] = useState(false);
   const [hasRecoveredSession, setHasRecoveredSession] = useState(false);
 
@@ -54,10 +56,10 @@ export default function Home() {
               className="bg-white/80 backdrop-blur-md px-6 py-3 rounded-full shadow-lg border border-gray-100 flex items-center gap-3 hover:scale-105 active:scale-95 transition-all"
             >
               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs overflow-hidden">
-                {user?.photoURL ? (
-                  <img src={user.photoURL} className="w-full h-full object-cover" />
+                {(profile?.photoURL || profile?.photoUrl || user?.photoURL) ? (
+                  <img src={profile?.photoURL || profile?.photoUrl || user?.photoURL} className="w-full h-full object-cover" alt="Avatar" />
                 ) : (
-                  user?.email ? user.email[0].toUpperCase() : '?'
+                  profile?.displayName?.[0]?.toUpperCase() || user?.displayName?.[0]?.toUpperCase() || (user?.email ? user.email[0].toUpperCase() : '?')
                 )}
               </div>
               <span className="font-black text-xs uppercase tracking-widest text-gray-700">

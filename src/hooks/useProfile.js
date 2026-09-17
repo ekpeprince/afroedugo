@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { db } from '../firebase/config';
-import { doc, onSnapshot, setDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../firebase/config';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { updateProfile as updateAuthProfile } from 'firebase/auth';
 import { useAuth } from './useAuth';
 
 export const useProfile = () => {
@@ -15,27 +16,36 @@ export const useProfile = () => {
       return;
     }
 
-    const unsub = onSnapshot(doc(db, 'users', user.uid), (doc) => {
-      if (doc.exists()) {
-        setProfile(doc.data());
-      } else {
-        // Create initial profile if it doesn't exist
-        const initialProfile = {
-          uid: user.uid,
-          email: user.email,
-          displayName: user.email.split('@')[0],
-          bio: '',
-          country: '',
-          major: '',
-          role: 'incoming',
-          photoUrl: '',
-          createdAt: new Date()
-        };
-        setDoc(doc.ref, initialProfile);
-        setProfile(initialProfile);
+    const unsub = onSnapshot(
+      doc(db, 'users', user.uid),
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const photoURL = data.photoURL || data.photoUrl || user.photoURL || '';
+          setProfile({ ...data, photoURL });
+        } else {
+          // Create initial profile if it doesn't exist
+          const initialProfile = {
+            uid: user.uid,
+            email: user.email,
+            displayName: user.displayName || user.email.split('@')[0],
+            bio: '',
+            country: '',
+            major: '',
+            role: 'incoming',
+            photoURL: user.photoURL || '',
+            createdAt: new Date()
+          };
+          setDoc(docSnap.ref, initialProfile, { merge: true });
+          setProfile(initialProfile);
+        }
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Error loading user profile:", err);
+        setLoading(false);
       }
-      setLoading(false);
-    });
+    );
 
     return unsub;
   }, [user]);
@@ -43,7 +53,25 @@ export const useProfile = () => {
   const updateProfile = async (data) => {
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
-    await updateDoc(userRef, data);
+    // Use setDoc with merge: true to avoid crashes if document was missing
+    await setDoc(userRef, data, { merge: true });
+
+    // Sync with Firebase Auth currentUser so auth state stays in lockstep
+    if (auth.currentUser) {
+      try {
+        const authUpdates = {};
+        if (data.displayName) authUpdates.displayName = data.displayName;
+        if (data.photoURL) authUpdates.photoURL = data.photoURL;
+        if (Object.keys(authUpdates).length > 0) {
+          await updateAuthProfile(auth.currentUser, authUpdates);
+        }
+      } catch (authErr) {
+        console.warn("Could not sync with auth profile:", authErr);
+      }
+    }
+
+    // Optimistically update local profile state
+    setProfile(prev => ({ ...(prev || {}), ...data }));
   };
 
   return { profile, loading, updateProfile };
