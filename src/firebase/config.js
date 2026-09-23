@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 import { getAuth } from "firebase/auth";
@@ -10,22 +10,31 @@ const getAuthDomain = () => {
   if (typeof window !== "undefined" && window.location.hostname.includes("afroedugo.com")) {
     return window.location.hostname;
   }
-  return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "www.afroedugo.com";
+  return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "afroedugo.com";
 };
 
-// Your web app's Firebase configuration
+// Web app's Firebase configuration with fallback values for SSR & CI builds
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBOr3R-Subxwq2HjZGB1v7Wz31ttkcJBpQ",
   authDomain: getAuthDomain(),
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "afroedugo-b0b3f",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "afroedugo-b0b3f.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "86185831384",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:86185831384:web:1fffe955dcd6d044a9a0ad",
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Validate required config fields
+const missing = Object.entries(firebaseConfig)
+  .filter(([key, value]) => !value && key !== 'measurementId')
+  .map(([key]) => key);
+
+if (missing.length > 0) {
+  throw new Error(`Missing required Firebase configuration: ${missing.join(', ')}`);
+}
+
+// Initialize Firebase (prevent duplicate initialization during Fast Refresh / SSR)
+const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const storage = getStorage(app);
 const auth = getAuth(app);
@@ -37,17 +46,17 @@ if (typeof window !== "undefined") {
     if (supported) {
       analytics = getAnalytics(app);
     }
-  });
+  }).catch(() => {});
 
   isMessagingSupported().then((supported) => {
     if (supported) {
       messaging = getMessaging(app);
     }
-  });
+  }).catch(() => {});
 }
 
 // Google Maps Configuration
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "YOUR_GOOGLE_MAPS_API_KEY";
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyBOr3R-Subxwq2HjZGB1v7Wz31ttkcJBpQ";
 
 // Enable Offline Persistence (Client-only)
 if (typeof window !== 'undefined') {
