@@ -8,9 +8,11 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   sendPasswordResetEmail,
+  sendEmailVerification,
   updateProfile as updateAuthProfile
 } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp, getDoc, collection, addDoc } from 'firebase/firestore';
+import { logger } from '../utils/logger';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -18,20 +20,33 @@ export const useAuth = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      if (user) {
-        document.cookie = "session-auth=true; path=/; max-age=31536000; SameSite=Lax";
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      setUser(currentUser);
+      if (currentUser) {
+        // Sync secure server-side session cookie
+        try {
+          const idToken = await currentUser.getIdToken();
+          await fetch('/api/auth/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idToken })
+          });
+        } catch (syncErr) {
+          logger.warn('Session sync warning:', syncErr.message);
+        }
+        // Legacy fallback cookie for local dev / client navigation
+        document.cookie = "session-auth=true; path=/; max-age=1209600; SameSite=Lax";
       } else {
+        // Destroy server-side session
+        try {
+          await fetch('/api/auth/session', { method: 'DELETE' });
+        } catch {}
         document.cookie = "session-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
       }
       setLoading(false);
     });
     return unsubscribe;
   }, []);
-
-  // Presence tracking has been moved to ClientWrapper.jsx to prevent race conditions
-
 
   const login = async (email, password) => {
     setLoading(true);
@@ -52,6 +67,14 @@ export const useAuth = () => {
     setError(null);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      
+      // Automatically send verification email
+      try {
+        await sendEmailVerification(userCredential.user);
+      } catch (verifErr) {
+        logger.warn('Verification email dispatch warning:', verifErr.message);
+      }
+
       await syncUserProfile(userCredential.user, options);
     } catch (err) {
       setError(err.message);
@@ -59,6 +82,14 @@ export const useAuth = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const resendVerificationEmail = async () => {
+    if (auth.currentUser && !auth.currentUser.emailVerified) {
+      await sendEmailVerification(auth.currentUser);
+      return true;
+    }
+    return false;
   };
 
   const syncUserProfile = async (user, options = {}) => {
@@ -71,9 +102,6 @@ export const useAuth = () => {
       const existingData = userSnap.data() || {};
       const finalDisplayName = existingData.displayName || user.displayName || user.email?.split('@')[0] || "Scholar";
 
-      // CRITICAL: Preserve custom uploaded profile picture!
-      // If user uploaded an avatar (stored in existingData.photoURL or photoUrl),
-      // NEVER overwrite it with the Google account avatar or ui-avatars.
       const existingPhoto = existingData.photoURL || existingData.photoUrl;
       const finalPhoto = existingPhoto || user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(finalDisplayName)}&background=random`;
 
@@ -105,7 +133,6 @@ export const useAuth = () => {
 
       await setDoc(userRef, profileData, { merge: true });
 
-      // Synchronize photoURL and displayName with Firebase Auth currentUser so auth user state always matches
       if (auth.currentUser) {
         try {
           const authUpdates = {};
@@ -119,7 +146,7 @@ export const useAuth = () => {
             await updateAuthProfile(auth.currentUser, authUpdates);
           }
         } catch (authSyncErr) {
-          console.warn("Could not sync Firebase Auth user profile:", authSyncErr);
+          logger.warn("Could not sync Firebase Auth user profile:", authSyncErr.message);
         }
       }
 
@@ -132,12 +159,11 @@ export const useAuth = () => {
             source: 'weekly_updates_opt_in'
           }, { merge: true });
         } catch (subErr) {
-          console.error("Newsletter subscriber sync error:", subErr);
+          logger.error("Newsletter subscriber sync error:", subErr.message);
         }
       }
 
       if (isNewUser) {
-        // Welcome Bot Post
         await addDoc(collection(db, 'discussions'), {
           text: `👋 Please welcome our newest member, ${finalDisplayName}! Say hi and make them feel at home.`,
           user: "🤖 Welcome Bot",
@@ -149,7 +175,7 @@ export const useAuth = () => {
         });
       }
     } catch (err) {
-      console.error("Profile sync error:", err);
+      logger.error("Profile sync error:", err.message);
     }
   };
 
@@ -177,30 +203,26 @@ export const useAuth = () => {
   };
 
   const loginWithTikTok = () => {
-    // 1. TikTok Client Key from .env
     const clientKey = process.env.NEXT_PUBLIC_TIKTOK_CLIENT_KEY || "YOUR_CLIENT_KEY";
     const redirectUri = process.env.NEXT_PUBLIC_TIKTOK_REDIRECT_URI || window.location.origin;
-    
-    // 2. Generate authorization URL
-    // Scope: user.info.basic
     const scope = 'user.info.basic';
     const authUrl = `https://www.tiktok.com/auth/authorize/?client_key=${clientKey}&scope=${scope}&response_type=code&redirect_uri=${encodeURIComponent(redirectUri)}&state=${Math.random().toString(36).substring(7)}`;
-
-    // 3. Redirect User
     window.location.href = authUrl;
   };
 
   const logout = async () => {
     try {
       if (user) {
-        // Mark as offline in Firestore
         await setDoc(doc(db, 'users', user.uid), { status: 'offline', lastOnline: serverTimestamp() }, { merge: true });
       }
       await signOut(auth);
+      await fetch('/api/auth/session', { method: 'DELETE' }).catch(() => {});
+      document.cookie = "session-auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC; SameSite=Lax";
     } catch (error) {
-      console.error("Logout error:", error);
+      logger.error("Logout error:", error.message);
     }
   };
+
   const resetPassword = async (email) => {
     setLoading(true);
     setError(null);
@@ -214,5 +236,16 @@ export const useAuth = () => {
     }
   };
 
-  return { user, loading, error, login, signup, logout, loginWithGoogle, loginWithTikTok, resetPassword };
+  return { 
+    user, 
+    loading, 
+    error, 
+    login, 
+    signup, 
+    logout, 
+    loginWithGoogle, 
+    loginWithTikTok, 
+    resetPassword,
+    resendVerificationEmail
+  };
 };

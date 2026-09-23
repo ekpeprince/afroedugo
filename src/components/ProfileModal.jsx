@@ -3,6 +3,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
 import { storage } from '../firebase/config';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { validateFile } from '../utils/fileSecurity';
 
 export default function ProfileModal({ isOpen, onClose }) {
   const { user } = useAuth();
@@ -38,6 +39,11 @@ export default function ProfileModal({ isOpen, onClose }) {
   const handleAvatarChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const check = validateFile(file, { label: 'Avatar image' });
+      if (!check.valid) {
+        alert(check.error);
+        return;
+      }
       setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => setAvatarPreview(reader.result);

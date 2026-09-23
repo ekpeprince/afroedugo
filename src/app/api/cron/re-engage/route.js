@@ -16,12 +16,37 @@ export const maxDuration = 60; // Allows up to 60s for batch email dispatch
  * 3. Sends a win-back email via Resend with top student resources.
  * 4. Stamps reEngagementSentAt with server timestamp to prevent duplicate emails.
  */
+import crypto from 'crypto';
+import { checkRateLimit, getClientIp } from '../../../../utils/rateLimiter';
+import { logger } from '../../../../utils/logger';
+
+
 export async function GET(req) {
-  // 1. Authenticate the Cron request
-  const authHeader = req.headers.get('authorization');
+  // 1. Rate limiting (max 10 cron trigger checks per hour per IP)
+  const ip = getClientIp(req);
+  const rateCheck = checkRateLimit(`cron-reengage:${ip}`, 10, 60 * 60 * 1000);
+  if (!rateCheck.allowed) {
+    return NextResponse.json({ error: 'Too many cron trigger attempts' }, { status: 429 });
+  }
+
+  // 2. Authenticate the Cron request with mandatory secret
+  const authHeader = req.headers.get('authorization') || '';
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret) {
+    logger.error('CRON_SECRET is not configured on server');
+    return NextResponse.json({ error: 'Cron secret unconfigured' }, { status: 500 });
+  }
+
+  const expectedAuth = `Bearer ${cronSecret}`;
+  const headerBuf = Buffer.from(authHeader);
+  const expectedBuf = Buffer.from(expectedAuth);
+
+  const isAuthValid = headerBuf.length === expectedBuf.length && 
+    crypto.timingSafeEqual(headerBuf, expectedBuf);
+
+  if (!isAuthValid) {
+    logger.warn('Unauthorized attempt to trigger /api/cron/re-engage from IP:', ip);
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

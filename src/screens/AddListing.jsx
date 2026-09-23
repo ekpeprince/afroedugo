@@ -4,6 +4,9 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../hooks/useAuth';
 import { useLoadScript } from '@react-google-maps/api';
+import { validateFile } from '../utils/fileSecurity';
+import { validateListingInput } from '../utils/validators';
+import { logger } from '../utils/logger';
 
 const AddListing = ({ onBack }) => {
   const { user, loading: authLoading } = useAuth();
@@ -93,6 +96,12 @@ const AddListing = ({ onBack }) => {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      const fileCheck = validateFile(file, { label: 'Listing image' });
+      if (!fileCheck.valid) {
+        alert(fileCheck.error);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+        return;
+      }
       setImage(file);
       setPreview(URL.createObjectURL(file));
     }
@@ -106,6 +115,13 @@ const AddListing = ({ onBack }) => {
     }
     if (!image) {
       alert('Please select an image');
+      return;
+    }
+
+    // Input Validation
+    const validation = validateListingInput(formData);
+    if (!validation.valid) {
+      alert(validation.errors.join('\n'));
       return;
     }
 
@@ -124,15 +140,15 @@ const AddListing = ({ onBack }) => {
       let coords = null;
       if (isLoaded) {
         try {
-          coords = await geocodeAddress(formData.location);
+          coords = await geocodeAddress(validation.sanitized.location);
         } catch (err) {
-          console.warn('Geocoding warning:', err);
+          logger.warn('Geocoding warning:', err.message);
         }
       }
 
       // 4. Save to Firestore
       await addDoc(collection(db, 'housing'), {
-        ...formData,
+        ...validation.sanitized,
         imageUrl,
         userId: user.uid,
         userEmail: user.email,
@@ -144,8 +160,8 @@ const AddListing = ({ onBack }) => {
       alert('Listing submitted successfully! It will appear on the feed once approved by an admin.');
       onBack();
     } catch (error) {
-      console.error('Error adding listing:', error);
-      alert('Failed to add listing. Please check console.');
+      logger.error('Error adding listing:', error.message);
+      alert('Failed to add listing. Please try again.');
     } finally {
       setLoading(false);
     }

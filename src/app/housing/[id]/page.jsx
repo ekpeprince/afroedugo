@@ -105,7 +105,7 @@ export default async function HousingDetailPage({ params }) {
               price: item.price?.replace(/[^0-9.]/g, '') || '0',
               priceCurrency: 'EUR', // Assuming EUR, adjust if needed
             },
-          })
+          }).replace(/</g, '\\u003c')
         }}
       />
       <HousingDetailClient item={item} />

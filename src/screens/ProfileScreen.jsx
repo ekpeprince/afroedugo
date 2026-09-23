@@ -5,9 +5,11 @@ import { useProfile } from '../hooks/useProfile'
 import { db, storage } from '../firebase/config'
 import { doc, deleteDoc, collection, query, where, onSnapshot } from 'firebase/firestore'
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage'
+import { validateFile } from '../utils/fileSecurity'
+import { logger } from '../utils/logger'
 
 const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, resendVerificationEmail } = useAuth();
   const { profile, updateProfile, loading: profileLoading } = useProfile();
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({ displayName: '', country: '', major: '', bio: '', role: 'incoming', school: '', instagram: '', linkedin: '', graduationYear: '' });
@@ -89,14 +91,26 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
     setIsEditing(true);
   };
 
+  const [resendStatus, setResendStatus] = useState('');
+
   const handleSaveProfile = async () => {
-    await updateProfile(editData);
+    // Strip privileged fields so non-admins cannot self-elevate
+    const { role, isVerified, joinedAt, uid, email, ...safeData } = editData;
+    await updateProfile(safeData);
     setIsEditing(false);
   };
 
   const handlePhotoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file || !user) return;
+
+    // Validate file type and size (< 5MB, valid image only)
+    const fileCheck = validateFile(file, { label: 'Profile photo' });
+    if (!fileCheck.valid) {
+      alert(fileCheck.error);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
     try {
       setIsUploadingPhoto(true);
@@ -105,10 +119,24 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
       const url = await getDownloadURL(snapshot.ref);
       await updateProfile({ photoURL: url });
     } catch (error) {
-      console.error("Error uploading photo:", error);
+      logger.error("Error uploading photo:", error.message);
       alert("Failed to upload photo. Please try again.");
     } finally {
       setIsUploadingPhoto(false);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    setResendStatus('sending');
+    try {
+      const sent = await resendVerificationEmail?.();
+      if (sent) {
+        setResendStatus('sent');
+      } else {
+        setResendStatus('error');
+      }
+    } catch {
+      setResendStatus('error');
     }
   };
 
@@ -116,6 +144,21 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
 
   return (
     <div className="min-h-screen bg-transparent pb-20 max-w-4xl mx-auto">
+      {user && !user.emailVerified && (
+        <div className="mx-4 my-3 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-800 dark:text-amber-200 shadow-sm">
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">✉️</span>
+            <span><strong>Verify Your Email:</strong> Please verify your email to unlock all student features, housing submissions, and verified credentials.</span>
+          </div>
+          <button
+            onClick={handleResendVerification}
+            disabled={resendStatus === 'sending' || resendStatus === 'sent'}
+            className="bg-amber-600 text-white font-bold px-3.5 py-1.5 rounded-xl hover:bg-amber-700 transition-colors disabled:opacity-50 text-[11px] whitespace-nowrap self-end sm:self-auto"
+          >
+            {resendStatus === 'sending' ? 'Sending...' : resendStatus === 'sent' ? '✓ Verification Sent' : 'Resend Link'}
+          </button>
+        </div>
+      )}
       <header className="p-8 bg-gray-900/90 backdrop-blur-2xl text-white rounded-b-[3rem] shadow-2xl shadow-gray-200/20 mb-8 sticky top-0 z-20 border-b border-white/5">
         <button onClick={onBack} className="text-2xl mb-8 opacity-60 hover:opacity-100 transition-opacity">←</button>
         <div className="flex items-center justify-between">

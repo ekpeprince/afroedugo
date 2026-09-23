@@ -1,5 +1,7 @@
 import React, { useState } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { isValidEmail, validatePasswordStrength } from '../utils/validators'
+import { logger } from '../utils/logger'
 
 const AuthScreen = ({ onBack, onAuthSuccess }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,23 +17,39 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
     e.preventDefault();
     setLocalError('');
     setLocalSuccess('');
-    const trimmedEmail = email.trim();
+    const trimmedEmail = email.trim().toLowerCase();
     
+    // Validate email format
+    if (!isValidEmail(trimmedEmail)) {
+      setLocalError('Please enter a valid email address.');
+      return;
+    }
+
+    // Validate password strength on sign-up
+    if (!isLogin) {
+      const pwdCheck = validatePasswordStrength(password);
+      if (!pwdCheck.valid) {
+        setLocalError(pwdCheck.errors.join('. '));
+        return;
+      }
+    }
+
     try {
       if (isLogin) {
         await login(trimmedEmail, password);
       } else {
         await signup(trimmedEmail, password, { weeklyUpdates });
+        setLocalSuccess('Account created! A verification link was sent to your email. Please check your inbox.');
       }
       onAuthSuccess?.();
     } catch (err) {
-      console.error(err);
+      logger.warn('Authentication failure:', err.code || err.message);
       if (err.code === 'auth/invalid-credential') {
         setLocalError('Invalid email or password. If you signed up with Google, please click "Continue with Google" below.');
       } else if (err.code === 'auth/email-already-in-use') {
         setLocalError('An account already exists with this email.');
       } else if (err.code === 'auth/weak-password') {
-        setLocalError('Password should be at least 6 characters.');
+        setLocalError('Password should be at least 8 characters with letters, numbers, and special symbols.');
       } else {
         setLocalError(err.message.replace('Firebase: ', ''));
       }
@@ -45,7 +63,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
       await loginWithGoogle({ weeklyUpdates });
       onAuthSuccess?.();
     } catch (err) {
-      console.error(err);
+      logger.warn('Google sign-in exception:', err.code || err.message);
       if (err.code === 'auth/unauthorized-domain') {
         const domain = typeof window !== 'undefined' ? window.location.hostname : 'afroedugo.com';
         setLocalError(`Domain "${domain}" is not authorized for Google Sign-In in Firebase Console. Please add "${domain}" to Firebase Authentication > Settings > Authorized domains.`);
@@ -73,7 +91,7 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
       await resetPassword(trimmedEmail);
       setLocalSuccess('Password reset email sent! Please check your Spam or Junk folder if you do not see it in your Inbox.');
     } catch (err) {
-      console.error(err);
+      logger.warn('Password reset exception:', err.code || err.message);
       if (err.code === 'auth/user-not-found') {
         setLocalError('No account found with this email.');
       } else {

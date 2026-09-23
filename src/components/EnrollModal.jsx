@@ -4,6 +4,8 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../hooks/useAuth';
 import { getWhatsAppLink } from '../utils/whatsapp';
+import { validateFile, ALLOWED_DOCUMENT_TYPES } from '../utils/fileSecurity';
+import { logger } from '../utils/logger';
 
 const EnrollModal = ({ isOpen, onClose, school }) => {
   const { user } = useAuth();
@@ -20,21 +22,37 @@ const EnrollModal = ({ isOpen, onClose, school }) => {
   if (!isOpen) return null;
 
   const handleFileChange = (e, setter) => {
-    if (e.target.files[0]) {
-      setter(e.target.files[0]);
+    const file = e.target.files[0];
+    if (file) {
+      const check = validateFile(file, { maxSize: 10 * 1024 * 1024, allowedTypes: ALLOWED_DOCUMENT_TYPES, label: 'Passport document' });
+      if (!check.valid) {
+        alert(check.error);
+        return;
+      }
+      setter(file);
     }
   };
 
   const handleMultipleFilesChange = (e, setter) => {
     if (e.target.files) {
-      setter(Array.from(e.target.files));
+      const raw = Array.from(e.target.files);
+      const valid = raw.filter(file => {
+        const check = validateFile(file, { maxSize: 10 * 1024 * 1024, allowedTypes: ALLOWED_DOCUMENT_TYPES, label: 'Academic document' });
+        if (!check.valid) {
+          alert(check.error);
+          return false;
+        }
+        return true;
+      });
+      setter(valid);
     }
   };
 
   const uploadFile = async (file, type) => {
     if (!file) return null;
-    const storageRef = ref(storage, `enrollments/${user.uid}_${Date.now()}_${type}_${file.name}`);
-    await uploadBytes(storageRef, file);
+    const safeName = file.name ? file.name.replace(/[^a-zA-Z0-9.\-_]/g, '') : 'document.pdf';
+    const storageRef = ref(storage, `enrollments/${user.uid}_${Date.now()}_${type}_${safeName}`);
+    await uploadBytes(storageRef, file, { contentType: file.type || 'application/pdf' });
     return await getDownloadURL(storageRef);
   };
 

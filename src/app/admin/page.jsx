@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminDashboard from '../../screens/AdminDashboard';
 import { useProfile } from '../../hooks/useProfile';
@@ -8,20 +8,64 @@ import { useAuth } from '../../hooks/useAuth';
 
 export default function AdminPage() {
   const router = useRouter();
-  const { profile, loading } = useProfile();
+  const { profile, loading: profileLoading } = useProfile();
+  const { user, loading: authLoading } = useAuth();
+  const [serverAuthorized, setServerAuthorized] = useState(null); // null = pending, true = ok, false = denied
 
-  const { user } = useAuth();
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkServerAuthorization() {
+      if (!user) {
+        if (isMounted) setServerAuthorized(false);
+        return;
+      }
+
+      try {
+        const idToken = await user.getIdToken();
+        const res = await fetch('/api/admin/verify', {
+          headers: {
+            'Authorization': `Bearer ${idToken}`
+          }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setServerAuthorized(data.authorized === true);
+        } else {
+          if (isMounted) setServerAuthorized(false);
+        }
+      } catch {
+        if (isMounted) setServerAuthorized(false);
+      }
+    }
+
+    if (!authLoading) {
+      checkServerAuthorization();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user, authLoading]);
+
+  const loading = authLoading || profileLoading || serverAuthorized === null;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-3">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+        <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest">Verifying Server Security Credentials...</p>
       </div>
     );
   }
 
-  // Gate access to admin users only
-  const isAuthorized = profile?.role === 'admin' || user?.email === 'ekpeprinceesor@gmail.com' || user?.email === 'EKPEPRINCEESOR@GMAIL.COM';
+  // Double-check: Client-side role and Server-side authorization check must BOTH pass
+  const isClientAuthorized = 
+    profile?.role === 'admin' || 
+    user?.email?.toLowerCase() === 'ekpeprinceesor@gmail.com';
+
+  const isAuthorized = isClientAuthorized && serverAuthorized;
 
   if (!isAuthorized) {
     return (
@@ -53,4 +97,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

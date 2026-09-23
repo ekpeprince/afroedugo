@@ -21,6 +21,8 @@ import { notifyUser } from '../utils/notifyUser'
 import UserProfileViewer from '../components/UserProfileViewer'
 import NetworkMatch from '../components/NetworkMatch'
 import PostImageViewer from '../components/PostImageViewer'
+import { validateFile } from '../utils/fileSecurity'
+import { logger } from '../utils/logger'
 
 const CommunityScreen = ({ 
   onBack, 
@@ -351,8 +353,23 @@ const CommunityScreen = ({
   };
 
   const handleFileChange = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+    const rawFiles = Array.from(e.target.files);
+    if (rawFiles.length === 0) return;
+
+    // Security: Validate file type and size (< 5MB, valid image only)
+    const files = rawFiles.filter(file => {
+      const check = validateFile(file, { label: 'Community image' });
+      if (!check.valid) {
+        alert(check.error);
+        return false;
+      }
+      return true;
+    });
+
+    if (files.length === 0) {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
 
     try {
       // Compress each image file concurrently client-side
@@ -364,7 +381,7 @@ const CommunityScreen = ({
       imagePreviews.forEach(url => URL.revokeObjectURL(url));
       setImagePreviews(newFiles.map(f => URL.createObjectURL(f)));
     } catch (err) {
-      console.error('Image compression failed, falling back to original files:', err);
+      logger.error('Image compression failed, falling back to original files:', err.message);
       const newFiles = [...attachedImages, ...files].slice(0, 4);
       setAttachedImages(newFiles);
       imagePreviews.forEach(url => URL.revokeObjectURL(url));

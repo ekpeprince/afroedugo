@@ -53,8 +53,9 @@ export const useProfile = () => {
   const updateProfile = async (data) => {
     if (!user) return;
     const userRef = doc(db, 'users', user.uid);
-    // Use setDoc with merge: true to avoid crashes if document was missing
-    await setDoc(userRef, data, { merge: true });
+    // Security: Never permit client-side modification of privileged roles or verification status
+    const { role, isVerified, joinedAt, uid, email, ...safeData } = data || {};
+    await setDoc(userRef, safeData, { merge: true });
 
     // Sync with Firebase Auth currentUser so auth state stays in lockstep
     if (auth.currentUser) {

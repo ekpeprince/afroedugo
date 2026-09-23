@@ -7,6 +7,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useAuth } from '../hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
+import { validateFile } from '../utils/fileSecurity';
 
 // ──────────────────────────────────────────────
 // Story Viewer Overlay
@@ -381,6 +382,11 @@ export default function StoriesBar({ onLogin }) {
     if (!user) return;
     let imageUrl = null;
     if (imageFile) {
+      const check = validateFile(imageFile, { label: 'Story image' });
+      if (!check.valid) {
+        alert(check.error);
+        return;
+      }
       const ext = imageFile.type === 'image/png' ? 'png' : imageFile.type === 'image/webp' ? 'webp' : 'jpg';
       const storageRef = ref(storage, `stories/${user.uid}_${Date.now()}.${ext}`);
       const snap = await uploadBytes(storageRef, imageFile, { contentType: imageFile.type || 'image/jpeg' });
