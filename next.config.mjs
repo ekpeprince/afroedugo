@@ -52,7 +52,7 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com data:",
       "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://*.firebasestorage.app https://images.unsplash.com https://lh3.googleusercontent.com https://ui-avatars.com https://maps.googleapis.com https://maps.gstatic.com https://flagsapi.com https://flagcdn.com",
       "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.firebasestorage.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://fcm.googleapis.com https://studyin.lt",
-      "frame-src 'self' https://afroedugo-b0b3f.firebaseapp.com https://accounts.google.com",
+      "frame-src 'self' https://afroedugo-b0b3f.firebaseapp.com https://*.firebaseapp.com https://afroedugo-b0b3f.web.app https://*.web.app https://accounts.google.com https://*.google.com",
       "frame-ancestors 'none'",
       "object-src 'none'",
       "base-uri 'self'"
@@ -108,6 +108,19 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: securityHeaders,
+      },
+      {
+        source: '/__/auth/:path*',
+        headers: [
+          {
+            key: 'X-Frame-Options',
+            value: 'SAMEORIGIN',
+          },
+          {
+            key: 'Content-Security-Policy',
+            value: "frame-ancestors 'self' https://afroedugo-b0b3f.firebaseapp.com https://*.firebaseapp.com https://accounts.google.com https://*.google.com",
+          },
+        ],
       },
       {
         source: '/api/:path*',

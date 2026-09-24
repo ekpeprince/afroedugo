@@ -5,12 +5,16 @@ import { getAuth } from "firebase/auth";
 import { getAnalytics, isSupported as isAnalyticsSupported } from "firebase/analytics";
 import { getMessaging, isSupported as isMessagingSupported } from "firebase/messaging";
 
-// Determine authDomain dynamically: use current hostname (www.afroedugo.com or afroedugo.com)
+// Canonical Firebase authDomain:
+// Firebase Auth requires the official Firebase authDomain (afroedugo-b0b3f.firebaseapp.com)
+// for signInWithPopup and signInWithRedirect. Using a custom domain directly as authDomain causes
+// iframe framing errors (auth/internal-error) due to browser CSP, redirects, and clickjacking protections.
 const getAuthDomain = () => {
-  if (typeof window !== "undefined" && window.location.hostname.includes("afroedugo.com")) {
-    return window.location.hostname;
+  const envDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
+  if (!envDomain || envDomain.includes("afroedugo.com")) {
+    return "afroedugo-b0b3f.firebaseapp.com";
   }
-  return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "afroedugo.com";
+  return envDomain;
 };
 
 // Web app's Firebase configuration with fallback values for SSR & CI builds
