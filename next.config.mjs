@@ -47,12 +47,12 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.apis.google.com https://maps.googleapis.com https://www.google.com https://*.google.com https://*.gstatic.com https://*.firebaseapp.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://apis.google.com https://*.apis.google.com https://maps.googleapis.com https://www.google.com https://*.google.com https://*.gstatic.com https://*.firebaseapp.com https://www.googletagmanager.com https://*.googletagmanager.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com https://*.gstatic.com data:",
       "img-src 'self' data: blob: https://firebasestorage.googleapis.com https://*.firebasestorage.app https://images.unsplash.com https://lh3.googleusercontent.com https://ui-avatars.com https://maps.googleapis.com https://maps.gstatic.com https://flagsapi.com https://flagcdn.com https://*.google.com https://*.googleusercontent.com",
-      "connect-src 'self' https://apis.google.com https://*.apis.google.com https://accounts.google.com https://*.google.com https://*.googleapis.com https://*.gstatic.com https://fonts.gstatic.com https://fonts.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.firebasestorage.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://fcm.googleapis.com https://studyin.lt https://afroedugo.com https://www.afroedugo.com",
-      "frame-src 'self' https://afroedugo-b0b3f.firebaseapp.com https://*.firebaseapp.com https://afroedugo-b0b3f.web.app https://*.web.app https://accounts.google.com https://*.google.com",
+      "connect-src 'self' https://apis.google.com https://*.apis.google.com https://accounts.google.com https://*.google.com https://*.googleapis.com https://*.gstatic.com https://fonts.gstatic.com https://fonts.googleapis.com https://*.firebaseio.com https://*.firebaseapp.com https://*.firebasestorage.app https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://fcm.googleapis.com https://studyin.lt https://afroedugo.com https://www.afroedugo.com https://www.googletagmanager.com https://*.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com",
+      "frame-src 'self' https://afroedugo-b0b3f.firebaseapp.com https://*.firebaseapp.com https://afroedugo-b0b3f.web.app https://*.web.app https://accounts.google.com https://*.google.com https://afroedugo.com https://www.afroedugo.com",
       "frame-ancestors 'none'",
       "object-src 'none'",
       "base-uri 'self'"

@@ -5,11 +5,15 @@ import { getAuth } from "firebase/auth";
 import { getAnalytics, isSupported as isAnalyticsSupported } from "firebase/analytics";
 import { getMessaging, isSupported as isMessagingSupported } from "firebase/messaging";
 
-// Canonical Firebase authDomain:
-// Firebase Auth requires the official Firebase authDomain (afroedugo-b0b3f.firebaseapp.com)
-// where Google hosts the dedicated auth handler and iframe.
+// Auth Domain Configuration:
+// The project's Google OAuth 2.0 Web Client is configured with https://afroedugo.com/__/auth/handler
+// and https://www.afroedugo.com/__/auth/handler as authorized redirect URIs.
+// Next.js rewrites /__/auth/* to Firebase, allowing first-party authentication on afroedugo.com.
 const getAuthDomain = () => {
-  return "afroedugo-b0b3f.firebaseapp.com";
+  if (typeof window !== "undefined" && window.location.hostname.includes("afroedugo.com")) {
+    return window.location.hostname;
+  }
+  return process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "afroedugo.com";
 };
 
 // Web app's Firebase configuration with fallback values for SSR & CI builds
