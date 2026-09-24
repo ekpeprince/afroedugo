@@ -16,11 +16,15 @@ const WelcomeScreen = ({ onStart }) => {
       onStart?.();
     } catch (err) {
       console.error('Welcome screen Google sign-in error:', err);
+      const domain = typeof window !== 'undefined' ? window.location.hostname : 'afroedugo.com';
       if (err.code === 'auth/unauthorized-domain') {
-        const domain = typeof window !== 'undefined' ? window.location.hostname : 'afroedugo.com';
         setErrorMessage(`Domain "${domain}" is not authorized in Firebase Console.`);
       } else if (err.code === 'auth/popup-closed-by-user') {
         // User voluntarily closed popup
+      } else if (err.code === 'auth/popup-blocked') {
+        setErrorMessage('Sign-in popup was blocked. Please allow popups for this site.');
+      } else if (err.code === 'auth/internal-error') {
+        setErrorMessage(`Google sign-in error (auth/internal-error). Please verify "${domain}" is added to Authorized Domains in Firebase Console.`);
       } else {
         setErrorMessage(err.message ? err.message.replace('Firebase: ', '') : 'Google sign-in failed.');
       }

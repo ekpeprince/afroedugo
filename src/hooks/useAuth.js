@@ -184,16 +184,22 @@ export const useAuth = () => {
     setError(null);
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
       const result = await signInWithPopup(auth, provider);
       await syncUserProfile(result.user, options);
       return result.user;
     } catch (err) {
+      logger.error("Google sign-in error:", err.code, err.message);
       let msg = err.message;
+      const domain = typeof window !== 'undefined' ? window.location.hostname : 'afroedugo.com';
       if (err.code === 'auth/unauthorized-domain') {
-        const domain = typeof window !== 'undefined' ? window.location.hostname : 'afroedugo.com';
         msg = `Domain "${domain}" is not authorized in Firebase Console. Please add "${domain}" under Firebase > Authentication > Settings > Authorized domains.`;
       } else if (err.code === 'auth/popup-closed-by-user') {
         msg = null;
+      } else if (err.code === 'auth/popup-blocked') {
+        msg = 'Sign-in popup was blocked by your browser. Please allow popups for this site.';
+      } else if (err.code === 'auth/internal-error') {
+        msg = `Google sign-in error (auth/internal-error). Please make sure "${domain}" is added under Firebase Console > Authentication > Settings > Authorized domains.`;
       }
       setError(msg);
       throw err;

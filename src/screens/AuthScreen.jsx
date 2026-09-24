@@ -64,13 +64,17 @@ const AuthScreen = ({ onBack, onAuthSuccess }) => {
       onAuthSuccess?.();
     } catch (err) {
       logger.warn('Google sign-in exception:', err.code || err.message);
+      const domain = typeof window !== 'undefined' ? window.location.hostname : 'afroedugo.com';
       if (err.code === 'auth/unauthorized-domain') {
-        const domain = typeof window !== 'undefined' ? window.location.hostname : 'afroedugo.com';
         setLocalError(`Domain "${domain}" is not authorized for Google Sign-In in Firebase Console. Please add "${domain}" to Firebase Authentication > Settings > Authorized domains.`);
       } else if (err.code === 'auth/popup-closed-by-user') {
         // User voluntarily closed the popup, no error needed
       } else if (err.code === 'auth/cancelled-popup-request') {
         // Popup request cancelled
+      } else if (err.code === 'auth/popup-blocked') {
+        setLocalError('Sign-in popup was blocked by your browser. Please allow popups for this site.');
+      } else if (err.code === 'auth/internal-error') {
+        setLocalError(`Google sign-in error (auth/internal-error). Please verify "${domain}" is added to Authorized Domains in Firebase Console.`);
       } else {
         setLocalError(err.message ? err.message.replace('Firebase: ', '') : 'Google sign in failed.');
       }

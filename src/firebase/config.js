@@ -7,14 +7,9 @@ import { getMessaging, isSupported as isMessagingSupported } from "firebase/mess
 
 // Canonical Firebase authDomain:
 // Firebase Auth requires the official Firebase authDomain (afroedugo-b0b3f.firebaseapp.com)
-// for signInWithPopup and signInWithRedirect. Using a custom domain directly as authDomain causes
-// iframe framing errors (auth/internal-error) due to browser CSP, redirects, and clickjacking protections.
+// where Google hosts the dedicated auth handler and iframe.
 const getAuthDomain = () => {
-  const envDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
-  if (!envDomain || envDomain.includes("afroedugo.com")) {
-    return "afroedugo-b0b3f.firebaseapp.com";
-  }
-  return envDomain;
+  return "afroedugo-b0b3f.firebaseapp.com";
 };
 
 // Web app's Firebase configuration with fallback values for SSR & CI builds
