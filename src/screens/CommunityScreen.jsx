@@ -614,8 +614,8 @@ const CommunityScreen = ({
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </button>
-          <h1 className="text-lg font-bold text-gray-900 dark:text-white tracking-tight leading-none whitespace-nowrap">
-            AfroEdugo <span className="text-primary font-black">Social</span>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tighter text-gray-900 dark:text-white leading-none transition-colors duration-300 whitespace-nowrap">
+            AfroEduGo <span className="text-primary font-black tracking-tighter">Social</span>
           </h1>
         </div>
 
@@ -1272,7 +1272,7 @@ const CommunityScreen = ({
             </div>
 
             <div className="text-xs text-gray-400 font-medium px-2">
-              <p>© 2026 AfroEdugo. All rights reserved.</p>
+              <p>© 2026 AfroEduGo. All rights reserved.</p>
               <div className="flex gap-3 mt-1">
                 <a href="/privacy" className="hover:underline hover:text-gray-600">Privacy</a>
                 <a href="/terms" className="hover:underline hover:text-gray-600">Terms</a>

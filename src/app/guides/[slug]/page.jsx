@@ -115,8 +115,8 @@ export default async function GuidePage({ params }) {
             <span>All Guides</span>
           </Link>
 
-          <Link href="/" className="font-black text-lg text-gray-900 dark:text-white tracking-tight">
-            AfroEdugo <span className="text-primary font-black">Guides</span>
+          <Link href="/" className="text-lg font-black tracking-tighter text-gray-900 dark:text-white leading-none transition-colors duration-300">
+            AfroEduGo <span className="text-primary font-black tracking-tighter">Guides</span>
           </Link>
 
           <Link

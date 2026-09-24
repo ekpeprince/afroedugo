@@ -32,7 +32,7 @@ export default function InstallPromptModal({ isOpen, onConfirm, onCancel }) {
         </div>
 
         {/* Title */}
-        <h3 className="text-2xl font-black text-slate-900 dark:text-white leading-tight tracking-tight mb-2">
+        <h3 className="text-2xl font-black tracking-tighter text-gray-900 dark:text-white leading-none transition-colors duration-300 mb-2">
           Install AfroEduGo App
         </h3>
 

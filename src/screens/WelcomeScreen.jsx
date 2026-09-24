@@ -53,7 +53,7 @@ const WelcomeScreen = ({ onStart }) => {
           <span className="flex items-center gap-2 text-gray-800 dark:text-gray-200 text-sm sm:text-base md:text-xl font-semibold">
             <span>🌍</span> Welcome to
           </span>
-          <span className="text-primary dark:text-primary-light text-3xl sm:text-4xl md:text-6xl tracking-tight font-black">AfroEduGo</span>
+          <span className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter text-gray-900 dark:text-white leading-none transition-colors duration-300">AfroEduGo</span>
         </h1>
       </div>
 

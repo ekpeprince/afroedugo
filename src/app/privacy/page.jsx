@@ -18,8 +18,8 @@ export default function PrivacyPolicyPage() {
       <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-gray-100">
         <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
-            <span className="text-xl font-black tracking-tighter text-gray-900 group-hover:text-primary transition-colors">
-              AfroEdu<span className="text-primary">Go</span>
+            <span className="text-xl font-black tracking-tighter text-gray-900 leading-none transition-colors duration-300 group-hover:text-primary">
+              AfroEduGo
             </span>
           </Link>
           <div className="flex items-center gap-4 text-xs font-bold">

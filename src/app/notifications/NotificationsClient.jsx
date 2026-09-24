@@ -239,7 +239,7 @@ export default function NotificationsClient() {
     return (
       <div className="min-h-screen bg-[#FDFCFB] dark:bg-gray-900 flex flex-col items-center justify-center p-6 text-center">
         <span className="text-5xl mb-4">🔔</span>
-        <h2 className="text-xl font-black text-gray-900 dark:text-white mb-2">Join AfroEduGo</h2>
+        <h2 className="text-xl font-black tracking-tighter text-gray-900 dark:text-white leading-none transition-colors duration-300 mb-2">Join AfroEduGo</h2>
         <p className="text-gray-500 dark:text-gray-400 max-w-sm mb-6 font-medium text-sm">
           Log in to view and manage your community alerts, comment replies, and status updates.
         </p>

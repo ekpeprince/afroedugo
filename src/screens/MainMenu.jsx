@@ -214,7 +214,7 @@ const MainMenu = ({ onNavigate }) => {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white/15 backdrop-blur-md rounded-xl flex items-center justify-center text-xl">📱</div>
             <div>
-              <h4 className="font-black text-sm leading-tight">Install AfroEduGo</h4>
+              <h4 className="font-black tracking-tighter text-sm leading-tight">Install AfroEduGo</h4>
               <p className="text-[10px] font-bold text-white/80">Get the app on your home screen</p>
             </div>
           </div>

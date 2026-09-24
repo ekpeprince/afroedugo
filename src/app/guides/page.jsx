@@ -24,8 +24,8 @@ export default function GuidesIndexPage() {
       {/* Top Header */}
       <header className="sticky top-0 z-30 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="font-black text-xl text-gray-900 dark:text-white tracking-tight">
-            AfroEdugo <span className="text-primary font-black">Guides</span>
+          <Link href="/" className="text-xl font-black tracking-tighter text-gray-900 dark:text-white leading-none transition-colors duration-300">
+            AfroEduGo <span className="text-primary font-black tracking-tighter">Guides</span>
           </Link>
 
           <div className="flex items-center gap-3">
