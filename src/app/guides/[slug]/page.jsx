@@ -176,7 +176,7 @@ export default async function GuidePage({ params }) {
           <div className="text-center sm:text-left flex-1">
             <h3 className="font-bold text-gray-900 dark:text-white text-base">Written by the AfroEduGo Advisory Team</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed">
-              Curated by international alumni and student advisors to help African scholars navigate admissions, visas, accommodation, and work abroad with ease.
+              Curated by international alumni and student advisors to help international students navigate admissions, visas, accommodation, and work abroad with ease.
             </p>
           </div>
           <Link

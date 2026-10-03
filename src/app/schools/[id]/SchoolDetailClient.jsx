@@ -64,7 +64,7 @@ export default function SchoolDetailClient({ school }) {
           <div className="bg-white rounded-[2rem] p-8 shadow-xl shadow-gray-200/50 border border-gray-100">
             <h3 className="text-xl font-black text-gray-900 mb-4 uppercase tracking-wider text-xs text-primary">About the University</h3>
             <p className="text-gray-500 font-medium leading-relaxed">
-              {school.description || `${school.name} is a premier educational institution located in ${school.location}, ${school.country}. Offering internationally recognized degrees and programs, it serves as a gateway for African students to access high-quality European education, career opportunities, and direct integration paths.`}
+              {school.description || `${school.name} is a premier educational institution located in ${school.location}, ${school.country}. Offering internationally recognized degrees and programs, it serves as a gateway for international students to access high-quality European education, career opportunities, and direct integration paths.`}
             </p>
           </div>
 

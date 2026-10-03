@@ -5,7 +5,7 @@ import SchoolsPageClient from './SchoolsPageClient';
 
 export const metadata = {
   title: 'Discover Universities & Schools | AfroEduGo',
-  description: 'Explore top universities, colleges, and educational programs globally, trusted by the African student community.',
+  description: 'Explore top universities, colleges, and educational programs globally, trusted by the international student community.',
 };
 
 export default async function SchoolsPage() {

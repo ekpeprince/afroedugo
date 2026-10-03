@@ -122,7 +122,7 @@ const ChatScreen = ({ onBack, onOpenChat }) => {
             <div className="w-24 h-24 bg-gray-100 dark:bg-[#1e2a30] rounded-full flex items-center justify-center text-4xl shadow-inner">💬</div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white">No chats yet</h3>
             <p className="text-gray-500 dark:text-gray-400 font-medium max-w-xs text-sm">
-              Start chatting with fellow African students, housing providers, or study groups!
+              Start chatting with fellow international students, housing providers, or study groups!
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
               <Link 

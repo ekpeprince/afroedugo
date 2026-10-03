@@ -5,7 +5,7 @@ import HousingPageClient from './HousingPageClient';
 
 export const metadata = {
   title: 'Student Housing & Accommodation | AfroEduGo',
-  description: 'Find affordable and safe student housing, apartments, and rooms for rent across Europe, curated for African students.',
+  description: 'Find affordable and safe student housing, apartments, and rooms for rent across Europe, curated for international students.',
 };
 
 export default async function HousingPage() {

@@ -2,8 +2,8 @@ import React, { Suspense } from 'react';
 import CommunityClient from './CommunityClient';
 
 export const metadata = {
-  title: 'African Student Community & Network | AfroEduGo',
-  description: 'Connect with other African students abroad. Join discussions, find mentors, and build your international network on AfroEduGo.',
+  title: 'Student Community & Network | AfroEduGo',
+  description: 'Connect with international students abroad. Join discussions, find mentors, and build your global network on AfroEduGo.',
 };
 
 export default function CommunityPage() {

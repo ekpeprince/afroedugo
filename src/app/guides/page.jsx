@@ -4,13 +4,13 @@ import { getAllGuides } from '../../utils/guides';
 
 export const metadata = {
   title: 'International Student Guides & Visa Resources | AfroEduGo',
-  description: 'Verified guides on studying, working, finding student accommodation, opening bank accounts, and visas for African students in Europe.',
+  description: 'Verified guides on studying, working, finding student accommodation, opening bank accounts, and visas for international students in Europe.',
   alternates: {
     canonical: 'https://afroedugo.com/guides',
   },
   openGraph: {
     title: 'International Student Guides & Visa Resources | AfroEduGo',
-    description: 'Verified guides on studying, working, finding student accommodation, opening bank accounts, and visas for African students in Europe.',
+    description: 'Verified guides on studying, working, finding student accommodation, opening bank accounts, and visas for international students in Europe.',
     url: 'https://afroedugo.com/guides',
     type: 'website',
   },
@@ -60,7 +60,7 @@ export default function GuidesIndexPage() {
           Everything You Need to Study, Live, & Thrive Abroad
         </h1>
         <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed font-normal">
-          Practical, actionable step-by-step guides written specifically for African and international students moving to Lithuania and Europe.
+          Practical, actionable step-by-step guides written specifically for international students moving to Lithuania and Europe.
         </p>
       </section>
 
@@ -131,7 +131,7 @@ export default function GuidesIndexPage() {
           <div className="text-center md:text-left">
             <h3 className="text-2xl sm:text-3xl font-black tracking-tight mb-2">Have a specific question?</h3>
             <p className="text-white/80 text-sm max-w-md">
-              Ask hundreds of current African students and international alumni on our interactive community forum.
+              Ask hundreds of current international students and alumni on our interactive community forum.
             </p>
           </div>
           <Link
