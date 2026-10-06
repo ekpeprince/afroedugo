@@ -14,13 +14,16 @@ export default function SchoolDetailClient({ school }) {
   const [isInquiryOpen, setIsInquiryOpen] = useState(false);
   const [isEnrollOpen, setIsEnrollOpen] = useState(false);
   const [expandedCourse, setExpandedCourse] = useState(null);
+  const [toastMessage, setToastMessage] = useState(null);
+
+  const showToast = (msg) => {
+    setToastMessage(msg || 'Inquiry Sent! An advisor will reach out via WhatsApp/Email within 24 hours');
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 6000);
+  };
 
   const handleEnrollClick = () => {
-    if (!user) {
-      alert("Please login to enroll or send inquiries!");
-      router.push('/auth');
-      return;
-    }
     setIsEnrollOpen(true);
   };
 
@@ -174,14 +177,13 @@ export default function SchoolDetailClient({ school }) {
                 🎓 Enroll Now
               </button>
 
-              <a
-                href={getWhatsAppLink(school.whatsapp || '+37060123456', `Hi, I am interested in applying to ${school.name}. Please guide me on the next steps!`)}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setIsInquiryOpen(true)}
                 className="w-full flex items-center justify-center gap-2.5 bg-gray-900 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-black transition-colors"
               >
                 💬 Chat with Advisor
-              </a>
+              </button>
             </div>
           </div>
 
@@ -247,18 +249,39 @@ export default function SchoolDetailClient({ school }) {
         </div>
       </div>
 
+      {/* Floating Optimistic Success Toast */}
+      {toastMessage && (
+        <div className="fixed bottom-6 right-6 max-w-md z-[120] bg-emerald-950/95 backdrop-blur-md text-white px-5 py-4 rounded-2xl shadow-2xl flex items-start gap-3.5 border border-emerald-500/30 animate-in fade-in slide-in-from-bottom-5">
+          <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-black text-base shrink-0">
+            ✓
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-black uppercase tracking-wider text-emerald-300 mb-0.5">Inquiry Pipeline</p>
+            <p className="text-sm font-semibold text-gray-100 leading-snug">{toastMessage}</p>
+          </div>
+          <button 
+            onClick={() => setToastMessage(null)}
+            className="text-gray-400 hover:text-white text-xs font-bold p-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Admission Inquiry Modal */}
       <InquiryModal 
         isOpen={isInquiryOpen} 
         onClose={() => setIsInquiryOpen(false)} 
         item={school} 
         type="school" 
+        onSuccess={showToast}
       />
 
       <EnrollModal
         isOpen={isEnrollOpen}
         onClose={() => setIsEnrollOpen(false)}
         school={school}
+        onSuccess={showToast}
       />
     </div>
   );
