@@ -1,7 +1,7 @@
 import { getGuideSlugs } from '../utils/guides';
 
 export default function sitemap() {
-  const baseUrl = 'https://afroedugo.com';
+  const baseUrl = 'https://www.afroedugo.com';
 
   const guideSlugs = getGuideSlugs();
   const guideEntries = guideSlugs.map((slug) => ({
