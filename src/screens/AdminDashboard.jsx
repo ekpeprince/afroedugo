@@ -778,7 +778,28 @@ const AdminDashboard = ({ onBack }) => {
                     ];
 
                     for (const post of seedPosts) {
-                      await addDoc(collection(db, 'discussions'), post);
+                      const postRef = await addDoc(collection(db, 'discussions'), post);
+                      try {
+                        const idToken = await user.getIdToken();
+                        const firstLine = post.text.trim().split('\n')[0] || 'Community Guide';
+                        await fetch('/api/community/broadcast', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+                          },
+                          body: JSON.stringify({
+                            postId: postRef.id,
+                            title: firstLine,
+                            text: post.text,
+                            category: post.category,
+                            authorName: post.user,
+                            isSeedPost: true
+                          })
+                        });
+                      } catch (broadcastErr) {
+                        console.warn('Seed post broadcast trigger warning:', broadcastErr);
+                      }
                     }
 
                     alert("Database successfully seeded with sample data!");

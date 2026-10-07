@@ -23,27 +23,34 @@ export async function POST(request) {
       });
     }
 
-    // 2. Authenticate caller with Firebase ID Token
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized: Missing bearer token' }, { status: 401 });
-    }
-    const idToken = authHeader.split('Bearer ')[1];
+    // 2. Authenticate caller with Firebase ID Token or Internal Secret
+    const internalSecret = request.headers.get('x-internal-secret');
+    const isInternalCall = internalSecret && (
+      internalSecret === (process.env.CRON_SECRET || 'afroedugo-internal-secret-broadcaster-39105')
+    );
 
     let callerUser = null;
-    let isCallerAdmin = false;
+    let isCallerAdmin = Boolean(isInternalCall);
 
-    if (admin.apps.length) {
-      try {
-        callerUser = await admin.auth().verifyIdToken(idToken);
-        isCallerAdmin = callerUser.admin === true || 
-          (callerUser.email_verified && callerUser.email?.toLowerCase() === 'ekpeprinceesor@gmail.com');
-      } catch (authErr) {
-        logger.warn('Push notification unauthorized token:', authErr.message);
-        return NextResponse.json({ error: 'Unauthorized: Invalid ID token' }, { status: 401 });
+    if (!isInternalCall) {
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return NextResponse.json({ error: 'Unauthorized: Missing bearer token' }, { status: 401 });
       }
-    } else {
-      return NextResponse.json({ skipped: true, reason: 'Admin not configured' }, { status: 200 });
+      const idToken = authHeader.split('Bearer ')[1];
+
+      if (admin.apps.length) {
+        try {
+          callerUser = await admin.auth().verifyIdToken(idToken);
+          isCallerAdmin = callerUser.admin === true || 
+            (callerUser.email_verified && callerUser.email?.toLowerCase() === 'ekpeprinceesor@gmail.com');
+        } catch (authErr) {
+          logger.warn('Push notification unauthorized token:', authErr.message);
+          return NextResponse.json({ error: 'Unauthorized: Invalid ID token' }, { status: 401 });
+        }
+      } else {
+        return NextResponse.json({ skipped: true, reason: 'Admin not configured' }, { status: 200 });
+      }
     }
 
     const body = await request.json();

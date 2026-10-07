@@ -561,27 +561,30 @@ const CommunityScreen = ({
         }).catch(err => console.warn('Failed to send mention notification:', err));
       }
 
-      // Broadcast push notification to all users
+      // Trigger Community Broadcast Engine (In-App, FCM Push, and Resend Email)
       try {
         const idToken = await auth.currentUser?.getIdToken();
-        if (idToken) {
-          fetch('/api/notify', {
-            method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${idToken}`
-            },
-            body: JSON.stringify({
-              broadcast: true,
-              title: `New Post in ${postCategory}`,
-              body: `${getUserHandle(user, profile)} just posted: "${newMessage.slice(0, 50)}${newMessage.length > 50 ? '...' : ''}"`,
-              link: `community?postId=${postRef.id}`,
-              icon: profile?.photoURL || user?.photoURL || null,
-              image: imageUrls[0] || null
-            })
-          }).catch(err => console.warn('Failed to broadcast post notification:', err));
-        }
-      } catch (notifyErr) {}
+        const firstLine = newMessage.trim().split('\n')[0] || 'New Discussion';
+        const postTitle = firstLine.length > 80 ? `${firstLine.slice(0, 80)}...` : firstLine;
+
+        fetch('/api/community/broadcast', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            ...(idToken ? { 'Authorization': `Bearer ${idToken}` } : {})
+          },
+          body: JSON.stringify({
+            postId: postRef.id,
+            title: postTitle,
+            text: newMessage,
+            category: postCategory,
+            authorName: getUserHandle(user, profile) || user.displayName || 'A fellow student',
+            isSeedPost: false
+          })
+        }).catch(err => console.warn('Failed to dispatch community broadcast:', err));
+      } catch (broadcastErr) {
+        console.warn('Community broadcast trigger error:', broadcastErr);
+      }
 
       imagePreviews.forEach(url => URL.revokeObjectURL(url));
       setNewMessage('');

@@ -557,6 +557,53 @@ const ProfileScreen = ({ onBack, onLogout, onShowViralModal, onNavigate }) => {
           )}
         </section>
 
+        {/* Email & Notification Preferences Section */}
+        <section className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center text-lg">
+              ✉️
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-gray-900 leading-tight">Notification & Email Preferences</h3>
+              <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">Manage Alerts & Updates</p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl border border-gray-100">
+              <div className="pr-4">
+                <h4 className="font-bold text-gray-900 text-sm mb-1">Community Discussion Alerts</h4>
+                <p className="text-gray-500 text-xs leading-relaxed">
+                  Receive email alerts when new student discussions, guides, and advice are shared.
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={profile?.emailPreferences?.communityUpdates !== false}
+                onClick={async () => {
+                  const currentVal = profile?.emailPreferences?.communityUpdates !== false;
+                  await updateProfile({
+                    emailPreferences: {
+                      ...(profile?.emailPreferences || {}),
+                      communityUpdates: !currentVal
+                    }
+                  });
+                }}
+                className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  profile?.emailPreferences?.communityUpdates !== false ? 'bg-emerald-600' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    profile?.emailPreferences?.communityUpdates !== false ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+        </section>
+
         <section className="pt-12 border-t border-gray-100">
           <button 
             onClick={handleLogout}
