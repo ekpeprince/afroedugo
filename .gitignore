@@ -81,3 +81,7 @@ public/swe-worker-*.js
 
 # TypeScript build info
 *.tsbuildinfo
+
+# Service Account and Secrets keys
+*key*.json
+gsc-key.json
