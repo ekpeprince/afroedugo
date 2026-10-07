@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import { getGuideBySlug, getGuideSlugs, getAllGuides } from '../../../utils/guides';
+import FaqAccordion from '../../../components/FaqAccordion';
 
 // Custom beautifully styled components for MDX rendering
 const mdxComponents = {
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }) {
   const guide = getGuideBySlug(resolvedParams.slug);
   if (!guide) return {};
 
-  const baseUrl = 'https://afroedugo.com';
+  const baseUrl = 'https://www.afroedugo.com';
   const url = `${baseUrl}/guides/${guide.slug}`;
 
   return {
@@ -43,7 +44,7 @@ export async function generateMetadata({ params }) {
       url,
       type: 'article',
       publishedTime: guide.data.date,
-      authors: [guide.data.author || 'AfroEduGo'],
+      authors: [guide.data.author || 'AfroEduGo Admissions & Mobility Team'],
       tags: guide.data.tags,
       siteName: 'AfroEduGo',
     },
@@ -72,9 +73,10 @@ export default async function GuidePage({ params }) {
 
   const allGuides = getAllGuides();
   const relatedGuides = allGuides.filter((g) => g.slug !== guide.slug).slice(0, 2);
+  const baseUrl = 'https://www.afroedugo.com';
 
-  // Structured Data (Schema.org Article JSON-LD)
-  const jsonLd = {
+  // Structured Data 1: Article JSON-LD
+  const articleJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
     headline: guide.data.title,
@@ -82,27 +84,54 @@ export default async function GuidePage({ params }) {
     datePublished: guide.data.date,
     author: {
       '@type': 'Organization',
-      name: guide.data.author || 'AfroEduGo',
-      url: 'https://afroedugo.com',
+      name: guide.data.author || 'AfroEduGo Admissions & Mobility Team',
+      url: baseUrl,
     },
     publisher: {
       '@type': 'Organization',
       name: 'AfroEduGo',
-      url: 'https://afroedugo.com',
+      url: baseUrl,
+      logo: {
+        '@type': 'ImageObject',
+        url: `${baseUrl}/icon-192.png`,
+      },
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': `https://afroedugo.com/guides/${guide.slug}`,
+      '@id': `${baseUrl}/guides/${guide.slug}`,
     },
   };
+
+  // Structured Data 2: FAQPage JSON-LD for Google PAA Rich Snippets
+  const faqs = Array.isArray(guide.data.faqs) ? guide.data.faqs : [];
+  const faqJsonLd = faqs.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((faq) => ({
+      '@type': 'Question',
+      name: faq.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: faq.answer,
+      },
+    })),
+  } : null;
 
   return (
     <div className="min-h-screen bg-[#FDFCFB] dark:bg-gray-950 font-sans text-gray-900 dark:text-white transition-colors duration-300 selection:bg-primary/20">
       {/* Article Structured Data */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd).replace(/</g, '\\u003c') }}
       />
+
+      {/* Dual Structured Data: FAQPage JSON-LD for Google Rich Results */}
+      {faqJsonLd && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd).replace(/</g, '\\u003c') }}
+        />
+      )}
 
       {/* Navigation Bar */}
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800">
@@ -168,8 +197,48 @@ export default async function GuidePage({ params }) {
           <MDXRemote source={guide.content} components={mdxComponents} />
         </article>
 
+        {/* Mid/Post-Article Contextual Callout Cards */}
+        <div className="my-12 grid sm:grid-cols-2 gap-4">
+          <div className="bg-gradient-to-br from-emerald-950 to-primary-dark text-white p-6 rounded-3xl shadow-lg relative overflow-hidden flex flex-col justify-between">
+            <div className="relative z-10">
+              <span className="text-2xl mb-2 block">🎓</span>
+              <h3 className="text-lg font-black mb-1.5 leading-snug">Explore Lithuanian Universities</h3>
+              <p className="text-xs text-emerald-100/90 leading-relaxed">
+                Compare accredited English-taught degrees, check tuition fees, and get direct advisor support.
+              </p>
+            </div>
+            <Link
+              href="/schools?country=Lithuania"
+              className="mt-5 inline-flex items-center justify-center gap-2 bg-white text-emerald-950 text-xs font-black uppercase tracking-wider px-4 py-3 rounded-2xl hover:bg-emerald-50 active:scale-95 transition-all shadow-md"
+            >
+              <span>View Universities</span>
+              <span>→</span>
+            </Link>
+          </div>
+
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden flex flex-col justify-between">
+            <div className="relative z-10">
+              <span className="text-2xl mb-2 block">🏠</span>
+              <h3 className="text-lg font-black mb-1.5 leading-snug">Verified Student Housing</h3>
+              <p className="text-xs text-gray-300 leading-relaxed">
+                Explore student dorms and private flat shares in Vilnius and Kaunas with guaranteed address registration.
+              </p>
+            </div>
+            <Link
+              href="/housing"
+              className="mt-5 inline-flex items-center justify-center gap-2 bg-primary text-white text-xs font-black uppercase tracking-wider px-4 py-3 rounded-2xl hover:bg-primary-dark active:scale-95 transition-all shadow-md"
+            >
+              <span>Find Housing</span>
+              <span>→</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Interactive FAQ Accordion (Qualifies for PAA Rich Snippets) */}
+        {faqs.length > 0 && <FaqAccordion faqs={faqs} />}
+
         {/* Author Bio Card */}
-        <div className="mt-16 p-6 sm:p-8 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl shadow-sm flex flex-col sm:flex-row items-center gap-5">
+        <div className="mt-14 p-6 sm:p-8 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl shadow-sm flex flex-col sm:flex-row items-center gap-5">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary to-primary-light text-white text-3xl flex items-center justify-center shrink-0 shadow-md">
             🎓
           </div>
@@ -189,7 +258,7 @@ export default async function GuidePage({ params }) {
 
         {/* Related Guides */}
         {relatedGuides.length > 0 && (
-          <div className="mt-16">
+          <div className="mt-14">
             <h3 className="text-xl font-black text-gray-900 dark:text-white mb-6 tracking-tight">
               Related Student Guides
             </h3>

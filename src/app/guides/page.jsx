@@ -6,12 +6,12 @@ export const metadata = {
   title: 'International Student Guides & Visa Resources | AfroEduGo',
   description: 'Verified guides on studying, working, finding student accommodation, opening bank accounts, and visas for international students in Europe.',
   alternates: {
-    canonical: 'https://afroedugo.com/guides',
+    canonical: 'https://www.afroedugo.com/guides',
   },
   openGraph: {
     title: 'International Student Guides & Visa Resources | AfroEduGo',
     description: 'Verified guides on studying, working, finding student accommodation, opening bank accounts, and visas for international students in Europe.',
-    url: 'https://afroedugo.com/guides',
+    url: 'https://www.afroedugo.com/guides',
     type: 'website',
   },
 };

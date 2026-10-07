@@ -31,7 +31,9 @@ const CommunityScreen = ({
   onOpenNotifications, 
   onLogin,
   targetPostId = null,
-  targetCommentId = null
+  targetCommentId = null,
+  initialCategory = 'all',
+  onCategoryChange = null
 }) => {
   const { user } = useAuth();
   const { getOrCreateConversation, unreadDMsCount } = useChat();
@@ -69,8 +71,21 @@ const CommunityScreen = ({
   const [viewingUser, setViewingUser] = useState(null); // { userId, displayName, photoURL }
   const [openMenuId, setOpenMenuId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [composerCategory, setComposerCategory] = useState('general');
+  const [selectedCategory, setSelectedCategory] = useState(initialCategory || 'all');
+  const [composerCategory, setComposerCategory] = useState('campus');
+
+  useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+    }
+  }, [initialCategory]);
+
+  const handleSelectCategory = (catId) => {
+    setSavedView(false);
+    setSelectedCategory(catId);
+    onCategoryChange?.(catId);
+  };
+
   const [newMessage, setNewMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [expandedPost, setExpandedPost] = useState(null);
@@ -243,23 +258,91 @@ const CommunityScreen = ({
 
   // ── Categories ───────────────────────────────────────────────────────────
   const categories = [
-    { id: 'all',         label: 'All',          icon: '🌐' },
-    { id: 'general',     label: 'General',      icon: '💬' },
-    { id: 'visa',        label: 'Visa Help',    icon: '📄' },
-    { id: 'housing',     label: 'Housing',      icon: '🏠' },
-    { id: 'study',       label: 'Study Tips',   icon: '📚' },
-    { id: 'scholarship', label: 'Scholarships', icon: '🎓' },
-    { id: 'jobs',        label: 'Jobs',         icon: '💼' },
+    { id: 'all',         label: 'All Discussions',     icon: '🌐' },
+    { id: 'visa',        label: 'Visa & MIGRIS',       icon: '🛂' },
+    { id: 'housing',     label: 'Housing & Flatmates', icon: '🏠' },
+    { id: 'campus',      label: 'Campus Life',         icon: '🎓' },
+    { id: 'jobs',        label: 'Student Jobs',        icon: '💼' },
   ];
 
   const categoryTitles = {
-    general:     'General discussions across the board',
-    visa:        'Latest questions and updates on visas',
-    housing:     'Tips and questions on accommodation',
-    study:       'Study strategies and academic tips',
-    scholarship: 'Scholarship opportunities and guidance',
-    jobs:        'Part-time jobs and career opportunities',
+    all:         'All Discussions across the student community',
+    visa:        'Visa & MIGRIS processes, TRP requirements, and embassy guidance',
+    housing:     'Student dorms, private apartments, flatmates, and renting tips',
+    campus:      'University life, integration, LSP cards, and student advice',
+    jobs:        'Part-time employment, 20h student regulations, and career guidance',
   };
+
+  const isPostInCategory = (postCategory, filterId) => {
+    if (!filterId || filterId === 'all') return true;
+    const cat = (postCategory || '').toLowerCase();
+    if (filterId === 'visa') return cat === 'visa';
+    if (filterId === 'housing') return cat === 'housing';
+    if (filterId === 'jobs') return cat === 'jobs';
+    if (filterId === 'campus') {
+      return ['campus', 'study', 'scholarship', 'general'].includes(cat);
+    }
+    return cat === filterId.toLowerCase();
+  };
+
+  const SEED_ANCHOR_DISCUSSIONS = [
+    {
+      id: 'anchor-visa-migris-guide',
+      isPinned: true,
+      category: 'visa',
+      userId: 'anchor-lead-amara',
+      user: 'Amara N. (Advising Lead)',
+      userRole: 'current',
+      userCountry: 'Nigeria ➔ Lithuania',
+      userPhotoURL: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
+      createdAt: { seconds: 1716940800, nanoseconds: 0 },
+      text: `🛂 PINNED GUIDE: 2025/2026 Lithuania Student Visa & MIGRIS Checklist\n\nFor everyone currently scheduling their VFS Global appointment or preparing their TRP application:\n\n1. Mediation Letter: Ensure your university has issued the official number in MIGRIS.\n2. Proof of Funds: Bank statement showing at least €4,440 (12 months × €370) plus return travel fare (€370).\n3. Police Clearance: Must be apostilled or consular legalized.\n4. Health Insurance: Valid across Schengen with minimum €30,000 emergency coverage.\n\nAsk any MIGRIS or visa document questions in the replies below!`,
+      reactions: { '👍': ['usr1', 'usr2', 'usr3', 'usr4'], '❤️': ['usr5', 'usr6'] },
+      commentCount: 14,
+    },
+    {
+      id: 'anchor-housing-flatmates-guide',
+      isPinned: true,
+      category: 'housing',
+      userId: 'anchor-rep-david',
+      user: 'David O. (KTU Ambassador)',
+      userRole: 'current',
+      userCountry: 'Ghana ➔ Kaunas',
+      userPhotoURL: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80',
+      createdAt: { seconds: 1716854400, nanoseconds: 0 },
+      text: `🏠 PINNED GUIDE: Dormitory Allocations vs. Private Rentals in Vilnius & Kaunas\n\nQuick breakdown for incoming autumn/spring students:\n\n• Dorms: €120 – €230/mo. Apply the day you receive your university admission portal access.\n• Private Apartments / Shared Flats: €280 – €450/mo plus utilities (~€70 in summer, ~€130 in winter).\n• Scam Warning: NEVER wire money via Western Union or crypto without an official lease agreement (Nuomos Sutartis) and verified landlord credentials.\n\nPost here if you're looking for flatmates in Saulėtekis, Naujamiestis, or Kaunas Center!`,
+      reactions: { '👍': ['usr1', 'usr2'], '❤️': ['usr3', 'usr4', 'usr5'] },
+      commentCount: 9,
+    },
+    {
+      id: 'anchor-campus-life-guide',
+      isPinned: true,
+      category: 'campus',
+      userId: 'anchor-lead-blessing',
+      user: 'Blessing K. (VU Student Rep)',
+      userRole: 'current',
+      userCountry: 'Kenya ➔ Vilnius',
+      userPhotoURL: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=256&q=80',
+      createdAt: { seconds: 1716768000, nanoseconds: 0 },
+      text: `🎓 PINNED GUIDE: Arrival Survival Guide (LSP Card, Revolut & Winter Readiness)\n\nWelcome to Lithuania! Three things you should do within your first 7 days:\n\n1. Order your LSP (Lietuvos Studento Pažymėjimas) on lsp.lt immediately. It gives you 50% discount on trains, 80% on city buses!\n2. Banking: Open a student IBAN (Paysera or Revolut) using your TRP/Passport and university letter.\n3. Climate: Don't panic about the cold, but do buy a windproof, waterproof down jacket and thermal boots before November.\n\nFeel free to connect and introduce your faculty and city below!`,
+      reactions: { '❤️': ['usr1', 'usr2', 'usr3'], '🙏': ['usr4', 'usr5'] },
+      commentCount: 18,
+    },
+    {
+      id: 'anchor-student-jobs-guide',
+      isPinned: true,
+      category: 'jobs',
+      userId: 'anchor-lead-tariro',
+      user: 'Tariro M. (VILNIUS TECH)',
+      userRole: 'current',
+      userCountry: 'Zimbabwe ➔ Vilnius',
+      userPhotoURL: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&q=80',
+      createdAt: { seconds: 1716681600, nanoseconds: 0 },
+      text: `💼 PINNED GUIDE: Working 20h/Week as a Student in Lithuania\n\nKey employment regulations you need to know:\n\n• Students holding a Temporary Residence Permit (TRP) are legally permitted to work up to 20 hours/week during semester time and up to 40 hours/week during official summer holidays.\n• No separate work permit is required if you are enrolled in an accredited degree program.\n• Top student jobs: Tech internships, customer support (Bolt, Western Union, Danske Bank), delivery, hospitality, and English tutoring.\n• You will receive a Sodra social insurance number automatically through your employer.\n\nShare job openings or CV questions in the comments!`,
+      reactions: { '👍': ['usr1', 'usr2', 'usr3'], '❤️': ['usr4'] },
+      commentCount: 12,
+    }
+  ];
 
   // ── Handlers ─────────────────────────────────────────────────────────────
   const handleStartPrivateChat = async (userId, userName) => {
@@ -528,30 +611,46 @@ const CommunityScreen = ({
   };
 
   // ── Derived data ─────────────────────────────────────────────────────────
+  const mergedDiscussions = useMemo(() => {
+    const firestorePosts = discussions || [];
+    const firestoreIds = new Set(firestorePosts.map(p => p.id));
+    const activeSeeds = SEED_ANCHOR_DISCUSSIONS.filter(seed => !firestoreIds.has(seed.id));
+    return [...activeSeeds, ...firestorePosts];
+  }, [discussions]);
+
   const filteredDiscussions = useMemo(() => {
-    let posts = [...discussions];
+    let posts = [...mergedDiscussions];
     if (deepLinkedPost && !posts.some(p => p.id === deepLinkedPost.id)) {
       posts.unshift(deepLinkedPost);
     }
     posts = posts.filter(d =>
       (activePostId && d.id === activePostId) || (
-        (selectedCategory === 'all' || d.category === selectedCategory) &&
+        isPostInCategory(d.category, selectedCategory) &&
         ((d.text || '').toLowerCase().includes(searchTerm.toLowerCase()))
       )
     );
     if (savedView) {
       posts = posts.filter(d => savedPosts.includes(d.id) || (activePostId && d.id === activePostId));
     }
-    return posts;
-  }, [discussions, selectedCategory, searchTerm, savedView, savedPosts, deepLinkedPost, activePostId]);
+    return posts.sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      const timeA = a.createdAt?.seconds || (a.createdAt instanceof Date ? a.createdAt.getTime() / 1000 : 0);
+      const timeB = b.createdAt?.seconds || (b.createdAt instanceof Date ? b.createdAt.getTime() / 1000 : 0);
+      return timeB - timeA;
+    });
+  }, [mergedDiscussions, selectedCategory, searchTerm, savedView, savedPosts, deepLinkedPost, activePostId]);
 
   const trendingTopics = useMemo(() => {
-    if (!discussions) return [];
+    const list = mergedDiscussions || [];
     const counts = {};
-    discussions.forEach(d => { counts[d.category] = (counts[d.category] || 0) + 1; });
+    list.forEach(d => {
+      const cat = ['campus', 'study', 'scholarship', 'general'].includes(d.category) ? 'campus' : d.category;
+      counts[cat] = (counts[cat] || 0) + 1;
+    });
     return Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
+      .slice(0, 4)
       .map(([catId, count]) => ({
         id: catId,
         label: categories.find(c => c.id === catId)?.label || catId,
@@ -559,12 +658,12 @@ const CommunityScreen = ({
         title: categoryTitles[catId] || catId,
         count
       }));
-  }, [discussions]);
+  }, [mergedDiscussions]);
 
   const activeMembers = useMemo(() => {
-    if (!discussions) return [];
+    const list = mergedDiscussions || [];
     const userMap = {};
-    discussions.forEach(d => {
+    list.forEach(d => {
       if (d.userId && !userMap[d.userId]) {
         userMap[d.userId] = {
           userId: d.userId,
@@ -578,13 +677,15 @@ const CommunityScreen = ({
       if (d.userId) userMap[d.userId].count += 1;
     });
     return Object.values(userMap).sort((a, b) => b.count - a.count).slice(0, 5);
-  }, [discussions]);
+  }, [mergedDiscussions]);
 
   const formatTime = (ts) => {
     if (!ts) return 'Just now';
     let date;
     if (ts.toDate) {
       date = ts.toDate();
+    } else if (ts.seconds) {
+      date = new Date(ts.seconds * 1000);
     } else if (ts instanceof Date) {
       date = ts;
     } else if (typeof ts === 'number' || typeof ts === 'string') {
@@ -746,14 +847,14 @@ const CommunityScreen = ({
             {categories.map(cat => (
               <button
                 key={cat.id}
-                onClick={() => { setSavedView(false); setSelectedCategory(cat.id); }}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-all font-bold text-sm shrink-0 ${
+                onClick={() => handleSelectCategory(cat.id)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full whitespace-nowrap transition-all font-bold text-sm shrink-0 cursor-pointer ${
                   selectedCategory === cat.id && !savedView
-                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-md'
+                    ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 shadow-md ring-2 ring-gray-900/10'
                     : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
               >
-                {cat.icon} {cat.label}
+                <span>{cat.icon}</span> <span>{cat.label}</span>
               </button>
             ))}
           </div>
@@ -778,7 +879,10 @@ const CommunityScreen = ({
           )}
 
           {/* ── POST COMPOSER ─────────────────────────────────────────── */}
-          <div className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 mb-5 transition-colors duration-300">
+          <div 
+            onClick={() => { if (!user) onLogin?.(); }}
+            className="bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 mb-5 transition-colors duration-300 cursor-default"
+          >
             <form onSubmit={handleSendMessage} className="flex flex-col gap-0">
               <div className="flex gap-3 items-start">
                 <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden flex items-center justify-center text-gray-500 dark:text-gray-300 font-bold text-sm shrink-0">
@@ -789,10 +893,11 @@ const CommunityScreen = ({
                 <div className="flex-grow relative">
                   <textarea
                     id="newPost"
-                    placeholder={user ? `What's on your mind, ${profile?.displayName?.split(' ')[0] || 'friend'}?` : 'Log in to share your thoughts…'}
+                    placeholder={user ? `What's on your mind, ${profile?.displayName?.split(' ')[0] || 'friend'}?` : 'Log in to join the conversation and share with students…'}
                     className="w-full bg-transparent pt-2 outline-none font-medium text-gray-900 dark:text-white text-base placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none min-h-[48px]"
                     value={newMessage}
                     onChange={e => handleTextChange(e, setNewMessage, 'newPost')}
+                    onClick={() => { if (!user) onLogin?.(); }}
                     disabled={isSending || !user}
                     rows={newMessage.length > 60 ? 3 : 2}
                   />
@@ -942,6 +1047,11 @@ const CommunityScreen = ({
                               {formatTime(msg.createdAt)}
                               {msg.isEdited && <span className="italic ml-1">(edited)</span>}
                             </span>
+                            {msg.isPinned && (
+                              <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 text-xs font-black rounded-full whitespace-nowrap flex items-center gap-1 border border-amber-200 dark:border-amber-700/50">
+                                📌 Pinned
+                              </span>
+                            )}
                             {msg.category && msg.category !== 'general' && (() => {
                               const cat = categories.find(c => c.id === msg.category);
                               return cat ? (

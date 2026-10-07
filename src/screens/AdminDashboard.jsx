@@ -737,16 +737,49 @@ const AdminDashboard = ({ onBack }) => {
                       createdAt: serverTimestamp()
                     });
 
-                    // Seed Community Post
-                    await addDoc(collection(db, 'discussions'), {
-                      text: "Hello everyone! I just arrived in Vilnius. Where is the best place to get a student bus pass?",
-                      user: "NewStudent",
-                      userId: user.uid,
-                      category: "General",
-                      createdAt: serverTimestamp(),
-                      likes: [],
-                      commentCount: 0
-                    });
+                    // Seed Community Posts across categories
+                    const seedPosts = [
+                      {
+                        text: "🛂 2025/2026 Lithuania Student Visa & MIGRIS Checklist:\n1. Mediation Letter from university.\n2. Bank balance: €4,440+.\n3. Police clearance apostilled.\n4. Schengen health insurance (€30,000+).",
+                        user: "Amara N. (Advising Lead)",
+                        userId: user.uid,
+                        category: "visa",
+                        createdAt: serverTimestamp(),
+                        likes: [],
+                        commentCount: 0
+                      },
+                      {
+                        text: "🏠 Student Dorms vs Private Rentals:\nDorms are €120-€220/mo, private flats €280-€450/mo. Always sign an official Nuomos Sutartis before sending deposits!",
+                        user: "David O. (KTU Ambassador)",
+                        userId: user.uid,
+                        category: "housing",
+                        createdAt: serverTimestamp(),
+                        likes: [],
+                        commentCount: 0
+                      },
+                      {
+                        text: "🎓 Arrival Survival Guide: Get your LSP card on lsp.lt immediately for 50-80% transport discounts, open a Revolut or Paysera account, and pack warm clothes!",
+                        user: "Blessing K. (VU Student Rep)",
+                        userId: user.uid,
+                        category: "campus",
+                        createdAt: serverTimestamp(),
+                        likes: [],
+                        commentCount: 0
+                      },
+                      {
+                        text: "💼 Working 20h/Week as a Student: International students can work up to 20h/week during semesters and 40h/week during holidays without a separate work permit.",
+                        user: "Tariro M. (VILNIUS TECH)",
+                        userId: user.uid,
+                        category: "jobs",
+                        createdAt: serverTimestamp(),
+                        likes: [],
+                        commentCount: 0
+                      }
+                    ];
+
+                    for (const post of seedPosts) {
+                      await addDoc(collection(db, 'discussions'), post);
+                    }
 
                     alert("Database successfully seeded with sample data!");
                   } catch (e) {
